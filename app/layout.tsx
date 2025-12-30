@@ -1,11 +1,20 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type {Metadata} from "next";
+import {Geist, Geist_Mono, Quicksand} from "next/font/google";
 import "./globals.css";
+import Header from "@/components/header/Header";
+import {ThemeProvider} from "next-themes"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
+
   subsets: ["latin"],
 });
+
+const quicksand = Quicksand({
+  // variable: "--font-quicksand-variable",
+  subsets: ["latin"],
+  weight: ['500'],
+})
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
@@ -18,17 +27,22 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({
-  children,
+ children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="en" suppressHydrationWarning>
+    <body
+      className={`${quicksand.className} antialiased transition-all duration-500`}
+    >
+    <main>
+      <ThemeProvider attribute="class" enableSystem defaultTheme='system'>
+        <Header/>
         {children}
-      </body>
+      </ThemeProvider>
+    </main>
+    </body>
     </html>
   );
 }
