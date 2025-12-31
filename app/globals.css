@@ -19,18 +19,12 @@
   color: #f5f3ff;
 }
 
-.dark .hamburger {
-  color: #f5f3ff;
-}
 
 .light {
   background-color: #fff;
   color: #222222;
 }
 
-.light .hamburger {
-  color: #222222;
-}
 
 body {
   font-family: "Quicksand", sans-serif;

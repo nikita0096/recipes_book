@@ -13,11 +13,15 @@ export const handleGoogleLogin = async () => {
   return data;
 };
 
-export const handleEmailLogin = async () => {
+export const handleEmailLogin = async (email: string, password: string) => {
   const {data, error} = await supabase.auth.signInWithPassword({
-    email: 'nikita.uswork@gmail.com',
-    password: 'qwerty12345'
-  })
+    email: email,
+    password: password
+  });
+
+  if (error) console.error(error);
+
+  return data;
 }
 
 export const logout = async () => {
@@ -29,3 +33,6 @@ export const getUser = async () => {
 
   return user;
 }
+
+//nikita.uswork@gmail.com
+//qwerty12345
