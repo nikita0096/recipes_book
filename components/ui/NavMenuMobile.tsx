@@ -3,7 +3,7 @@ import Link from "next/link";
 import {PAGES} from "@/config/page.config";
 import {IUserState} from "@/store/useUserStore";
 import {IoClose} from "react-icons/io5";
-import AuthBar from "@/components/ui/AuthBar";
+import AuthBar from "@/components/authorization/AuthBar";
 
 interface NavMenuMobileProps {
   user: IUserState | null;

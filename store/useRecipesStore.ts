@@ -1,6 +1,6 @@
 import {create} from "zustand/react";
 import {IRecipe} from "@/app/recipes/page";
-import {supabase} from "@/supabase/ClientComponentClient";
+import {supabase} from "@/lib/supabase/ClientComponentClient";
 
 interface RecipesState {
   recipes: IRecipe[];

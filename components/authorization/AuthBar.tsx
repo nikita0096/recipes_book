@@ -3,7 +3,7 @@
 import React, {useState} from 'react';
 import Image from "next/image";
 import {IUserState} from "@/store/useUserStore";
-import LoginPage from "@/components/authPage/LoginPage";
+import AuthPage from "@/components/authorization/AuthPage";
 
 interface AuthBarProps {
   user: IUserState | null;
@@ -35,7 +35,7 @@ const AuthBar: React.FC<AuthBarProps> = ({user, handleLogin, handleLogout}) => {
         </div>)
         : <button onClick={() => setIsOpenLoginPage(true)}>Login</button>}
       {isOpenLoginPage && (
-        <LoginPage setIsOpenLoginPage={setIsOpenLoginPage}/>
+        <AuthPage setIsOpenLoginPage={setIsOpenLoginPage}/>
       )}
     </div>
   );

@@ -1,5 +1,5 @@
 import {NextRequest, NextResponse} from "next/server";
-import {supabase} from "@/supabase/ClientComponentClient";
+import {supabase} from "@/lib/supabase/ClientComponentClient";
 
 export const GET = async (req: NextRequest) => {
   try {

@@ -1,4 +1,4 @@
-import {supabase} from "@/supabase/ClientComponentClient";
+import {supabase} from "@/lib/supabase/ClientComponentClient";
 
 export const handleGoogleLogin = async () => {
   const {data, error} = await supabase.auth.signInWithOAuth({
@@ -24,6 +24,16 @@ export const handleEmailLogin = async (email: string, password: string) => {
   return data;
 }
 
+export const handleSignUp = async (email: string, password: string) => {
+  const { data, error } = await supabase.auth.signUp({
+    email: email,
+    password: password
+  });
+
+  if (error) console.error(error);
+  return data;
+}
+
 export const logout = async () => {
   await supabase.auth.signOut();
 };
@@ -33,6 +43,3 @@ export const getUser = async () => {
 
   return user;
 }
-
-//nikita.uswork@gmail.com
-//qwerty12345

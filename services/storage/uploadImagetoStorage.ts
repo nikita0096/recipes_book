@@ -1,5 +1,5 @@
 import imageCompression from "browser-image-compression";
-import {supabase} from "@/supabase/ClientComponentClient";
+import {supabase} from "@/lib/supabase/ClientComponentClient";
 
 type UploadProps = {
   file: File;

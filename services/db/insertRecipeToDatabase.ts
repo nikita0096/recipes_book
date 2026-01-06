@@ -1,4 +1,4 @@
-import {supabase} from "@/supabase/ClientComponentClient";
+import {supabase} from "@/lib/supabase/ClientComponentClient";
 
 export interface IUploadData {
   title: string;

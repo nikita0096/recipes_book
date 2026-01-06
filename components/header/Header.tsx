@@ -3,11 +3,11 @@
 import React, {useEffect, useState} from 'react';
 import Link from "next/link";
 import {PAGES} from '@/config/page.config'
-import {handleGoogleLogin, logout, getUser} from '@/supabase/authClient'
+import {handleGoogleLogin, logout, getUser} from '@/lib/supabase/authClient'
 import {useUserStore} from "@/store/useUserStore";
 import ToggleTheme from "@/components/ui/ToggleTheme";
 import NavMenuMobile from "@/components/ui/NavMenuMobile";
-import AuthBar from "@/components/ui/AuthBar";
+import AuthBar from "@/components/authorization/AuthBar";
 
 const Header: React.FC = () => {
   const [isShowNav, setIsShowNav] = useState<boolean>(false);

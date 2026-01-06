@@ -1,4 +1,4 @@
-import {supabase} from "@/supabase/ClientComponentClient";
+import {supabase} from "@/lib/supabase/ClientComponentClient";
 
 export const fetchRecipes = async () => {
   const {data, error} = await supabase
