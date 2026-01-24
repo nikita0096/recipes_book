@@ -1,9 +1,11 @@
 import {create} from "zustand/react";
 
+export type UserRole = 'admin' | 'user';
+
 export interface IUserState {
   name: string;
   avatar_url: string;
-  role: boolean;
+  role: UserRole;
 }
 
 interface IAdminStore {

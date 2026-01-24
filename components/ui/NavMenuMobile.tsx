@@ -25,7 +25,7 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({user, isShowNav, setIsShow
                   href={PAGES.RECIPES}>Recipes</Link>
             <Link onClick={() => setIsShowNav(!isShowNav)}
                   href={PAGES.SOCIAL}>Social media</Link>
-            {user?.role && <Link href={PAGES.ADMIN_PANEL}
+            {user?.role === 'admin' && <Link href={PAGES.ADMIN_PANEL}
                                  onClick={() => setIsShowNav(!isShowNav)}>Admin panel</Link>}
 
             <div className='w-full'>

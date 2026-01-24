@@ -19,7 +19,7 @@ export const handleEmailLogin = async (email: string, password: string) => {
     password: password
   });
 
-  if (error) console.error(error);
+  if (error) return error;
 
   return data;
 }
@@ -42,4 +42,14 @@ export const getUser = async () => {
   const {data: {user}} = await supabase.auth.getUser();
 
   return user;
+}
+
+export const getUserProfile = async (userId: string) => {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .single();
+
+  return profile;
 }

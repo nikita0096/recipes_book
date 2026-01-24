@@ -4,7 +4,7 @@ import React from 'react';
 const SignUpPage = ({registerSignUp, handleSubmitSignUp, handleSignUpWithEmail}) => {
   return (
     <div className='w-full'>
-      <form className='flex flex-col items-center justify-centermt-3 w-full'
+      <form className='flex flex-col items-center justify-center mt-3 w-full'
             onSubmit={handleSubmitSignUp(handleSignUpWithEmail)}>
         <label className='w-2/3 mt-3'>Email
           <input {...registerSignUp('emailSignUp')}

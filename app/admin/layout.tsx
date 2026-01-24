@@ -2,16 +2,15 @@ import {PropsWithChildren} from "react";
 import AdminNavBar from "@/app/admin/AdminNavBar";
 import {createClient} from "@/lib/supabase/ServerComponentClient";
 import {redirect} from "next/navigation";
-import {supabase} from "@/lib/supabase/ClientComponentClient";
 
 
 export default async function AdminLayout({children}: PropsWithChildren<unknown>) {
-  const supabaseAuth = await createClient();
+  const supabase = await createClient();
 
   const {
     data: { user },
-  } = await supabaseAuth.auth.getUser();
-  console.log(user)
+  } = await supabase.auth.getUser();
+
   if (!user) redirect('/');
 
   const { data: profile } = await supabase

@@ -3,7 +3,7 @@
 import React, {useState} from 'react';
 import {IoClose} from "react-icons/io5";
 import {FaGoogle} from "react-icons/fa";
-import {handleEmailLogin, handleGoogleLogin, handleSignUp} from "@/lib/supabase/authClient";
+import {handleEmailLogin, handleGoogleLogin, handleSignUp, getUserProfile} from "@/lib/supabase/authClient";
 import {SubmitHandler, useForm} from "react-hook-form";
 import {useUserStore} from "@/store/useUserStore";
 import LoginPage from "@/components/authorization/LoginPage";
@@ -55,15 +55,17 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenLoginPage}) => {
   } = signUpForm;
 
 
-  const handleLoginWithEmail: SubmitHandler<ILoginPageForm> = async (formData) => {
+  const handleLoginWithEmail: SubmitHandler<ILoginValues> = async (formData) => {
     try {
-      const user = await handleEmailLogin(formData.emailLogin, formData.passwordLogin);
+      const data = await handleEmailLogin(formData.emailLogin, formData.passwordLogin);
 
-      if (user) {
+      if (data?.user) {
+        const profile = await getUserProfile(data.user.id);
+
         setUserData({
-          name: 'User',
-          avatar_url: '',
-          role: false,
+          name: data.user.user_metadata?.name || 'User',
+          avatar_url: data.user.user_metadata?.avatar_url || '',
+          role: profile?.role || 'user',
         })
       }
 
@@ -76,11 +78,21 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenLoginPage}) => {
     }
   }
 
-  const handleSignUpWithEmail: SubmitHandler<ILoginPageForm> = async (formData) => {
+  const handleSignUpWithEmail: SubmitHandler<ISignUpValues> = async (formData) => {
     try {
       await handleSignUp(formData.emailSignUp, formData.passwordSignUp);
 
-      await handleLoginWithEmail(formData.emailSignUp, formData.passwordSignUp);
+      const data = await handleEmailLogin(formData.emailSignUp, formData.passwordSignUp);
+
+      if (data?.user) {
+        // const profile = await getUserProfile(data.user.id);
+
+        setUserData({
+          name: data.user.user_metadata?.name || 'User',
+          avatar_url: data.user.user_metadata?.avatar_url || '',
+          role: 'user',
+        });
+      }
 
     } catch (error) {
       console.error(error);
@@ -89,6 +101,12 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenLoginPage}) => {
       resetLogin();
       setIsOpenLoginPage(false);
     }
+  }
+
+  const handleLoginWithGoogle = async () => {
+    const data = await handleGoogleLogin();
+
+    console.log(data);
   }
 
   const handlePageTab = () => {
@@ -123,7 +141,7 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenLoginPage}) => {
                         handleSubmitSignUp={handleSubmitSignUp}
                         handleSignUpWithEmail={handleSignUpWithEmail}/>}
         <div className='flex flex-col items-center justify-center w-full'>
-          <button onClick={handleGoogleLogin}
+          <button onClick={handleLoginWithGoogle}
                   className='flex items-center justify-center gap-2 py-2 px-4 border rounded-xl mt-3'>
             <FaGoogle/>
             Log in with Google

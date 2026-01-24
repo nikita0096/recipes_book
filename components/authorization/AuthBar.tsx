@@ -7,11 +7,10 @@ import AuthPage from "@/components/authorization/AuthPage";
 
 interface AuthBarProps {
   user: IUserState | null;
-  handleLogin: () => void;
   handleLogout: () => void;
 }
 
-const AuthBar: React.FC<AuthBarProps> = ({user, handleLogin, handleLogout}) => {
+const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout}) => {
   const [isOpenLoginPage, setIsOpenLoginPage] = useState(false);
 
   return (

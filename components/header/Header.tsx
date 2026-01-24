@@ -3,7 +3,8 @@
 import React, {useEffect, useState} from 'react';
 import Link from "next/link";
 import {PAGES} from '@/config/page.config'
-import {handleGoogleLogin, logout, getUser} from '@/lib/supabase/authClient'
+import {handleGoogleLogin, logout, getUser, getUserProfile} from '@/lib/supabase/authClient'
+import {supabase} from '@/lib/supabase/ClientComponentClient'
 import {useUserStore} from "@/store/useUserStore";
 import ToggleTheme from "@/components/ui/ToggleTheme";
 import NavMenuMobile from "@/components/ui/NavMenuMobile";
@@ -29,22 +30,34 @@ const Header: React.FC = () => {
   }
 
   useEffect(() => {
-    const checkUser = async () => {
+    const updateUserData = async () => {
       const data = await getUser();
 
       if (data) {
-        const {name, avatar_url, role} = data?.user_metadata;
+        const {name, avatar_url} = data?.user_metadata;
+        const profile = await getUserProfile(data.id);
 
         setUserData({
-          name: name,
-          avatar_url: avatar_url,
-          role: !!role,
+          name: name || 'User',
+          avatar_url: avatar_url || '',
+          role: profile?.role || 'user',
         });
       }
     }
 
-    checkUser();
-  }, []);
+    updateUserData();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+
+      if (event === 'SIGNED_IN') {
+        updateUserData();
+      } else if (event === 'SIGNED_OUT') {
+        setUserData(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [setUserData]);
 
   return (
     <menu className='sticky top-2 xl:max-w-6xl lg:max-w-5xl md:max-w-3xl md:mx-auto mx-6 rounded-3xl bg-pink-100/50 dark:bg-black/50 backdrop-blur-lg mt-2 px-8 py-4 md:py-2 flex items-center justify-between'>
@@ -75,12 +88,11 @@ const Header: React.FC = () => {
         <Link href={PAGES.HOME}>Home</Link>
         <Link href={PAGES.RECIPES}>Recipes</Link>
         <Link href={PAGES.SOCIAL}>Social media</Link>
-        {user?.role && <Link href={PAGES.ADMIN_PANEL}>Admin panel</Link>}
+        {user?.role === 'admin' && <Link href={PAGES.ADMIN_PANEL}>Admin panel</Link>}
       </nav>
       <div className='flex flex-row items-center justify-end gap-5 w-1/3'>
         <div className='hidden md:block'>
           <AuthBar user={user}
-                   handleLogin={handleLogin}
                    handleLogout={handleLogout}/>
         </div>
         <ToggleTheme/>
