@@ -2,9 +2,7 @@
 
 import React, {useEffect, useState} from 'react';
 import {useParams} from "next/navigation";
-import {IRecipe} from "@/app/recipes/page";
 import {useRecipesStore} from "@/store/useRecipesStore";
-import Image from "next/image";
 import RecipePage from "@/components/recipes/RecipePage";
 
 const Page = () => {
