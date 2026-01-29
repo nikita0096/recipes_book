@@ -1,8 +1,20 @@
 'use client';
 
 import React from 'react';
+import {SubmitHandler, UseFormHandleSubmit, UseFormRegister} from "react-hook-form";
 
-const LoginPage = ({registerLogin, handleSubmitLogin, handleLoginWithEmail}) => {
+interface ILoginFormFields {
+  emailLogin: string;
+  passwordLogin: string;
+}
+
+interface LoginPageProps {
+  registerLogin: UseFormRegister<ILoginFormFields>;
+  handleSubmitLogin: UseFormHandleSubmit<ILoginFormFields>
+  handleLoginWithEmail: SubmitHandler<ILoginFormFields>
+}
+
+const LoginPage: React.FC<LoginPageProps> = ({registerLogin, handleSubmitLogin, handleLoginWithEmail}) => {
   return (
     <div className='w-full'>
       <form className='flex flex-col items-center justify-center mt-3 w-full'

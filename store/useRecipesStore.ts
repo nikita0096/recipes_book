@@ -7,24 +7,28 @@ interface RecipesState {
   selectedRecipe: IRecipe | null;
   isLoading: boolean;
   error: string | null;
-  getRecipes: () => void,
+  getRecipes: (page: number, pageSize: number) => void,
   setSelectedRecipe: (id: string) => void;
 }
 
-export const useRecipesStore = create<RecipesState>((set) => ({
+export const useRecipesStore = create<RecipesState>((set, get) => ({
   recipes: [],
   selectedRecipe: null,
   isLoading: false,
   error: null,
-  getRecipes: async () => {
+  getRecipes: async (page = 0, pageSize = 10) => {
     set({
       isLoading: true,
       error: null,
     });
 
+    const start = page * pageSize;
+    const end = start + pageSize - 1;
+
     const {data, error} = await supabase
       .from('recipes')
-      .select();
+      .select()
+      .range(start, end);
 
     if(error) {
       set({
@@ -38,7 +42,7 @@ export const useRecipesStore = create<RecipesState>((set) => ({
     set({
       isLoading: false,
       error: null,
-      recipes: data ?? []
+      recipes: data ? [...get().recipes, ...data] : [],
     })
   },
   setSelectedRecipe: async (id) => {

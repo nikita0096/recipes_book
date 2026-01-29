@@ -22,11 +22,8 @@ export default function Home() {
 
   return (
     <div
-      style={{
-        // transform: `scale(${scale})`,
-        height: 'calc(100vh - 61px)',
-      }}
-      className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center font-sans bg-[url('https://i.pinimg.com/1200x/1b/ed/81/1bed81e6288a8d1ed71f3bd577163228.jpg')] bg-center bg-no-repeat bg-cover">
+      >
+      <div className="fixed inset-0 min-h-screen w-full -z-100 bg-[url('https://i.pinimg.com/1200x/1b/ed/81/1bed81e6288a8d1ed71f3bd577163228.jpg')] bg-center bg-no-repeat bg-cover"></div>
     </div>
   );
 }

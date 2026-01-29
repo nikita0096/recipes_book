@@ -25,7 +25,7 @@ const AdminRecipesItems = () => {
 
   return (
     <div className='mt-4'>
-      <div>
+      <div className='flex flex-col gap-3 w-full'>
         {data?.map((recipe) => (<AdminRecipeItem key={recipe.id} recipe={recipe} />))}
       </div>
     </div>

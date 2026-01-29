@@ -3,7 +3,6 @@ import AdminNavBar from "@/app/admin/AdminNavBar";
 import {createClient} from "@/lib/supabase/ServerComponentClient";
 import {redirect} from "next/navigation";
 
-
 export default async function AdminLayout({children}: PropsWithChildren<unknown>) {
   const supabase = await createClient();
 

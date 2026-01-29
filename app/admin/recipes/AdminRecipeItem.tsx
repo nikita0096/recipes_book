@@ -22,11 +22,16 @@ const AdminRecipeItem: React.FC<AdminRecipeItem> = ({recipe}) => {
     },
   });
   return (
-    <div>
+    <div className='relative flex items-center justify-center gap-2'>
       <RecipeItem recipe={recipe}/>
-      <button className='bg-red-400 rounded-xl px-4 py-2'
-              onClick={() => deleteRecipeMutation.mutate(recipe.id.toString())}>Delete
-      </button>
+      <div className='absolute top-5 right-5 flex flex-col gap-2'>
+        <button className='bg-blue-400 rounded-xl px-4 py-2 w-30 cursor-pointer'
+                >Edit
+        </button>
+        <button className='bg-red-400 rounded-xl px-4 py-2 w-30 cursor-pointer'
+                onClick={() => deleteRecipeMutation.mutate(recipe.id.toString())}>Delete
+        </button>
+      </div>
     </div>
   );
 };

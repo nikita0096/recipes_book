@@ -4,7 +4,7 @@ export type UserRole = 'admin' | 'user';
 
 export interface IUserState {
   name: string;
-  avatar_url: string;
+  avatar_url: string | null;
   role: UserRole;
 }
 

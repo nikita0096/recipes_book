@@ -1,0 +1,10 @@
+.dropdown-menu {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    display: none;
+}
+
+.auth_bar:hover .dropdown-menu {
+    display: block;
+}

@@ -58,13 +58,13 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenLoginPage}) => {
   const handleLoginWithEmail: SubmitHandler<ILoginValues> = async (formData) => {
     try {
       const data = await handleEmailLogin(formData.emailLogin, formData.passwordLogin);
-
+      console.log(data);
       if (data?.user) {
         const profile = await getUserProfile(data.user.id);
 
         setUserData({
           name: data.user.user_metadata?.name || 'User',
-          avatar_url: data.user.user_metadata?.avatar_url || '',
+          avatar_url: data.user.user_metadata?.avatar_url || null,
           role: profile?.role || 'user',
         })
       }
@@ -89,7 +89,7 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenLoginPage}) => {
 
         setUserData({
           name: data.user.user_metadata?.name || 'User',
-          avatar_url: data.user.user_metadata?.avatar_url || '',
+          avatar_url: data.user.user_metadata?.avatar_url || null,
           role: 'user',
         });
       }
@@ -120,15 +120,15 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenLoginPage}) => {
   }
 
   return (
-    <div className="absolute top-0 left-0 w-full h-screen flex items-center justify-center bg-white/50 dark:bg-gray-800/50 backdrop-blur-lg">
-      <div className='relative w-2/3 bg-gray-700 flex flex-col items-center justify-around p-5 rounded-xl'>
+    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-white/50 dark:bg-gray-800/50 backdrop-blur-lg">
+      <div className='relative w-2/3 max-w-lg min-h-[400px] bg-pink-100 dark:bg-gray-700 flex flex-col items-center justify-around p-5 rounded-xl'>
         <div className='flex items-center justify-around w-1/3 bg-pink-100 text-black p-1 rounded-full'>
           <div onClick={handlePageTab}
-               className={authMode === 'login' ? 'bg-gray-700 text-white p-2 rounded-full transition' : 'p-2 rounded-full transition'}>
+               className={authMode === 'login' ? 'bg-gray-700 text-white p-2 rounded-full transition cursor-pointer' : 'p-2 rounded-full transition cursor-pointer'}>
             Log in
           </div>
           <div onClick={handlePageTab}
-               className={authMode === 'signup' ? 'bg-gray-700 text-white p-2 rounded-full transition' : 'p-2 rounded-full transition'}>
+               className={authMode === 'signup' ? 'bg-gray-700 text-white p-2 rounded-full transition cursor-pointer' : 'p-2 rounded-full transition cursor-pointer'}>
             Sign up
           </div>
         </div>

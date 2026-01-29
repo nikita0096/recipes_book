@@ -19,7 +19,7 @@ export const handleEmailLogin = async (email: string, password: string) => {
     password: password
   });
 
-  if (error) return error;
+  if (error) throw error;
 
   return data;
 }

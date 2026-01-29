@@ -19,7 +19,9 @@ const Recipes = () => {
   const [searchValue, setSearchValue] = useState('');
   const [selectValue, setSelectValue] = useState('All recipes');
   const [allRecipes, setAllRecipes] = useState<IRecipe[]>([]);
+  const [page, setPage] = useState<number>(0);
 
+  const pageSize = 10;
 
 
   const filteredRecipes = useMemo(() => {
@@ -47,7 +49,7 @@ const Recipes = () => {
   }, [searchValue, allRecipes, selectValue]);
 
   useEffect(() => {
-    getRecipes();
+    getRecipes(page, pageSize);
   }, []);
 
   useEffect(() => {
@@ -55,8 +57,13 @@ const Recipes = () => {
   }, [recipes]);
 
 
+  const handlePaginationPage = () => {
+    getRecipes(page + 1, pageSize);
+    setPage(page + 1);
+  }
+
   return (
-    <div className="max-w-5xl lg:max-w-7xl mx-auto px-8 lg:p">
+    <div className="max-w-5xl lg:max-w-7xl mx-auto px-8">
       <form className="max-w-3xl mx-auto mt-8">
         <div className="flex shadow-xs space-x-0.5">
           <select name="Category"
@@ -84,10 +91,13 @@ const Recipes = () => {
         ? (
         <LoadingPage/>
       )
-      : (<RecipesList filteredRecipes={filteredRecipes}/>)}
+      : (<div>
+          <RecipesList filteredRecipes={allRecipes}/>
+          <button onClick={handlePaginationPage}>Load more</button>
+        </div>)}
 
 
-      {error ?? (<div>{error}</div>)}
+      {error && (<div>{error}</div>)}
 
 
     </div>
