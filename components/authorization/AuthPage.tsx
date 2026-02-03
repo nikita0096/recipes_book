@@ -10,7 +10,7 @@ import LoginPage from "@/components/authorization/LoginPage";
 import SignUpPage from "@/components/authorization/SignUpPage";
 
 interface ILoginPageProps {
-  setIsOpenLoginPage: (value: boolean) => void;
+  setIsOpenAuthPage: (value: boolean) => void;
 }
 
 interface ILoginValues {
@@ -18,12 +18,12 @@ interface ILoginValues {
   passwordLogin: string;
 }
 
-interface ISignUpValues {
+export interface ISignUpValues {
   emailSignUp: string;
   passwordSignUp: string;
 }
 
-const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenLoginPage}) => {
+const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenAuthPage}) => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
 
   const {setUserData} = useUserStore();
@@ -74,7 +74,7 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenLoginPage}) => {
     } finally {
       resetSignUp();
       resetLogin();
-      setIsOpenLoginPage(false);
+      setIsOpenAuthPage(false);
     }
   }
 
@@ -99,14 +99,16 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenLoginPage}) => {
     } finally {
       resetSignUp();
       resetLogin();
-      setIsOpenLoginPage(false);
+      setIsOpenAuthPage(false);
     }
   }
 
   const handleLoginWithGoogle = async () => {
-    const data = await handleGoogleLogin();
-
-    console.log(data);
+    try {
+      await handleGoogleLogin();
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   const handlePageTab = () => {
@@ -120,19 +122,46 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenLoginPage}) => {
   }
 
   return (
-    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-white/50 dark:bg-gray-800/50 backdrop-blur-lg">
-      <div className='relative w-2/3 max-w-lg min-h-[400px] bg-pink-100 dark:bg-gray-700 flex flex-col items-center justify-around p-5 rounded-xl'>
-        <div className='flex items-center justify-around w-1/3 bg-pink-100 text-black p-1 rounded-full'>
-          <div onClick={handlePageTab}
-               className={authMode === 'login' ? 'bg-gray-700 text-white p-2 rounded-full transition cursor-pointer' : 'p-2 rounded-full transition cursor-pointer'}>
+    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-black/30 backdrop-blur-sm z-50">
+      <div className='relative w-11/12 max-w-md bg-white dark:bg-gray-800 flex flex-col items-center p-8 rounded-2xl shadow-2xl border border-amber-100 dark:border-gray-700'>
+        {/* Close button */}
+        <button
+          className='absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-amber-100 dark:bg-gray-700 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-gray-600 transition-colors'
+          onClick={() => setIsOpenAuthPage(false)}
+        >
+          <IoClose className='text-xl' />
+        </button>
+
+        {/* Header */}
+        <h2 className='text-2xl font-bold text-gray-900 dark:text-white mb-6'>
+          Welcome
+        </h2>
+
+        {/* Tabs */}
+        <div className='flex items-center w-full max-w-xs bg-amber-100 dark:bg-gray-700 p-1 rounded-full mb-6'>
+          <button
+            onClick={handlePageTab}
+            className={`flex-1 py-2 px-4 rounded-full font-medium transition-all ${
+              authMode === 'login'
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400'
+            }`}
+          >
             Log in
-          </div>
-          <div onClick={handlePageTab}
-               className={authMode === 'signup' ? 'bg-gray-700 text-white p-2 rounded-full transition cursor-pointer' : 'p-2 rounded-full transition cursor-pointer'}>
+          </button>
+          <button
+            onClick={handlePageTab}
+            className={`flex-1 py-2 px-4 rounded-full font-medium transition-all ${
+              authMode === 'signup'
+                ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
+                : 'text-gray-600 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400'
+            }`}
+          >
             Sign up
-          </div>
+          </button>
         </div>
 
+        {/* Form */}
         {authMode === 'login'
           ? <LoginPage registerLogin={registerLogin}
                        handleSubmitLogin={handleSubmitLogin}
@@ -140,17 +169,23 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenLoginPage}) => {
           : <SignUpPage registerSignUp={registerSignUp}
                         handleSubmitSignUp={handleSubmitSignUp}
                         handleSignUpWithEmail={handleSignUpWithEmail}/>}
-        <div className='flex flex-col items-center justify-center w-full'>
-          <button onClick={handleLoginWithGoogle}
-                  className='flex items-center justify-center gap-2 py-2 px-4 border rounded-xl mt-3'>
-            <FaGoogle/>
-            Log in with Google
-          </button>
-        </div>
-        <IoClose className='absolute top-5 right-5 text-4xl'
-                 onClick={() => setIsOpenLoginPage(false)}/>
-      </div>
 
+        {/* Divider */}
+        <div className='flex items-center w-full my-6'>
+          <div className='flex-1 h-px bg-amber-200 dark:bg-gray-600'></div>
+          <span className='px-4 text-sm text-gray-400'>or</span>
+          <div className='flex-1 h-px bg-amber-200 dark:bg-gray-600'></div>
+        </div>
+
+        {/* Google button */}
+        <button
+          onClick={handleLoginWithGoogle}
+          className='flex items-center justify-center gap-3 w-full py-3 px-4 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 font-medium hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-md transition-all'
+        >
+          <FaGoogle className='text-amber-500' />
+          Continue with Google
+        </button>
+      </div>
     </div>
   );
 };

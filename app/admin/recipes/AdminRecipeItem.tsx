@@ -21,15 +21,19 @@ const AdminRecipeItem: React.FC<AdminRecipeItem> = ({recipe}) => {
       queryClient.invalidateQueries({queryKey: ['recipes']});
     },
   });
+
   return (
-    <div className='relative flex items-center justify-center gap-2'>
+    <div className='relative'>
       <RecipeItem recipe={recipe}/>
-      <div className='absolute top-5 right-5 flex flex-col gap-2'>
-        <button className='bg-blue-400 rounded-xl px-4 py-2 w-30 cursor-pointer'
-                >Edit
+      <div className='absolute top-3 right-3 flex flex-col gap-2'>
+        <button className='px-4 py-2 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors shadow-md'>
+          Edit
         </button>
-        <button className='bg-red-400 rounded-xl px-4 py-2 w-30 cursor-pointer'
-                onClick={() => deleteRecipeMutation.mutate(recipe.id.toString())}>Delete
+        <button
+          className='px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-medium rounded-xl hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors shadow-md'
+          onClick={() => deleteRecipeMutation.mutate(recipe.id.toString())}
+        >
+          Delete
         </button>
       </div>
     </div>

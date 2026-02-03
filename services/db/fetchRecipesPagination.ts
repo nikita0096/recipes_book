@@ -1,9 +1,9 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 
-export const fetchRecipes = async (pageParam: number) => {
+export const fetchRecipesPagination = async (pageParam: number) => {
 
-  const start = pageParam * 10;
-  const end = start + 9;
+  const start = pageParam * 9;
+  const end = start + 8;
 
   const {data, error} = await supabase
     .from("recipes")
@@ -14,6 +14,6 @@ export const fetchRecipes = async (pageParam: number) => {
 
   return {
     data,
-    nextCursor: data.length === 10 ? pageParam + 1 : undefined,
+    nextCursor: data.length === 9 ? pageParam + 1 : undefined,
   };
 }

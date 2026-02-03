@@ -30,11 +30,17 @@ const Page = () => {
   }
 
   return (
-    <div className='flex flex-col items-center my-10'>
-      <AdminRecipesItems allRecipes={allRecipes}/>
-      <button className='bg-blue-400 rounded-xl px-4 py-2 min-w-30 cursor-pointer mt-5'
-              disabled={isFetching || !hasNextPage}
-              onClick={() => fetchNextPage()}>{isFetchingNextPage ? 'Loading...' : hasNextPage ? 'Load more' : 'Nothing more to load'}</button>
+    <div className='max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8'>
+      <div className='flex flex-col items-center'>
+        <AdminRecipesItems allRecipes={allRecipes}/>
+        <button
+          className='mt-8 px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium rounded-full transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed'
+          disabled={isFetching || !hasNextPage}
+          onClick={() => fetchNextPage()}
+        >
+          {isFetchingNextPage ? 'Loading...' : hasNextPage ? 'Load more' : 'Nothing more to load'}
+        </button>
+      </div>
     </div>
   );
 };

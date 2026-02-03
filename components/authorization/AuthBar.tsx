@@ -13,50 +13,64 @@ import {IoClose} from "react-icons/io5";
 interface AuthBarProps {
   user: IUserState | null;
   handleLogout: () => void;
-  isOpenLoginPage: boolean;
-  setIsOpenLoginPage: Dispatch<SetStateAction<boolean>>;
+  setIsOpenAuthPage: Dispatch<SetStateAction<boolean>>;
 }
 
-const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout, isOpenLoginPage, setIsOpenLoginPage}) => {
+const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout, setIsOpenAuthPage}) => {
 
   const [isOpenUserMenu, setIsOpenUserMenu] = useState(false);
 
   return (
     <div>
-      {user
-        ? (<div className='relative flex flex-row items-center md:justify-around gap-3 justify-between md:w-full cursor-pointer' onClick={() => setIsOpenUserMenu(!isOpenUserMenu)}>
-          <div className='flex flex-row items-center gap-3'>
-            {user.avatar_url
-              ? <Image
+      {user ? (
+        <div
+          className='relative flex flex-row items-center gap-3 cursor-pointer'
+          onClick={() => setIsOpenUserMenu(!isOpenUserMenu)}
+        >
+          <div className='flex flex-row items-center gap-2'>
+            {user.avatar_url ? (
+              <Image
                 src={user.avatar_url}
                 alt={user ? user.name : 'unknown'}
-                width={35}
-                height={35}
-                className='rounded-full'
+                width={36}
+                height={36}
+                className='rounded-full ring-2 ring-amber-200 dark:ring-amber-600'
               />
-              : <div className='flex items-center justify-center border rounded-full p-1'>
-                <GiCook className='text-xl'/>
+            ) : (
+              <div className='flex items-center justify-center w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400'>
+                <GiCook className='text-lg' />
               </div>
-            }
-
-            <div>{user?.name}</div>
+            )}
+            <span className='text-gray-700 dark:text-gray-200 font-medium hidden lg:block'>{user?.name}</span>
           </div>
-          {/*<button className='rounded-xl border border-pink-400 p-1.5 text-s bg-pink-300 duration-300 hover:-rotate-2 hover:scale-95 hover:-translate-0.5 transition'*/}
-          {/*        onClick={handleLogout}*/}
-          {/*>Sign out*/}
-          {/*</button>*/}
 
           {isOpenUserMenu && (
-            <div className='absolute -bottom-22 -left-7 w-45 bg-pink-100 dark:bg-gray-700 flex flex-col items-start justify-center gap-1 p-2 rounded-b-xl rounded-r-xl'>
-              <Link href={PAGES.PROFILE(user.name)} className='px-2 text-xl'>Profile</Link>
-              <button className='text-red-500 px-2 text-xl cursor-pointer' onClick={handleLogout}>Sign out</button>
-              <IoClose className='absolute top-2 right-2 text-xl cursor-pointer'
-                       onClick={() => setIsOpenUserMenu(false)}/>
+            <div id='aut__bar_overlay' className='fixed inset-0 min-h-screen' onClick={() => setIsOpenUserMenu(!isOpenUserMenu)}>
+              <div className='absolute top-12 right-0 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-amber-100 dark:border-gray-700 overflow-hidden z-50'>
+                <Link
+                  href={PAGES.PROFILE(user.name)}
+                  className='block px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors'
+                >
+                  Profile
+                </Link>
+                <button
+                  className='w-full text-left px-4 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'
+                  onClick={handleLogout}
+                >
+                  Sign out
+                </button>
+              </div>
             </div>
           )}
-        </div>)
-        : <button onClick={() => setIsOpenLoginPage(true)}>Login</button>}
-
+        </div>
+      ) : (
+        <button
+          onClick={() => setIsOpenAuthPage(true)}
+          className='px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium rounded-full transition-all shadow-md hover:shadow-lg'
+        >
+          Login
+        </button>
+      )}
     </div>
   );
 };

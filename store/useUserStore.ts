@@ -6,6 +6,7 @@ export interface IUserState {
   name: string;
   avatar_url: string | null;
   role: UserRole;
+  email: string;
 }
 
 interface IAdminStore {

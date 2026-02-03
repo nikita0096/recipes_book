@@ -4,7 +4,8 @@
 
 
 :root {
-  --background: #ffffff;
+  --background: #fffbeb;
+  --background-end: #ffffff;
   --foreground: #171717;
   --border-color: black;
 }
@@ -15,13 +16,15 @@
 }
 
 .dark {
-  background-color: #222222;
+  --background: #111827;
+  --background-end: #1f2937;
+  background: linear-gradient(to bottom, #111827, #1f2937);
   color: #f5f3ff;
 }
 
 
 .light {
-  background-color: #fff;
+  background: linear-gradient(to bottom, #fffbeb, #ffffff);
   color: #222222;
 }
 
@@ -31,12 +34,9 @@ body {
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;
+  min-height: 100vh;
+  background: linear-gradient(to bottom, var(--background), var(--background-end));
 }
-
-/*input[type='file']::file-selector-button {*/
-/*  border: 1px var(--border-color) solid;*/
-
-/*}*/
 
 
 .loader {

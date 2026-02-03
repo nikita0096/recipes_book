@@ -1,10 +1,10 @@
-import {fetchRecipes} from "@/services/db/fetchRecipes";
+import {fetchRecipesPagination} from "@/services/db/fetchRecipesPagination";
 import {useInfiniteQuery} from "@tanstack/react-query";
 
 export const useRecipes = () => {
   return useInfiniteQuery({
     queryKey: ['recipes'],
-    queryFn: ({pageParam}) => fetchRecipes(pageParam),
+    queryFn: ({pageParam}) => fetchRecipesPagination(pageParam),
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => lastPage.nextCursor,
   });

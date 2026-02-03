@@ -5,7 +5,6 @@ import {IRecipe} from "@/app/recipes/page";
 import Image from 'next/image';
 import {PAGES} from "@/config/page.config";
 import Link from "next/link";
-import {useRecipesStore} from "@/store/useRecipesStore";
 
 interface RecipeItemProps {
   recipe: IRecipe;
@@ -17,55 +16,54 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe}) => {
   const [image, setImage] = useState<string>(recipe.recipeSteps[0].imgUrl);
 
   return (
-    <div className="flex flex-row border rounded-base shadow-xs rounded-xl overflow-hidden w-full">
-      <Link href={PAGES.RECIPE(recipe.id)} className="w-1/2">
+    <div className="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl overflow-hidden transition-all duration-300 hover:scale-[1.02]">
+      <Link href={PAGES.RECIPE(recipe.id)} className="block relative h-48 overflow-hidden">
         <Image
-          width={100}
-          height={100}
-          className="rounded-t-base w-full h-full aspect-3/2 object-cover"
+          fill
+          className="object-cover transition-transform duration-300 group-hover:scale-110"
           src={image}
           alt={recipe.title}
           onError={() => setImage(imagePlaceholder)}
         />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+        {recipe.likes >= 10 && (
+          <span className="absolute top-3 right-3 inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 text-white text-xs font-medium shadow-md">
+            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" />
+            </svg>
+            Hot
+          </span>
+        )}
       </Link>
 
-      <div className="flex flex-col items-center justify-center p-6 text-center w-1/2">
-        <span className="inline-flex items-center bg-brand-softer border border-brand-subtle text-fg-brand-strong text-xs font-medium px-1.5 py-0.5 rounded-sm"
-          style={recipe.likes >= 10 ? {color: 'red'} : {}}
-        >
-      <svg
-        className="w-3 h-3 me-1"
-        aria-hidden="true"
-        xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
-        fill="none"
-        viewBox="0 0 24 24"
-      >
-        <path
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2"
-          d="M18.122 17.645a7.185 7.185 0 0 1-2.656 2.495 7.06 7.06 0 0 1-3.52.853 6.617 6.617 0 0 1-3.306-.718 6.73 6.73 0 0 1-2.54-2.266c-2.672-4.57.287-8.846.887-9.668A4.448 4.448 0 0 0 8.07 6.31 4.49 4.49 0 0 0 7.997 4c1.284.965 6.43 3.258 5.525 10.631 1.496-1.136 2.7-3.046 2.846-6.216 1.43 1.061 3.985 5.462 1.754 9.23Z"
-        />
-      </svg>
-      Trending
-    </span>
+      <div className="p-5">
+        <span className="inline-block px-3 py-1 mb-3 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/30 rounded-full">
+          {recipe.category}
+        </span>
 
-        <a href="#">
-          <h5 className="mt-3 text-2xl font-semibold tracking-tight text-heading">
-            {recipe.title}
-          </h5>
-        </a>
-        <p className='mb-4 text-xs text-gray-400'>{recipe.category}</p>
+        <h5 className="text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-2">
+          {recipe.title}
+        </h5>
 
-        <a
-          href="#"
-          className="inline-flex items-center text-white bg-blue-400 box-border border border-transparent rounded-xl hover:bg-brand-strong focus:ring-4 focus:ring-brand-medium shadow-xs font-medium leading-5 rounded-base text-sm px-4 py-2.5 focus:outline-none hover:-rotate-2 hover:scale-95 hover:-translate-0.5 transition"
-        >
-          Read more
-        </a>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+            <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
+            </svg>
+            <span className="text-sm">{recipe.likes}</span>
+          </div>
+
+          <Link
+            href={PAGES.RECIPE(recipe.id)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-sm font-medium rounded-full transition-all duration-300 shadow-md hover:shadow-lg"
+          >
+            View Recipe
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
       </div>
     </div>
   );
