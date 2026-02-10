@@ -7,15 +7,31 @@ import RecipePage from "@/components/recipes/RecipePage";
 
 const Page = () => {
   const params = useParams<{ recipe: string }>();
-  const {selectedRecipe, setSelectedRecipe} = useRecipesStore();
+  const {selectedRecipe, setSelectedRecipe, isLoading, error} = useRecipesStore();
 
   useEffect(() => {
     setSelectedRecipe(params.recipe);
-  }, []);
 
-  console.log(selectedRecipe);
+    return () => setSelectedRecipe(null);
+  }, [params.recipe]);
 
-  if(!selectedRecipe){
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="rounded-2xl border border-red-200 dark:border-red-900 p-6 bg-red-50 dark:bg-red-900/20 text-center">
+          <p className="text-red-600 dark:text-red-400 font-medium">{error}</p>
+          <button
+            onClick={() => setSelectedRecipe(params.recipe)}
+            className="mt-4 px-4 py-2 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900 transition-colors"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedRecipe || isLoading) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="rounded-2xl border border-amber-200 dark:border-gray-700 p-6 bg-white dark:bg-gray-800">
