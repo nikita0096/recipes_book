@@ -1,22 +1,18 @@
 'use client'
+
 import React, {useMemo, useState} from 'react';
 import RecipesList from "@/components/recipes/RecipesList";
 import {useRecipes} from "@/hooks/useRecipes";
 import LoadingPage from "@/components/ui/LoadingPage";
-
-export interface IRecipe {
-  id: number;
-  title: string;
-  category: string;
-  recipeSteps: { desc: string; imgUrl: string }[];
-  likes: number;
-  ingredients: string[];
-}
+import {useTranslations} from "next-intl";
 
 const Recipes = () => {
 
   const [searchValue, setSearchValue] = useState('');
   const [selectValue, setSelectValue] = useState('All recipes');
+
+  const tRecipes = useTranslations('recipes');
+  const tCommon = useTranslations('common');
 
   const {
     data,
@@ -52,10 +48,10 @@ const Recipes = () => {
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-3">
-          Recipes
+          {tRecipes('page.title')}
         </h1>
         <p className="text-gray-600 dark:text-gray-300">
-          Discover delicious recipes for every occasion
+          {tRecipes('page.subtitle')}
         </p>
       </div>
 
@@ -87,7 +83,7 @@ const Recipes = () => {
               id="search-dropdown"
               className="w-full bg-white dark:bg-gray-800 border-2 border-amber-200 dark:border-gray-600 rounded-xl pl-12 pr-4 py-3 text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
               value={searchValue}
-              placeholder="Search for a recipe..."
+              placeholder={tRecipes('search.placeholder')}
               onChange={(e) => setSearchValue(e.target.value)}
             />
           </div>
@@ -103,8 +99,8 @@ const Recipes = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
           </div>
-          <p className="text-xl text-gray-900 dark:text-white font-semibold mb-2">Something went wrong!</p>
-          <p className="text-gray-500 dark:text-gray-400">Please reload the page or try again later</p>
+          <p className="text-xl text-gray-900 dark:text-white font-semibold mb-2">{tCommon('errors.somethingWentWrong')}</p>
+          <p className="text-gray-500 dark:text-gray-400">{tCommon('errors.tryAgainLater')}</p>
         </div>
       ) : (
         <div className="flex flex-col items-center">
@@ -125,17 +121,17 @@ const Recipes = () => {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                Loading...
+                {tRecipes('pagination.loading')}
               </>
             ) : hasNextPage ? (
               <>
-                Load more
+                {tRecipes('pagination.loadMore')}
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </>
             ) : (
-              'All recipes loaded'
+              tRecipes('pagination.allLoaded')
             )}
           </button>
         </div>

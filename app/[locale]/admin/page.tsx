@@ -3,7 +3,8 @@
 import React, {useEffect, useState} from 'react';
 import Image from 'next/image';
 import {useUserStore} from "@/store/useUserStore";
-import {useRouter} from 'next/navigation'
+import {useRouter} from "@/i18n/navigation";
+import {useTranslations} from "next-intl";
 import {SubmitHandler, useFieldArray, useForm} from "react-hook-form";
 import {v4 as uuidv4} from 'uuid';
 import {insertRecipe, IUploadData} from "@/services/db/insertRecipeToDatabase";
@@ -58,6 +59,7 @@ const Page = () => {
   const {user} = useUserStore();
 
   const router = useRouter();
+  const t = useTranslations('admin');
 
   const handleIngredientsForm = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -165,9 +167,9 @@ const Page = () => {
       {/* Header */}
       <div className="text-center mb-8">
         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-2">
-          Add New Recipe
+          {t('form.title')}
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">Create a delicious new recipe</p>
+        <p className="text-gray-600 dark:text-gray-400">{t('form.subtitle')}</p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}
@@ -178,21 +180,21 @@ const Page = () => {
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <span className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400 text-sm font-bold">1</span>
-            Basic Information
+            {t('form.sections.basicInfo')}
           </h2>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Recipe Title</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('form.fields.title')}</label>
               <input {...register('title')}
                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
                      type="text"
-                     placeholder="Enter recipe title"/>
+                     placeholder={t('form.fields.titlePlaceholder')}/>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Likes</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('form.fields.likes')}</label>
                 <input {...register('likes')}
                        className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
                        type="number"
@@ -200,7 +202,7 @@ const Page = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('form.fields.category')}</label>
                 <select
                   defaultValue="Appetizers"
                   className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors cursor-pointer"
@@ -219,7 +221,7 @@ const Page = () => {
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <span className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400 text-sm font-bold">2</span>
-            Ingredients
+            {t('form.sections.ingredients')}
           </h2>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
@@ -227,12 +229,12 @@ const Page = () => {
                    className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
                    type="text"
                    name="ingredient"
-                   placeholder="Enter ingredient"/>
+                   placeholder={t('form.fields.ingredientPlaceholder')}/>
             <button
               className="px-6 py-3 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors"
               onClick={(e) => handleIngredientsForm(e)}
             >
-              Add
+              {t('form.buttons.add')}
             </button>
           </div>
 
@@ -256,7 +258,7 @@ const Page = () => {
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <span className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400 text-sm font-bold">3</span>
-            Preparation Steps
+            {t('form.sections.steps')}
           </h2>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -269,7 +271,7 @@ const Page = () => {
                   <span className="w-7 h-7 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white text-sm font-bold">
                     {index + 1}
                   </span>
-                  <h5 className="font-medium text-gray-900 dark:text-white">Step {index + 1}</h5>
+                  <h5 className="font-medium text-gray-900 dark:text-white">{t('form.fields.step')} {index + 1}</h5>
                 </div>
 
                 {stepImageUrls[index] ? (
@@ -298,14 +300,14 @@ const Page = () => {
                         multiple={false}
                         onChange={(e) => handleFiles(e, index)}
                       />
-                      Add picture
+                      {t('form.buttons.addPicture')}
                     </label>
                   </div>
                 )}
 
                 <textarea
                   {...register(`recipeSteps.${index}.desc`)}
-                  placeholder={`Describe step ${index + 1}...`}
+                  placeholder={t('form.fields.stepDescPlaceholder', {step: index + 1})}
                   rows={4}
                   className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors resize-none mb-3"
                 />
@@ -315,7 +317,7 @@ const Page = () => {
                   className="w-full py-2 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-medium hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
                   onClick={() => removeStep(index)}
                 >
-                  Delete step
+                  {t('form.buttons.deleteStep')}
                 </button>
               </div>
             ))}
@@ -326,7 +328,7 @@ const Page = () => {
             type="button"
             onClick={() => appendStep({desc: "", image: null, blobUrl: ''})}
           >
-            + Add new step
+            + {t('form.buttons.addNewStep')}
           </button>
         </div>
 
@@ -336,7 +338,7 @@ const Page = () => {
           type="submit"
           disabled={isPending}
         >
-          {isPending ? <Spinner/> : 'Create Recipe'}
+          {isPending ? <Spinner/> : t('form.buttons.create')}
         </button>
       </form>
     </div>

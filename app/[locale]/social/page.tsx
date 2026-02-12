@@ -1,5 +1,8 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import {useTranslations} from "next-intl";
 
 const socialLinks = [
   {
@@ -56,15 +59,17 @@ const socialLinks = [
 ];
 
 const SocialMedia = () => {
+  const t = useTranslations('socialMedia');
+
   return (
     <div className="min-h-screen py-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            Follow Me
+            {t('page.title')}
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300">
-            Stay connected for more recipes and culinary inspiration
+            {t('page.subtitle')}
           </p>
         </div>
 

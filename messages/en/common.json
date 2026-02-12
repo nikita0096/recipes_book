@@ -1,0 +1,52 @@
+{
+  "header": {
+    "brand": "Recipes Book",
+    "byAuthor": "by Yuliia"
+  },
+  "nav": {
+    "home": "Home",
+    "recipes": "Recipes",
+    "socialMedia": "Social media",
+    "adminPanel": "Admin panel"
+  },
+  "auth": {
+    "login": "Login",
+    "logout": "Sign out",
+    "profile": "Profile",
+    "welcome": "Welcome",
+    "logIn": "Log in",
+    "signUp": "Sign up",
+    "email": "Email",
+    "emailPlaceholder": "your@email.com",
+    "password": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "createPassword": "Create a password",
+    "continueWithGoogle": "Continue with Google",
+    "or": "or"
+  },
+  "buttons": {
+    "add": "Add",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "loadMore": "Load more",
+    "loading": "Loading...",
+    "viewRecipe": "View Recipe"
+  },
+  "categories": {
+    "all": "All recipes",
+    "appetizers": "Appetizers",
+    "breakfast": "Breakfast",
+    "dinner": "Dinner",
+    "soups": "Soups",
+    "salads": "Salads",
+    "mainDishes": "Main dishes",
+    "sideDishes": "Side dishes",
+    "desserts": "Desserts"
+  },
+  "errors": {
+    "somethingWentWrong": "Something went wrong!",
+    "tryAgainLater": "Please reload the page or try again later",
+    "error": "Error"
+  }
+}

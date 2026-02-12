@@ -1,10 +1,11 @@
 'use client';
 
 import React, {useState} from 'react';
-import {IRecipe} from "@/app/recipes/page";
+import {IRecipe} from "@/types/recipe";
 import Image from 'next/image';
 import {PAGES} from "@/config/page.config";
-import Link from "next/link";
+import {Link} from "@/i18n/navigation";
+import {useTranslations} from "next-intl";
 
 interface RecipeItemProps {
   recipe: IRecipe;
@@ -14,6 +15,8 @@ const imagePlaceholder = "https://media.istockphoto.com/id/1346523346/vector/spo
 
 const RecipeItem: React.FC<RecipeItemProps> = ({recipe}) => {
   const [image, setImage] = useState<string>(recipe.recipeSteps[0].imgUrl);
+
+  const tCommon = useTranslations('common');
 
   return (
     <div className="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl overflow-hidden transition-all duration-300 hover:scale-[1.02]">
@@ -58,7 +61,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe}) => {
             href={PAGES.RECIPE(recipe.id)}
             className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-sm font-medium rounded-full transition-all duration-300 shadow-md hover:shadow-lg"
           >
-            View Recipe
+            {tCommon('buttons.viewRecipe')}
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

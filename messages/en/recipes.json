@@ -1,0 +1,14 @@
+{
+  "page": {
+    "title": "Recipes",
+    "subtitle": "Discover delicious recipes for every occasion"
+  },
+  "search": {
+    "placeholder": "Search for a recipe..."
+  },
+  "pagination": {
+    "loadMore": "Load more",
+    "loading": "Loading...",
+    "allLoaded": "All recipes loaded"
+  }
+}

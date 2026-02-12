@@ -1,10 +1,12 @@
 import React, {Dispatch, SetStateAction} from 'react';
-import Link from "next/link";
+import {Link} from "@/i18n/navigation";
 import {PAGES} from "@/config/page.config";
 import {IUserState} from "@/store/useUserStore";
 import {IoClose} from "react-icons/io5";
 import Image from "next/image";
 import {GiCook} from "react-icons/gi";
+import {useTranslations} from "next-intl";
+import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 
 interface NavMenuMobileProps {
   user: IUserState | null;
@@ -21,6 +23,8 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
                                                        handleLogout,
                                                        setIsOpenAuthPage
                                                      }) => {
+  const t = useTranslations('common');
+
   return (
       <>
         {isShowNav && (
@@ -32,21 +36,21 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
                   href={PAGES.HOME}
                   className='text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-400 font-medium text-lg transition-colors py-2 border-b border-amber-100 dark:border-gray-700'
                 >
-                  Home
+                  {t('nav.home')}
                 </Link>
                 <Link
                   onClick={() => setIsShowNav(false)}
                   href={PAGES.RECIPES}
                   className='text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-400 font-medium text-lg transition-colors py-2 border-b border-amber-100 dark:border-gray-700'
                 >
-                  Recipes
+                  {t('nav.recipes')}
                 </Link>
                 <Link
                   onClick={() => setIsShowNav(false)}
                   href={PAGES.SOCIAL}
                   className='text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-400 font-medium text-lg transition-colors py-2 border-b border-amber-100 dark:border-gray-700'
                 >
-                  Social media
+                  {t('nav.socialMedia')}
                 </Link>
                 {user?.role === 'admin' && (
                   <Link
@@ -54,7 +58,7 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
                     onClick={() => setIsShowNav(false)}
                     className='text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium text-lg transition-colors py-2 border-b border-amber-100 dark:border-gray-700'
                   >
-                    Admin panel
+                    {t('nav.adminPanel')}
                   </Link>
                 )}
 
@@ -83,13 +87,13 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
                           href={PAGES.PROFILE(user.name)}
                           className=' pt-2 text-gray-700 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors'
                         >
-                          Profile
+                          {t('auth.profile')}
                         </Link>
                         <button
                           className='w-full text-left pt-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'
                           onClick={handleLogout}
                         >
-                          Sign out
+                          {t('auth.logout')}
                         </button>
                       </div>
                     </div>
@@ -98,9 +102,13 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
                       onClick={() => setIsOpenAuthPage(true)}
                       className='px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium rounded-full transition-all shadow-md hover:shadow-lg'
                     >
-                      Login
+                      {t('auth.login')}
                     </button>
                   )}
+                </div>
+
+                <div className='flex items-center justify-center w-full mt-2'>
+                  <LanguageSwitcher/>
                 </div>
               </nav>
 
@@ -110,6 +118,7 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
               >
                 <IoClose className='text-xl'/>
               </button>
+
             </div>
           </div>
         )}

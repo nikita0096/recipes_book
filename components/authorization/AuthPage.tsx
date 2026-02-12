@@ -8,6 +8,7 @@ import {SubmitHandler, useForm} from "react-hook-form";
 import {useUserStore} from "@/store/useUserStore";
 import LoginPage from "@/components/authorization/LoginPage";
 import SignUpPage from "@/components/authorization/SignUpPage";
+import {useTranslations} from "next-intl";
 
 interface ILoginPageProps {
   setIsOpenAuthPage: (value: boolean) => void;
@@ -25,8 +26,8 @@ export interface ISignUpValues {
 
 const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenAuthPage}) => {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-
   const {setUserData} = useUserStore();
+  const t = useTranslations('common');
 
   const loginFrom = useForm<ILoginValues>({
     defaultValues: {
@@ -66,6 +67,7 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenAuthPage}) => {
           name: data.user.user_metadata?.name || 'User',
           avatar_url: data.user.user_metadata?.avatar_url || null,
           role: profile?.role || 'user',
+          email: data.user.email || '',
         })
       }
 
@@ -91,6 +93,7 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenAuthPage}) => {
           name: data.user.user_metadata?.name || 'User',
           avatar_url: data.user.user_metadata?.avatar_url || null,
           role: 'user',
+          email: data.user.email || '',
         });
       }
 
@@ -134,7 +137,7 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenAuthPage}) => {
 
         {/* Header */}
         <h2 className='text-2xl font-bold text-gray-900 dark:text-white mb-6'>
-          Welcome
+          {t('auth.welcome')}
         </h2>
 
         {/* Tabs */}
@@ -147,7 +150,7 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenAuthPage}) => {
                 : 'text-gray-600 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400'
             }`}
           >
-            Log in
+            {t('auth.logIn')}
           </button>
           <button
             onClick={handlePageTab}
@@ -157,7 +160,7 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenAuthPage}) => {
                 : 'text-gray-600 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400'
             }`}
           >
-            Sign up
+            {t('auth.signUp')}
           </button>
         </div>
 
@@ -173,7 +176,7 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenAuthPage}) => {
         {/* Divider */}
         <div className='flex items-center w-full my-6'>
           <div className='flex-1 h-px bg-amber-200 dark:bg-gray-600'></div>
-          <span className='px-4 text-sm text-gray-400'>or</span>
+          <span className='px-4 text-sm text-gray-400'>{t('auth.or')}</span>
           <div className='flex-1 h-px bg-amber-200 dark:bg-gray-600'></div>
         </div>
 
@@ -183,7 +186,7 @@ const AuthPage: React.FC<ILoginPageProps> = ({setIsOpenAuthPage}) => {
           className='flex items-center justify-center gap-3 w-full py-3 px-4 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 font-medium hover:border-amber-400 dark:hover:border-amber-500 hover:shadow-md transition-all'
         >
           <FaGoogle className='text-amber-500' />
-          Continue with Google
+          {t('auth.continueWithGoogle')}
         </button>
       </div>
     </div>

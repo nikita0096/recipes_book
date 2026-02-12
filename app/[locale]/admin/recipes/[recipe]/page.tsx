@@ -1,15 +1,15 @@
 'use client';
 
-import React from 'react';
 import Image from "next/image";
 import {Link} from "@/i18n/navigation";
-import {IRecipe} from "@/types/recipe";
+import React from "react";
+import {useParams} from "next/navigation";
 
-interface RecipePageProps {
-  recipe: IRecipe;
-}
+const Page = () => {
+  const params = useParams<{recipe: string}>();
 
-const RecipePage: React.FC<RecipePageProps> = ({recipe}) => {
+
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Hero Section */}
@@ -140,4 +140,4 @@ const RecipePage: React.FC<RecipePageProps> = ({recipe}) => {
   );
 };
 
-export default RecipePage;
+export default Page;

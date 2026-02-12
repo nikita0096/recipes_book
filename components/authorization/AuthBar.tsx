@@ -4,11 +4,10 @@ import './auth.module.css'
 import React, {Dispatch, SetStateAction, useState} from 'react';
 import Image from "next/image";
 import {IUserState} from "@/store/useUserStore";
-import AuthPage from "@/components/authorization/AuthPage";
 import { GiCook } from "react-icons/gi";
-import Link from "next/link";
+import {Link} from "@/i18n/navigation";
 import {PAGES} from "@/config/page.config";
-import {IoClose} from "react-icons/io5";
+import {useTranslations} from "next-intl";
 
 interface AuthBarProps {
   user: IUserState | null;
@@ -17,8 +16,8 @@ interface AuthBarProps {
 }
 
 const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout, setIsOpenAuthPage}) => {
-
   const [isOpenUserMenu, setIsOpenUserMenu] = useState(false);
+  const t = useTranslations('common');
 
   return (
     <div>
@@ -51,13 +50,13 @@ const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout, setIsOpenAuthPage}
                   href={PAGES.PROFILE(user.name)}
                   className='block px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors'
                 >
-                  Profile
+                  {t('auth.profile')}
                 </Link>
                 <button
                   className='w-full text-left px-4 py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'
                   onClick={handleLogout}
                 >
-                  Sign out
+                  {t('auth.logout')}
                 </button>
               </div>
             </div>
@@ -68,7 +67,7 @@ const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout, setIsOpenAuthPage}
           onClick={() => setIsOpenAuthPage(true)}
           className='px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium rounded-full transition-all shadow-md hover:shadow-lg'
         >
-          Login
+          {t('auth.login')}
         </button>
       )}
     </div>

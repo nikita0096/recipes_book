@@ -1,12 +1,15 @@
 'use client';
 
-import AdminRecipesItems from "@/app/admin/recipes/AdminRecipesItems";
+import AdminRecipesItems from "./AdminRecipesItems";
 import LoadingPage from "@/components/ui/LoadingPage";
 import {useRecipes} from "@/hooks/useRecipes";
 import React, {useMemo} from "react";
-import {IRecipe} from "@/app/recipes/page";
+import {IRecipe} from "@/types/recipe";
+import {useTranslations} from "next-intl";
 
 const Page = () => {
+  const t = useTranslations('admin');
+
   const {
     data,
     error,
@@ -20,8 +23,8 @@ const Page = () => {
   const allRecipes: IRecipe[] = useMemo(() => data?.pages.flatMap((page) => page.data) ?? [], [data]);
 
   if (error) return (
-    <div>
-      Error
+    <div className="flex flex-col items-center justify-center py-20">
+      <p className="text-xl text-gray-900 dark:text-white font-semibold">{t('list.error')}</p>
     </div>
   );
 
@@ -38,7 +41,7 @@ const Page = () => {
           disabled={isFetching || !hasNextPage}
           onClick={() => fetchNextPage()}
         >
-          {isFetchingNextPage ? 'Loading...' : hasNextPage ? 'Load more' : 'Nothing more to load'}
+          {isFetchingNextPage ? t('list.loading') : hasNextPage ? t('list.loadMore') : t('list.allLoaded')}
         </button>
       </div>
     </div>

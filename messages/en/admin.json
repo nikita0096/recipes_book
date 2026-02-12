@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "addNewRecipe": "Add new recipe",
+    "allRecipes": "All recipes"
+  },
+  "form": {
+    "title": "Add New Recipe",
+    "subtitle": "Create a delicious new recipe",
+    "sections": {
+      "basicInfo": "Basic Information",
+      "ingredients": "Ingredients",
+      "steps": "Preparation Steps"
+    },
+    "fields": {
+      "title": "Recipe Title",
+      "titlePlaceholder": "Enter recipe title",
+      "likes": "Likes",
+      "category": "Category",
+      "ingredientPlaceholder": "Enter ingredient",
+      "step": "Step",
+      "stepDescPlaceholder": "Describe step {step}..."
+    },
+    "buttons": {
+      "add": "Add",
+      "addPicture": "Add picture",
+      "deleteStep": "Delete step",
+      "addNewStep": "Add new step",
+      "create": "Create Recipe"
+    }
+  },
+  "list": {
+    "loadMore": "Load more",
+    "loading": "Loading...",
+    "allLoaded": "Nothing more to load",
+    "error": "Error loading recipes",
+    "viewRecipe": "View Recipe",
+    "edit": "Edit",
+    "delete": "Delete"
+  }
+}

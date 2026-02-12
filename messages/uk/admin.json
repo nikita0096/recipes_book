@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "addNewRecipe": "Додати рецепт",
+    "allRecipes": "Усі рецепти"
+  },
+  "form": {
+    "title": "Додати новий рецепт",
+    "subtitle": "Створіть смачний новий рецепт",
+    "sections": {
+      "basicInfo": "Основна інформація",
+      "ingredients": "Інгредієнти",
+      "steps": "Кроки приготування"
+    },
+    "fields": {
+      "title": "Назва рецепту",
+      "titlePlaceholder": "Введіть назву рецепту",
+      "likes": "Вподобання",
+      "category": "Категорія",
+      "ingredientPlaceholder": "Введіть інгредієнт",
+      "step": "Крок",
+      "stepDescPlaceholder": "Опишіть крок {step}..."
+    },
+    "buttons": {
+      "add": "Додати",
+      "addPicture": "Додати фото",
+      "deleteStep": "Видалити крок",
+      "addNewStep": "Додати новий крок",
+      "create": "Створити рецепт"
+    }
+  },
+  "list": {
+    "loadMore": "Завантажити ще",
+    "loading": "Завантаження...",
+    "allLoaded": "Більше нічого завантажити",
+    "error": "Помилка завантаження рецептів",
+    "viewRecipe": "Переглянути рецепт",
+    "edit": "Редагувати",
+    "delete": "Видалити"
+  }
+}

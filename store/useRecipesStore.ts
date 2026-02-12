@@ -1,5 +1,5 @@
 import {create} from "zustand/react";
-import {IRecipe} from "@/app/recipes/page";
+import {IRecipe} from "@/types/recipe";
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 
 interface RecipesState {

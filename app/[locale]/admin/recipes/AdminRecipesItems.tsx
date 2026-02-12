@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import AdminRecipeItem from "@/app/admin/recipes/AdminRecipeItem";
-import {IRecipe} from "@/app/recipes/page";
+import AdminRecipeItem from "./AdminRecipeItem";
+import {IRecipe} from "@/types/recipe";
 
 interface IAdminRecipesProps {
   allRecipes: IRecipe[];

@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import Link from "next/link";
-import {usePathname} from "next/navigation";
+import {Link, usePathname} from "@/i18n/navigation";
+import {useTranslations} from "next-intl";
 
 const AdminNavBar = () => {
   const pathname = usePathname();
+  const t = useTranslations('admin');
 
   const linkBaseClass = 'px-6 py-2.5 rounded-full font-medium transition-all duration-300';
   const activeClass = 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md';
@@ -17,13 +18,13 @@ const AdminNavBar = () => {
         className={`${linkBaseClass} ${pathname === '/admin' ? activeClass : inactiveClass}`}
         href='/admin'
       >
-        Add new recipe
+        {t('nav.addNewRecipe')}
       </Link>
       <Link
         className={`${linkBaseClass} ${pathname === '/admin/recipes' ? activeClass : inactiveClass}`}
         href='/admin/recipes'
       >
-        All recipes
+        {t('nav.allRecipes')}
       </Link>
     </div>
   );

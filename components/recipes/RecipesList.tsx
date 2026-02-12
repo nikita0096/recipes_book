@@ -1,5 +1,5 @@
 import React from 'react';
-import {IRecipe} from "@/app/recipes/page";
+import {IRecipe} from "@/types/recipe";
 import RecipeItem from "@/components/recipes/RecipeItem";
 
 interface RecipesListProps {

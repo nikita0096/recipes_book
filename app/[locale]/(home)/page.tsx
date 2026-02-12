@@ -1,14 +1,16 @@
 'use client';
 
 import {useEffect, useRef} from "react";
-import Link from "next/link";
+import {Link} from "@/i18n/navigation";
 import {PAGES} from "@/config/page.config";
-
-const words = ['Recipes', 'Masterclasses', 'Deserts', 'Magic']
+import {useTranslations} from "next-intl";
 
 export default function Home() {
   const titleRef = useRef<HTMLSpanElement>(null);
   const indexRef = useRef(0);
+  const t = useTranslations('home');
+
+  const words = t.raw('title.words') as string[];
 
   useEffect(() => {
     const titleInterval = setInterval(() => {
@@ -31,7 +33,7 @@ export default function Home() {
     }, 2000);
 
     return () => clearInterval(titleInterval);
-  }, [titleRef]);
+  }, [words]);
 
 
   return (
@@ -43,17 +45,17 @@ export default function Home() {
             className="block text-6xl sm:text-7xl md:text-8xl font-bold text-white transition-all duration-300 drop-shadow-[0_4px_8px_rgba(0,0,0,0.5)]"
             ref={titleRef}
           >
-            Recipes
+            {words[0]}
           </span>
           <span className="block mt-4 text-2xl sm:text-3xl md:text-4xl font-medium text-white/90 drop-shadow-lg">
-            by Yuliia Stohantseva
+            {t('title.byAuthor')}
           </span>
         </h1>
         <Link
           href={PAGES.RECIPES}
           className="mt-8 px-8 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-semibold rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-105"
         >
-          Explore Recipes
+          {t('cta.exploreRecipes')}
         </Link>
       </div>
     </div>

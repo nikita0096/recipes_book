@@ -1,0 +1,52 @@
+{
+  "header": {
+    "brand": "Книга Рецептів",
+    "byAuthor": "від Юлії"
+  },
+  "nav": {
+    "home": "Головна",
+    "recipes": "Рецепти",
+    "socialMedia": "Соціальні мережі",
+    "adminPanel": "Адмін панель"
+  },
+  "auth": {
+    "login": "Увійти",
+    "logout": "Вийти",
+    "profile": "Профіль",
+    "welcome": "Ласкаво просимо",
+    "logIn": "Вхід",
+    "signUp": "Реєстрація",
+    "email": "Email",
+    "emailPlaceholder": "ваш@email.com",
+    "password": "Пароль",
+    "passwordPlaceholder": "Введіть пароль",
+    "createPassword": "Створіть пароль",
+    "continueWithGoogle": "Продовжити з Google",
+    "or": "або"
+  },
+  "buttons": {
+    "add": "Додати",
+    "delete": "Видалити",
+    "save": "Зберегти",
+    "cancel": "Скасувати",
+    "loadMore": "Завантажити ще",
+    "loading": "Завантаження...",
+    "viewRecipe": "Переглянути рецепт"
+  },
+  "categories": {
+    "all": "Усі рецепти",
+    "appetizers": "Закуски",
+    "breakfast": "Сніданок",
+    "dinner": "Вечеря",
+    "soups": "Супи",
+    "salads": "Салати",
+    "mainDishes": "Основні страви",
+    "sideDishes": "Гарніри",
+    "desserts": "Десерти"
+  },
+  "errors": {
+    "somethingWentWrong": "Щось пішло не так!",
+    "tryAgainLater": "Будь ласка, перезавантажте сторінку або спробуйте пізніше",
+    "error": "Помилка"
+  }
+}

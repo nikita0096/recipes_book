@@ -1,12 +1,13 @@
 'use client';
 
 import React, {useState} from 'react';
-import {IRecipe} from "@/app/recipes/page";
+import {IRecipe} from "@/types/recipe";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {deleteRecipe} from "@/services/db/deleteRecipe";
-import Link from "next/link";
+import {Link} from "@/i18n/navigation";
 import Image from 'next/image';
 import {PAGES} from "@/config/page.config";
+import {useTranslations} from "next-intl";
 
 interface AdminRecipeItemProps {
   recipe: IRecipe;
@@ -15,6 +16,7 @@ const imagePlaceholder = "https://media.istockphoto.com/id/1346523346/vector/spo
 
 const AdminRecipeItem: React.FC<AdminRecipeItemProps> = ({recipe}) => {
   const [image, setImage] = useState<string>(recipe.recipeSteps[0].imgUrl);
+  const t = useTranslations('admin');
 
   const queryClient = useQueryClient();
 
@@ -70,7 +72,7 @@ const AdminRecipeItem: React.FC<AdminRecipeItemProps> = ({recipe}) => {
               href={PAGES.ADMIN_RECIPE_PAGE(recipe.id)}
               className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-sm font-medium rounded-full transition-all duration-300 shadow-md hover:shadow-lg"
             >
-              View Recipe
+              {t('list.viewRecipe')}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
@@ -80,13 +82,13 @@ const AdminRecipeItem: React.FC<AdminRecipeItemProps> = ({recipe}) => {
       </div>
       <div className='absolute top-3 right-3 flex flex-col gap-2'>
         <button className='px-4 py-2 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors shadow-md'>
-          Edit
+          {t('list.edit')}
         </button>
         <button
           className='px-4 py-2 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-medium rounded-xl hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors shadow-md'
           onClick={() => deleteRecipeMutation.mutate(recipe.id.toString())}
         >
-          Delete
+          {t('list.delete')}
         </button>
       </div>
     </div>
