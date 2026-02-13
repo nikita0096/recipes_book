@@ -10,5 +10,12 @@
     "loadMore": "Завантажити ще",
     "loading": "Завантаження...",
     "allLoaded": "Усі рецепти завантажено"
+  },
+  "singlePage": {
+    "backButton": "Назад до рецептiв",
+    "steps": "кроки",
+    "keyIngredients": "Основні інгредієнти",
+    "preparationSteps": "Кроки підготовки",
+    "step": "Крок"
   }
 }

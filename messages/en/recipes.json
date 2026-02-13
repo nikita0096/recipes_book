@@ -10,5 +10,12 @@
     "loadMore": "Load more",
     "loading": "Loading...",
     "allLoaded": "All recipes loaded"
+  },
+  "singlePage": {
+    "backButton": "Back to recipes",
+    "steps": "steps",
+    "keyIngredients": "Key ingredients",
+    "preparationSteps": "Preparation Steps",
+    "step": "Step"
   }
 }
