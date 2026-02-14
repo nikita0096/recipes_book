@@ -1,11 +1,12 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
+import {Ingredients} from "@/app/[locale]/admin/page";
 
 export interface IUploadData {
   title: string;
   likes: number;
   category: string;
-  recipeSteps: { desc: string, imgUrl: string | null; }[];
-  ingredients: string[];
+  recipeSteps: { desc: string, imgUrl: string | null, id: string}[];
+  ingredients: Ingredients[];
 }
 
 export const insertRecipe = async ({title, category, likes = 0, recipeSteps, ingredients}: IUploadData) => {

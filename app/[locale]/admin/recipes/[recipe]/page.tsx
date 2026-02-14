@@ -11,7 +11,8 @@ import {useTranslations} from "next-intl";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {deleteRecipe} from "@/services/db/deleteRecipe";
 import {useRouter} from "next/navigation";
-import {useDraggable} from "@dnd-kit/core";
+import {DndContext, useDraggable} from "@dnd-kit/core";
+import SortableStep from "@/app/[locale]/admin/recipes/[recipe]/SortableStep";
 
 const Page = () => {
   const params = useParams<{recipe: string}>();
@@ -19,10 +20,6 @@ const Page = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
-
-  const {attributes, listeners, setNodeRef, transform} = useDraggable({
-    id: 'unique-id',
-  });
 
   console.log(recipe)
 
@@ -82,6 +79,18 @@ const Page = () => {
     deleteRecipeMutation.mutate(id.toString());
 
     router.push(`/admin/recipes`);
+  }
+
+  const handleDragEnd = (event: any) => {
+    const {active, over} = event;
+
+    if(!over || active.id === over.id) {
+      return;
+    }
+
+    // setRecipe((items) => {
+    //   const oldIndex = items?.recipeSteps
+    // })
   }
 
   const handleUpdateHeroImage = async () => {
@@ -185,35 +194,10 @@ const Page = () => {
           <div className="space-y-8">
             {recipe.recipeSteps.map((step, i) => (
               <div
-                ref={setNodeRef}
                 key={i}
                 className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden"
               >
-                {step.imgUrl && (
-                  <div className="relative h-64 md:h-80 w-full">
-                    <Image
-                      src={step.imgUrl}
-                      alt={`Step ${i + 1}`}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                )}
-                <div className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md">
-                      <span className="text-white font-bold">{i + 1}</span>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                        {tRecipes('singlePage.step')} <span>{i + 1}</span>
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                        {step.desc}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <SortableStep step={step} id={i}/>
               </div>
             ))}
           </div>

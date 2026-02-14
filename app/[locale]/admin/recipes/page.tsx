@@ -16,8 +16,7 @@ const Page = () => {
     fetchNextPage,
     hasNextPage,
     isFetching,
-    isFetchingNextPage,
-    status,
+    isFetchingNextPage
   } = useRecipes();
 
   const allRecipes: IRecipe[] = useMemo(() => data?.pages.flatMap((page) => page.data) ?? [], [data]);

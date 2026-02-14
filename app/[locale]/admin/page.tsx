@@ -4,14 +4,25 @@ import React, {useEffect, useState} from 'react';
 import Image from 'next/image';
 import {useUserStore} from "@/store/useUserStore";
 import {useRouter} from "@/i18n/navigation";
-import {useTranslations} from "next-intl";
+import {useLocale, useTranslations} from "next-intl";
 import {SubmitHandler, useFieldArray, useForm} from "react-hook-form";
 import {v4 as uuidv4} from 'uuid';
 import {insertRecipe, IUploadData} from "@/services/db/insertRecipeToDatabase";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {MdDeleteForever} from "react-icons/md";
 import {Spinner} from "@/components/ui/spinner";
+import {units} from "@/constants/units";
 
+type Locale = 'en' | 'uk';
+
+type UnitValue = typeof units[number]['value'];
+
+export interface Ingredients {
+  value: string;
+  quantity: string;
+  unit: UnitValue;
+  id: string;
+}
 
 export interface IFormValues {
   title: string;
@@ -19,13 +30,22 @@ export interface IFormValues {
   category: string;
   recipeSteps: { desc: string, image: File | null; blobUrl: string; }[];
   ingredient: string;
-  ingredients: { value: string }[];
+  ingredients: Ingredients[];
+  heroImg: File | null;
+  ingredientQuantity: string | null;
+  ingredientUnit: UnitValue;
 }
 
 const Page = () => {
   const [mounted, setMounted] = useState<boolean>(false);
-  const [stepImageUrls, setStepImageUrls] = useState<{[key: string]: string}>({});
+  const [stepImageUrls, setStepImageUrls] = useState<{url: string}[]>([{url: ''}]);
+  const [heroImg, setHeroImg] = useState<string | null>(null);
   const [isPending, setIsPending] = useState<boolean>(false);
+
+  const [validationErrorIngredients, setValidationErrorIngredients] = useState('');
+
+  const localeRaw = useLocale();
+  const locale = localeRaw as Locale;
 
   const {register, handleSubmit, reset, control, setValue, resetField, getValues} = useForm<IFormValues>({
     defaultValues: {
@@ -34,7 +54,10 @@ const Page = () => {
       likes: 0,
       category: 'Appetizers',
       ingredient: '',
-      ingredients: []
+      ingredientQuantity: '',
+      ingredientUnit: '',
+      ingredients: [],
+      heroImg: null
     }
   });
 
@@ -64,13 +87,20 @@ const Page = () => {
   const handleIngredientsForm = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const ingredient = getValues('ingredient')?.trim();
-
-    if (!ingredient) {
+    const quantity = getValues('ingredientQuantity')?.trim();
+    const unit = getValues('ingredientUnit')
+    console.log(ingredient, quantity, unit);
+    if (!ingredient || !quantity || !unit) {
+      setValidationErrorIngredients('Enter All Ingredient fields');
       return;
     }
 
-    appendIngredient({value: ingredient});
+
+    appendIngredient({value: ingredient, quantity: quantity, unit: unit, id: uuidv4()});
     resetField('ingredient');
+    resetField('ingredientQuantity');
+    resetField('ingredientUnit');
+    setValidationErrorIngredients('');
   }
 
   const handleFiles = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -79,23 +109,51 @@ const Page = () => {
     if (file !== null) {
       const url = URL.createObjectURL(file);
 
-      setStepImageUrls(prevState => ({
+      setStepImageUrls(prevState => ([
         ...prevState,
-        [index]: url,
-      }));
+        {
+          url: url,
+        }
+      ]));
 
     }
 
     setValue(`recipeSteps.${index}.image`, file, {
       shouldValidate: true,
     });
+  }
 
-    console.log(stepFields);
+  const deleteStepsImg = (index: number) => {
+    const newSteps = stepImageUrls.map((step, i) => i === index ? {url: ''} : step);
+    setStepImageUrls(newSteps);
+
+    setValue(`recipeSteps.${index}.image`, null);
+  }
+
+  const deleteStep = (index: number) => {
+    const newSteps = stepImageUrls.filter((step, i) => i !== index);
+    setStepImageUrls(newSteps);
+    removeStep(index);
+  }
+
+  const handleHeroImg = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+
+    if(file !== null) {
+      const url = URL.createObjectURL(file);
+
+      setHeroImg(url);
+    }
+  }
+
+  const deleteHeroImg = () => {
+    setHeroImg(null);
+    setValue('heroImg', null);
   }
 
   const handleFormData = async (data: IFormValues, folder: string) => {
     const steps = [];
-    const ingredients = data.ingredients.map(item => item.value);
+    const ingredients = data.ingredients.map(item => item);
 
     for (const step of data.recipeSteps) {
       const {desc, image} = step;
@@ -111,21 +169,34 @@ const Page = () => {
         });
 
         if (error) {
-          console.error(error);
-          continue;
+          return null;
         }
 
         imgUrl = imageUrl;
       }
       steps.push({
         desc,
-        imgUrl
+        imgUrl,
+        id: uuidv4(),
       });
+    }
+
+    let heroImg;
+
+    if(data.heroImg) {
+      const fileHeroPath = `${folder}/${"heroImg" + uuidv4()}`;
+
+      heroImg = await uploadImage({
+        file: data.heroImg,
+        bucket: 'images',
+        filePath: fileHeroPath
+      })
     }
     return {
       ...data,
       recipeSteps: steps,
       ingredients: ingredients,
+      heroImg: heroImg,
     }
   }
 
@@ -133,7 +204,7 @@ const Page = () => {
     setIsPending(true);
 
     try {
-      const recipeData: IUploadData = await handleFormData(formData, formData.title);
+      const recipeData: IUploadData | null = await handleFormData(formData, formData.title);
 
       if (recipeData === null) {
         return;
@@ -145,7 +216,7 @@ const Page = () => {
       console.error(err);
     } finally {
       setIsPending(false);
-      setStepImageUrls({});
+      setStepImageUrls([]);
     }
 
     console.log(formData, 'formData')
@@ -160,7 +231,6 @@ const Page = () => {
       router.push('/');
     }
   }, [user]);
-
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -230,6 +300,19 @@ const Page = () => {
                    type="text"
                    name="ingredient"
                    placeholder={t('form.fields.ingredientPlaceholder')}/>
+            <input {...register('ingredientQuantity')}
+                   className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
+                   type="text"
+                   name="ingredientQuantity"
+                   placeholder='Введіть кількість'/>
+            <select required
+                    {...register('ingredientUnit')}
+                    className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
+                    id="units">
+              {units.map((unit) => (
+                <option key={unit.value} value={unit.value}>{unit.title[locale]}</option>
+              ))}
+            </select>
             <button
               className="px-6 py-3 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors"
               onClick={(e) => handleIngredientsForm(e)}
@@ -238,13 +321,17 @@ const Page = () => {
             </button>
           </div>
 
+          {validationErrorIngredients && (<div className='p-2 pb-4 text-red-500'>{validationErrorIngredients}</div>)}
+
           <div className="flex items-center justify-start gap-2 flex-wrap">
             {ingredientFields.map((item) => (
               <div
                 className="flex flex-row items-center gap-2 px-3 py-2 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gray-700 dark:to-gray-600 border border-amber-200 dark:border-gray-500 text-gray-700 dark:text-gray-200"
                 key={item.id}
               >
-                <span>{item.value}</span>
+                <span>{item.value}</span> -
+                <span>{item.quantity}</span>
+                <span>{item.unit}</span>
                 <MdDeleteForever
                   className="text-red-500 cursor-pointer hover:text-red-600 transition-colors"
                   onClick={() => removeIngredient(+item.id)}
@@ -254,10 +341,50 @@ const Page = () => {
           </div>
         </div>
 
-        {/* Steps Section */}
+        {/*Hero Image section*/}
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
             <span className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400 text-sm font-bold">3</span>
+            Hero image
+          </h2>
+          <div>
+            {heroImg ? (
+              <div className="relative mb-3">
+                <Image
+                  className="rounded-xl w-full object-cover"
+                  width={300}
+                  height={200}
+                  src={heroImg}
+                  alt="Uploaded image"
+                />
+                <button
+                  type="button"
+                  className="absolute top-2 right-2 w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
+                  onClick={deleteHeroImg}
+                >
+                  <MdDeleteForever className="text-xl"/>
+                </button>
+              </div>
+            ) : (
+              <div className="w-full h-40 flex items-center justify-center border-2 border-dashed border-amber-200 dark:border-gray-500 rounded-xl mb-3 bg-white dark:bg-gray-800">
+                <label className="cursor-pointer px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors">
+                  <input
+                    type="file"
+                    hidden
+                    multiple={false}
+                    onChange={(e) => handleHeroImg(e)}
+                  />
+                  {t('form.buttons.addPicture')}
+                </label>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Steps Section */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <span className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400 text-sm font-bold">4</span>
             {t('form.sections.steps')}
           </h2>
 
@@ -274,19 +401,19 @@ const Page = () => {
                   <h5 className="font-medium text-gray-900 dark:text-white">{t('form.fields.step')} {index + 1}</h5>
                 </div>
 
-                {stepImageUrls[index] ? (
+                {stepImageUrls[index].url ? (
                   <div className="relative mb-3">
                     <Image
                       className="rounded-xl w-full object-cover"
                       width={300}
                       height={200}
-                      src={stepImageUrls[index]}
+                      src={stepImageUrls[index].url}
                       alt="Uploaded image"
                     />
                     <button
                       type="button"
                       className="absolute top-2 right-2 w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
-                      onClick={() => setStepImageUrls(prev => ({...prev, [index]: ''}))}
+                      onClick={() => deleteStepsImg(index)}
                     >
                       <MdDeleteForever className="text-xl"/>
                     </button>
@@ -315,7 +442,7 @@ const Page = () => {
                 <button
                   type="button"
                   className="w-full py-2 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-medium hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                  onClick={() => removeStep(index)}
+                  onClick={() => deleteStep(index)}
                 >
                   {t('form.buttons.deleteStep')}
                 </button>
