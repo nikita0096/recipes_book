@@ -1,0 +1,1 @@
+export const categories: string[] = ['All recipes', 'Appetizers', 'Breakfast', 'Dinner', 'Soups', 'Salads', 'Main dishes', 'Side dishes', 'Desserts'];

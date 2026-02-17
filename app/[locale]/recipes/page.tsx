@@ -20,7 +20,6 @@ const Recipes = () => {
     fetchNextPage,
     hasNextPage,
     isFetching,
-    isFetchingNextPage,
     status,
   } = useRecipes();
 
@@ -31,9 +30,9 @@ const Recipes = () => {
   const filteredRecipes = useMemo(() => {
     let recipes = allRecipes;
 
-    if (selectValue !== 'All recipes') {
-      recipes = recipes.filter((recipe) => recipe.category === selectValue);
-    }
+    // if (selectValue !== 'All recipes') {
+    //   recipes = recipes.filter((recipe) => recipe.category === selectValue);
+    // }
 
     if (searchValue !== '') {
       const search = searchValue.toLowerCase().trim();
@@ -58,21 +57,21 @@ const Recipes = () => {
       {/* Search & Filter */}
       <form className="max-w-2xl mx-auto mb-10">
         <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative sm:w-1/3">
-            <select
-              name="Category"
-              id="category-select"
-              className="w-full appearance-none bg-white dark:bg-gray-800 border-2 border-amber-200 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 text-gray-700 dark:text-gray-200 font-medium focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors cursor-pointer"
-              onChange={(e) => setSelectValue(e.target.value)}
-            >
-              {['All recipes', 'Appetizers', 'Breakfast', 'Dinner', 'Soups', 'Salads', 'Main dishes', 'Side dishes', 'Desserts'].map((item, i) => (
-                <option value={item} key={i}>{item}</option>
-              ))}
-            </select>
-            <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
+          {/*<div className="relative sm:w-1/3">*/}
+          {/*  <select*/}
+          {/*    name="Category"*/}
+          {/*    id="category-select"*/}
+          {/*    className="w-full appearance-none bg-white dark:bg-gray-800 border-2 border-amber-200 dark:border-gray-600 rounded-xl px-4 py-3 pr-10 text-gray-700 dark:text-gray-200 font-medium focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors cursor-pointer"*/}
+          {/*    onChange={(e) => setSelectValue(e.target.value)}*/}
+          {/*  >*/}
+          {/*    {['All recipes', 'Appetizers', 'Breakfast', 'Dinner', 'Soups', 'Salads', 'Main dishes', 'Side dishes', 'Desserts'].map((item, i) => (*/}
+          {/*      <option value={item} key={i}>{item}</option>*/}
+          {/*    ))}*/}
+          {/*  </select>*/}
+          {/*  <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-amber-500 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">*/}
+          {/*    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />*/}
+          {/*  </svg>*/}
+          {/*</div>*/}
 
           <div className="relative flex-1">
             <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

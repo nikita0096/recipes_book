@@ -34,11 +34,12 @@ export interface IFormValues {
   heroImg: File | null;
   ingredientQuantity: string | null;
   ingredientUnit: UnitValue;
+  isPremium: boolean;
 }
 
 const Page = () => {
   const [mounted, setMounted] = useState<boolean>(false);
-  const [stepImageUrls, setStepImageUrls] = useState<{url: string}[]>([{url: ''}]);
+  const [stepImageUrls, setStepImageUrls] = useState<string[]>([]);
   const [heroImg, setHeroImg] = useState<string | null>(null);
   const [isPending, setIsPending] = useState<boolean>(false);
 
@@ -49,15 +50,16 @@ const Page = () => {
 
   const {register, handleSubmit, reset, control, setValue, resetField, getValues} = useForm<IFormValues>({
     defaultValues: {
-      recipeSteps: [{desc: "", image: null, blobUrl: ''}],
+      recipeSteps: [],
       title: '',
       likes: 0,
-      category: 'Appetizers',
+      category: 'Desserts',
       ingredient: '',
       ingredientQuantity: '',
-      ingredientUnit: '',
+      ingredientUnit: units[0].value,
       ingredients: [],
-      heroImg: null
+      heroImg: null,
+      isPremium: true
     }
   });
 
@@ -111,9 +113,7 @@ const Page = () => {
 
       setStepImageUrls(prevState => ([
         ...prevState,
-        {
-          url: url,
-        }
+        url
       ]));
 
     }
@@ -124,7 +124,7 @@ const Page = () => {
   }
 
   const deleteStepsImg = (index: number) => {
-    const newSteps = stepImageUrls.map((step, i) => i === index ? {url: ''} : step);
+    const newSteps = stepImageUrls.map((step, i) => i === index ? '' : step);
     setStepImageUrls(newSteps);
 
     setValue(`recipeSteps.${index}.image`, null);
@@ -138,6 +138,7 @@ const Page = () => {
 
   const handleHeroImg = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
+    setValue('heroImg', file);
 
     if(file !== null) {
       const url = URL.createObjectURL(file);
@@ -186,18 +187,32 @@ const Page = () => {
     if(data.heroImg) {
       const fileHeroPath = `${folder}/${"heroImg" + uuidv4()}`;
 
-      heroImg = await uploadImage({
-        file: data.heroImg,
-        bucket: 'images',
-        filePath: fileHeroPath
-      })
+      try {
+        heroImg = await uploadImage({
+          file: data.heroImg,
+          bucket: 'images',
+          filePath: fileHeroPath
+        })
+      } catch(error) {
+        return;
+      }
     }
-    return {
-      ...data,
+
+    console.log({
+      title: data.title,
+      category: data.category,
+      likes: data.likes,
       recipeSteps: steps,
       ingredients: ingredients,
-      heroImg: heroImg,
-    }
+      heroImg: heroImg  ? heroImg.imageUrl : null,
+      isPremium: data.isPremium,
+    });
+    // return {
+    //   ...data,
+    //   recipeSteps: steps,
+    //   ingredients: ingredients,
+    //   heroImg: heroImg,
+    // }
   }
 
   const onSubmit: SubmitHandler<IFormValues> = async (formData) => {
@@ -262,6 +277,11 @@ const Page = () => {
                      placeholder={t('form.fields.titlePlaceholder')}/>
             </div>
 
+            <div className="flex gap-3 items-center">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Платний контент:</label>
+              <input className="text-2xl" type="checkbox" {...register('isPremium')}/>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('form.fields.likes')}</label>
@@ -274,11 +294,10 @@ const Page = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('form.fields.category')}</label>
                 <select
-                  defaultValue="Appetizers"
                   className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors cursor-pointer"
                   {...register('category')}
                 >
-                  {['Appetizers', 'Breakfast', 'Dinner', 'Soups', 'Salads', 'Main dishes', 'Side dishes', 'Desserts'].map((category, i) => (
+                  {['Desserts', 'Appetizers', 'Breakfast', 'Dinner', 'Soups', 'Salads', 'Main dishes', 'Side dishes'].map((category, i) => (
                     <option key={i} value={category}>{category}</option>
                   ))}
                 </select>
@@ -305,7 +324,7 @@ const Page = () => {
                    type="text"
                    name="ingredientQuantity"
                    placeholder='Введіть кількість'/>
-            <select required
+            <select
                     {...register('ingredientUnit')}
                     className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
                     id="units">
@@ -401,13 +420,13 @@ const Page = () => {
                   <h5 className="font-medium text-gray-900 dark:text-white">{t('form.fields.step')} {index + 1}</h5>
                 </div>
 
-                {stepImageUrls[index].url ? (
+                {stepImageUrls[index] ? (
                   <div className="relative mb-3">
                     <Image
                       className="rounded-xl w-full object-cover"
                       width={300}
                       height={200}
-                      src={stepImageUrls[index].url}
+                      src={stepImageUrls[index]}
                       alt="Uploaded image"
                     />
                     <button
