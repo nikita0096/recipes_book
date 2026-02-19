@@ -9,20 +9,21 @@ export interface IUploadData {
   ingredients: Ingredients[];
   heroImgUrl: string | null;
   isPremium: boolean;
+  preparingTime: number;
 }
 
-export const insertRecipe = async ({title, category, likes = 0, recipeSteps, ingredients}: IUploadData) => {
+export const insertRecipe = async (recipeData: IUploadData) => {
   const {data, error} = await supabase
     .from('recipes')
     .insert({
-      title: title, category: category, likes: likes, recipe_steps: recipeSteps, ingredients: ingredients
+      title: recipeData.title, category: recipeData.category, likes: recipeData.likes, recipe_steps: recipeData.recipeSteps, ingredients: recipeData.ingredients, hero_img: recipeData.heroImgUrl, is_premium: recipeData.isPremium, preparing_time: recipeData.preparingTime,
     });
 
   if (error) {
-    console.log(error);
+    throw error;
   }
 
   if(data) {
-    console.log(data);
+    return "success";
   }
 }

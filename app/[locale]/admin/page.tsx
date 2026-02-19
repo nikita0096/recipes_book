@@ -5,7 +5,7 @@ import Image from 'next/image';
 import {useUserStore} from "@/store/useUserStore";
 import {useRouter} from "@/i18n/navigation";
 import {useLocale, useTranslations} from "next-intl";
-import {SubmitHandler, useFieldArray, useForm} from "react-hook-form";
+import {Controller, SubmitHandler, useFieldArray, useForm} from "react-hook-form";
 import {v4 as uuidv4} from 'uuid';
 import {insertRecipe, IUploadData} from "@/services/db/insertRecipeToDatabase";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
@@ -35,6 +35,7 @@ export interface IFormValues {
   ingredientQuantity: string | null;
   ingredientUnit: UnitValue;
   isPremium: boolean;
+  preparingTime: number
 }
 
 const Page = () => {
@@ -42,13 +43,23 @@ const Page = () => {
   const [stepImageUrls, setStepImageUrls] = useState<string[]>([]);
   const [heroImg, setHeroImg] = useState<string | null>(null);
   const [isPending, setIsPending] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [validationErrorIngredients, setValidationErrorIngredients] = useState('');
 
   const localeRaw = useLocale();
   const locale = localeRaw as Locale;
 
-  const {register, handleSubmit, reset, control, setValue, resetField, getValues} = useForm<IFormValues>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    setValue,
+    resetField,
+    getValues,
+    formState: {errors}
+  } = useForm<IFormValues>({
     defaultValues: {
       recipeSteps: [],
       title: '',
@@ -59,7 +70,8 @@ const Page = () => {
       ingredientUnit: units[0].value,
       ingredients: [],
       heroImg: null,
-      isPremium: true
+      isPremium: true,
+      preparingTime: 0
     }
   });
 
@@ -140,7 +152,7 @@ const Page = () => {
     const file = e.target.files?.[0] ?? null;
     setValue('heroImg', file);
 
-    if(file !== null) {
+    if (file !== null) {
       const url = URL.createObjectURL(file);
 
       setHeroImg(url);
@@ -153,8 +165,14 @@ const Page = () => {
   }
 
   const handleFormData = async (data: IFormValues, folder: string) => {
+    setError(null);
+
+    if (data.ingredients.length === 0 || data.heroImg === null || data.recipeSteps.length === 0) {
+      setError('Fill all the fields');
+      return null;
+    }
+
     const steps = [];
-    const ingredients = data.ingredients.map(item => item);
 
     for (const step of data.recipeSteps) {
       const {desc, image} = step;
@@ -182,37 +200,31 @@ const Page = () => {
       });
     }
 
-    let heroImg;
+    let heroImg = null;
 
-    if(data.heroImg) {
-      const fileHeroPath = `${folder}/${"heroImg" + uuidv4()}`;
+    const fileHeroPath = `${folder}/${"heroImg" + uuidv4()}`;
 
-      try {
-        heroImg = await uploadImage({
-          file: data.heroImg,
-          bucket: 'images',
-          filePath: fileHeroPath
-        })
-      } catch(error) {
-        return;
-      }
+    try {
+      heroImg = await uploadImage({
+        file: data.heroImg,
+        bucket: 'images',
+        filePath: fileHeroPath
+      })
+    } catch (error) {
+      setError('Reload the hero image');
+      return null;
     }
 
-    console.log({
+    return {
       title: data.title,
       category: data.category,
       likes: data.likes,
       recipeSteps: steps,
-      ingredients: ingredients,
-      heroImg: heroImg  ? heroImg.imageUrl : null,
+      ingredients: data.ingredients,
+      heroImgUrl: heroImg.imageUrl,
       isPremium: data.isPremium,
-    });
-    // return {
-    //   ...data,
-    //   recipeSteps: steps,
-    //   ingredients: ingredients,
-    //   heroImg: heroImg,
-    // }
+      preparingTime: data.preparingTime,
+    }
   }
 
   const onSubmit: SubmitHandler<IFormValues> = async (formData) => {
@@ -222,19 +234,19 @@ const Page = () => {
       const recipeData: IUploadData | null = await handleFormData(formData, formData.title);
 
       if (recipeData === null) {
+        setIsPending(false);
         return;
       }
 
       await insertRecipe(recipeData);
       reset();
-    } catch (err) {
-      console.error(err);
+      setStepImageUrls([]);
+      setHeroImg(null);
+    } catch (error) {
+      setError("Recipe has not been uploaded, try again");
     } finally {
       setIsPending(false);
-      setStepImageUrls([]);
     }
-
-    console.log(formData, 'formData')
   }
 
   useEffect(() => {
@@ -271,7 +283,7 @@ const Page = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{t('form.fields.title')}</label>
-              <input {...register('title')}
+              <input {...register('title', {required: true})}
                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
                      type="text"
                      placeholder={t('form.fields.titlePlaceholder')}/>
@@ -279,7 +291,8 @@ const Page = () => {
 
             <div className="flex gap-3 items-center">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Платний контент:</label>
-              <input className="text-2xl" type="checkbox" {...register('isPremium')}/>
+              <input className="text-2xl"
+                     type="checkbox" {...register('isPremium')}/>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -298,9 +311,23 @@ const Page = () => {
                   {...register('category')}
                 >
                   {['Desserts', 'Appetizers', 'Breakfast', 'Dinner', 'Soups', 'Salads', 'Main dishes', 'Side dishes'].map((category, i) => (
-                    <option key={i} value={category}>{category}</option>
+                    <option key={i}
+                            value={category}>{category}</option>
                   ))}
                 </select>
+              </div>
+
+              <div className='relative'>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Час
+                  приготування</label>
+                <div className='relative'>
+                  <input {...register('preparingTime', {required: true, min: 1, max: 1000})}
+                         name="preparingTime"
+                         aria-invalid={errors.preparingTime ? "true" : "false"}
+                         className="relative z-0 w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
+                         type="number"/>
+                  <span className='absolute top-0 right-0 w-2/10 h-full text-center flex justify-center items-center text-xs sm:text-md pr-3'>Хвилин</span>
+                </div>
               </div>
             </div>
           </div>
@@ -313,31 +340,48 @@ const Page = () => {
             {t('form.sections.ingredients')}
           </h2>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
-            <input {...register('ingredient')}
-                   className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
-                   type="text"
-                   name="ingredient"
-                   placeholder={t('form.fields.ingredientPlaceholder')}/>
-            <input {...register('ingredientQuantity')}
-                   className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
-                   type="text"
-                   name="ingredientQuantity"
-                   placeholder='Введіть кількість'/>
-            <select
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center flex-wrap gap-3 mb-4">
+            <Controller
+              name='ingredients'
+              control={control}
+              rules={{required: 'Ingredients are required'}}
+              render={() => (
+                <>
+                  <input {...register('ingredient')}
+                         className={error !== null && getValues('ingredients').length === 0 ?
+                           "flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-red-400 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors" :
+                           "flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
+                         }
+                         type="text"
+                         name="ingredient"
+                         placeholder={t('form.fields.ingredientPlaceholder')}/>
+                  <input {...register('ingredientQuantity')}
+                         className={error !== null && getValues('ingredients').length === 0 ?
+                           "flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-red-400 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors" :
+                           "flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
+                         }
+                         type="text"
+                         name="ingredientQuantity"
+                         placeholder='Введіть кількість'/>
+                  <select
                     {...register('ingredientUnit')}
                     className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
                     id="units">
-              {units.map((unit) => (
-                <option key={unit.value} value={unit.value}>{unit.title[locale]}</option>
-              ))}
-            </select>
-            <button
-              className="px-6 py-3 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors"
-              onClick={(e) => handleIngredientsForm(e)}
-            >
-              {t('form.buttons.add')}
-            </button>
+                    {units.map((unit) => (
+                      <option key={unit.value}
+                              value={unit.value}>{unit.title[locale]}</option>
+                    ))}
+                  </select>
+                  <button
+                    className="px-6 py-3 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors"
+                    onClick={(e) => handleIngredientsForm(e)}
+                  >
+                    {t('form.buttons.add')}
+                  </button>
+                </>
+              )}
+            />
+            {errors.ingredients && <p className='text-red-500'>Add at least one ingredient</p>}
           </div>
 
           {validationErrorIngredients && (<div className='p-2 pb-4 text-red-500'>{validationErrorIngredients}</div>)}
@@ -385,16 +429,26 @@ const Page = () => {
                 </button>
               </div>
             ) : (
-              <div className="w-full h-40 flex items-center justify-center border-2 border-dashed border-amber-200 dark:border-gray-500 rounded-xl mb-3 bg-white dark:bg-gray-800">
+              <div className="flex flex-col items-center justify-center gap-2 w-full h-40 flex items-center justify-center border-2 border-dashed border-amber-200 dark:border-gray-500 rounded-xl mb-3 bg-white dark:bg-gray-800">
                 <label className="cursor-pointer px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors">
-                  <input
-                    type="file"
-                    hidden
-                    multiple={false}
-                    onChange={(e) => handleHeroImg(e)}
+                  <Controller
+                    name='heroImg'
+                    control={control}
+                    rules={{required: 'Main image is required'}}
+                    render={() => (
+                      <>
+                        <input
+                          type="file"
+                          hidden
+                          multiple={false}
+                          onChange={(e) => handleHeroImg(e)}
+                        />
+                      </>
+                    )}
                   />
                   {t('form.buttons.addPicture')}
                 </label>
+                {errors.heroImg && <p className='text-red-500'>{errors.heroImg.message}</p>}
               </div>
             )}
           </div>
@@ -452,11 +506,14 @@ const Page = () => {
                 )}
 
                 <textarea
-                  {...register(`recipeSteps.${index}.desc`)}
+                  {...register(`recipeSteps.${index}.desc`, {required: 'Add description'})}
                   placeholder={t('form.fields.stepDescPlaceholder', {step: index + 1})}
                   rows={4}
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors resize-none mb-3"
+                  className={`w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 ${errors.recipeSteps?.[index]?.desc ? 'border-red-400' : 'border-amber-200 dark:border-gray-600'} rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors resize-none mb-3`}
                 />
+                {errors.recipeSteps?.[index]?.desc && (
+                  <p className='text-center pb-2 text-red-500'>{errors.recipeSteps[index].desc.message}</p>
+                )}
 
                 <button
                   type="button"
@@ -470,12 +527,16 @@ const Page = () => {
           </div>
 
           <button
-            className="mt-4 w-full py-3 rounded-xl border-2 border-dashed border-amber-300 dark:border-gray-500 text-amber-600 dark:text-amber-400 font-medium hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors"
+            className={`mt-4 w-full py-3 rounded-xl border-2 border-dashed ${error && stepFields.length === 0 ? 'border-red-400' : 'border-amber-300 dark:border-gray-500'} text-amber-600 dark:text-amber-400 font-medium hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors`}
             type="button"
             onClick={() => appendStep({desc: "", image: null, blobUrl: ''})}
           >
             + {t('form.buttons.addNewStep')}
           </button>
+          {error && stepFields.length === 0 && (
+            <p className='text-center pt-2 text-red-500'>Add at least one step</p>
+          )}
+
         </div>
 
         {/* Submit Button */}
@@ -486,6 +547,7 @@ const Page = () => {
         >
           {isPending ? <Spinner/> : t('form.buttons.create')}
         </button>
+        {error !== null && <p className='text-center pt-2 text-red-500'>{error}</p>}
       </form>
     </div>
   );
