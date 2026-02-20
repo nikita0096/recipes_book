@@ -9,16 +9,29 @@
     "sections": {
       "basicInfo": "Basic Information",
       "ingredients": "Ingredients",
-      "steps": "Preparation Steps"
+      "steps": "Preparation Steps",
+      "heroImage": "Main Image"
     },
     "fields": {
       "title": "Recipe Title",
       "titlePlaceholder": "Enter recipe title",
+      "titlePlaceholderUk": "Enter title in Ukrainian",
+      "titlePlaceholderEn": "Enter title in English",
       "likes": "Likes",
       "category": "Category",
       "ingredientPlaceholder": "Enter ingredient",
+      "ingredientPlaceholderUk": "Ingredient (UK)",
+      "ingredientPlaceholderEn": "Ingredient (EN)",
+      "quantity": "Quantity",
       "step": "Step",
-      "stepDescPlaceholder": "Describe step {step}..."
+      "stepDescPlaceholder": "Describe step {step}...",
+      "stepDescLabelUk": "Step description (UK)",
+      "stepDescLabelEn": "Step description (EN)",
+      "stepDescPlaceholderUk": "Describe the step in Ukrainian...",
+      "stepDescPlaceholderEn": "Describe the step in English...",
+      "premiumContent": "Premium content",
+      "preparingTime": "Preparing time",
+      "minutes": "Minutes"
     },
     "buttons": {
       "add": "Add",
@@ -26,6 +39,21 @@
       "deleteStep": "Delete step",
       "addNewStep": "Add new step",
       "create": "Create Recipe"
+    },
+    "tabs": {
+      "uk": "UK Ukrainian",
+      "en": "EN English",
+      "hint": "Fill in the fields in both languages by switching between tabs"
+    },
+    "validation": {
+      "fillAllFields": "Fill all fields",
+      "fillAllIngredientFields": "Fill all ingredient fields (UK and EN)",
+      "enterTitleBothLanguages": "Enter title in both languages",
+      "enterStepsBothLanguages": "Enter steps description in both languages",
+      "reloadHeroImage": "Reload the main image",
+      "recipeNotUploaded": "Recipe was not uploaded, try again",
+      "addAtLeastOneIngredient": "Add at least one ingredient",
+      "addAtLeastOneStep": "Add at least one step"
     }
   },
   "list": {

@@ -22,7 +22,7 @@ export default async function AdminLayout({children}: PropsWithChildren<unknown>
   if (!profile || profile?.role !== 'admin') redirect('/');
 
   return (
-      <div className="w-5/6 mx-auto mt-3">
+      <div>
         <AdminNavBar/>
         {children}
       </div>

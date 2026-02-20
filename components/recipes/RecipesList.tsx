@@ -1,6 +1,6 @@
 import React from 'react';
 import {IRecipe} from "@/types/recipe";
-import RecipeItem from "@/components/recipes/RecipeItem";
+import RecipeItem from "@/components/recipes/recipe/RecipeItem";
 
 interface RecipesListProps {
   filteredRecipes: IRecipe[];

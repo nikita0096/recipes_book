@@ -2,7 +2,7 @@ import React from 'react';
 
 const LoadingPage = () => {
   return (
-    <div className='fixed inset-0 flex justify-center items-center -z-10'>
+    <div className='fixed inset-0 flex justify-center items-center bg-amber-50 dark:bg-gray-900'>
       <div className="loader">
         <div className="cup">
           <div className="cup-handle"></div>

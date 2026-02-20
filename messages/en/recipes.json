@@ -12,10 +12,14 @@
     "allLoaded": "All recipes loaded"
   },
   "singlePage": {
-    "backButton": "Back to recipes",
+    "backButton": "Back to Recipes",
     "steps": "steps",
-    "keyIngredients": "Key ingredients",
+    "likes": "likes",
+    "keyIngredients": "Key Ingredients",
     "preparationSteps": "Preparation Steps",
     "step": "Step"
+  },
+  "card": {
+    "hot": "Hot"
   }
 }

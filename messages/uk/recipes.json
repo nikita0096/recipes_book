@@ -12,10 +12,14 @@
     "allLoaded": "Усі рецепти завантажено"
   },
   "singlePage": {
-    "backButton": "Назад до рецептiв",
-    "steps": "кроки",
+    "backButton": "Назад до рецептів",
+    "steps": "кроків",
+    "likes": "вподобань",
     "keyIngredients": "Основні інгредієнти",
-    "preparationSteps": "Кроки підготовки",
+    "preparationSteps": "Кроки приготування",
     "step": "Крок"
+  },
+  "card": {
+    "hot": "Гаряче"
   }
 }

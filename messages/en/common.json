@@ -47,6 +47,7 @@
   "errors": {
     "somethingWentWrong": "Something went wrong!",
     "tryAgainLater": "Please reload the page or try again later",
-    "error": "Error"
+    "error": "Error",
+    "recipeNotFound": "Recipe not found"
   }
 }

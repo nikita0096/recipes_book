@@ -3,7 +3,7 @@
 import React, {useEffect, useState} from 'react';
 import {useParams} from "next/navigation";
 import {useRecipesStore} from "@/store/useRecipesStore";
-import RecipePage from "@/components/recipes/RecipePage";
+import RecipePage from "@/components/recipes/recipe/RecipePage";
 
 const Page = () => {
   const params = useParams<{ recipe: string }>();

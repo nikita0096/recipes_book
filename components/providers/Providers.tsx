@@ -15,7 +15,8 @@ const Providers: React.FC<ProvidersProps> = ({children}) => {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class"
                      enableSystem
-                     defaultTheme='system'>
+                     defaultTheme='system'
+                     disableTransitionOnChange>
         {children}
       </ThemeProvider>
     </QueryClientProvider>

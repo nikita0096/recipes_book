@@ -4,27 +4,27 @@ import Image from "next/image";
 import {Link} from "@/i18n/navigation";
 import React, {useEffect, useState} from "react";
 import {useParams} from "next/navigation";
-import {IRecipe} from "@/types/recipe";
+import {IRecipe, parseJson} from "@/types/recipe";
 import {fetchRecipe} from "@/services/db/fetchRecipe";
 import LoadingPage from "@/components/ui/LoadingPage";
 import {useTranslations} from "next-intl";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {deleteRecipe} from "@/services/db/deleteRecipe";
 import {useRouter} from "next/navigation";
-import {DndContext, useDraggable} from "@dnd-kit/core";
 import SortableStep from "@/app/[locale]/admin/recipes/[recipe]/SortableStep";
+import {useTypedLocale} from "@/hooks/useTypedLocale";
 
 const Page = () => {
   const params = useParams<{recipe: string}>();
   const [recipe, setRecipe] = useState<IRecipe | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-
-  console.log(recipe)
-
+  const locale = useTypedLocale();
   const tRecipes = useTranslations('recipes');
   const tAdmin = useTranslations('admin');
+  const tCommon = useTranslations('common');
+
+  const title = recipe ? parseJson(recipe.title) : null;
 
   const router = useRouter();
 
@@ -67,7 +67,7 @@ const Page = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
         </div>
-        <p className="text-xl text-gray-900 dark:text-white font-semibold mb-2">{error || 'Recipe not found'}</p>
+        <p className="text-xl text-gray-900 dark:text-white font-semibold mb-2">{error || tCommon('errors.recipeNotFound')}</p>
         <Link href="/admin/recipes" className="text-amber-500 hover:text-amber-600">
           {tRecipes("singlePage.backButton")}
         </Link>
@@ -104,13 +104,13 @@ const Page = () => {
 
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-amber-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Hero Section */}
       <section className="relative h-[70vh] w-full overflow-hidden">
         {recipe.recipeSteps[0]?.imgUrl && (
           <Image
             src={recipe.recipeSteps[0].imgUrl}
-            alt={recipe.title}
+            alt={title ? title[locale] : ''}
             fill
             className="object-cover"
             priority
@@ -123,7 +123,7 @@ const Page = () => {
               {recipe.category}
             </span>
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
-              {recipe.title}
+              {title && title[locale]}
             </h1>
             <div className="flex items-center gap-4 text-white/90">
               <span className="flex items-center gap-2">
@@ -167,13 +167,18 @@ const Page = () => {
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {recipe.ingredients.map((item, i) => (
+              {recipe.ingredients.map((item) => (
                 <div
-                  key={i}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gray-700 dark:to-gray-600 border border-amber-100 dark:border-gray-600"
+                  key={item.id}
+                  className="flex items-center justify-between gap-3 p-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gray-700 dark:to-gray-600 border border-amber-100 dark:border-gray-600"
                 >
-                  <span className="w-2 h-2 rounded-full bg-amber-500" />
-                  <p className="text-gray-700 dark:text-gray-200 font-medium">{item}</p>
+                  <div className="flex items-center gap-3">
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    <p className="text-gray-700 dark:text-gray-200 font-medium">{item.value[locale]}</p>
+                  </div>
+                  <span className="text-sm text-amber-600 dark:text-amber-400 font-medium whitespace-nowrap">
+                    {item.quantity} {item.unit}
+                  </span>
                 </div>
               ))}
             </div>

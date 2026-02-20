@@ -1,11 +1,13 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {Ingredients} from "@/app/[locale]/admin/page";
 
+export type LocalizedText = { en: string; uk: string };
+
 export interface IUploadData {
-  title: string;
+  title: LocalizedText;
   likes: number;
   category: string;
-  recipeSteps: { desc: string, imgUrl: string | null, id: string}[];
+  recipeSteps: { desc: LocalizedText, imgUrl: string | null, id: string }[];
   ingredients: Ingredients[];
   heroImgUrl: string | null;
   isPremium: boolean;
@@ -16,7 +18,14 @@ export const insertRecipe = async (recipeData: IUploadData) => {
   const {data, error} = await supabase
     .from('recipes')
     .insert({
-      title: recipeData.title, category: recipeData.category, likes: recipeData.likes, recipe_steps: recipeData.recipeSteps, ingredients: recipeData.ingredients, hero_img: recipeData.heroImgUrl, is_premium: recipeData.isPremium, preparing_time: recipeData.preparingTime,
+      title: recipeData.title,
+      category: recipeData.category,
+      likes: recipeData.likes,
+      recipeSteps: recipeData.recipeSteps,
+      ingredients: recipeData.ingredients,
+      heroImg: recipeData.heroImgUrl,
+      isPremium: recipeData.isPremium,
+      preparingTime: recipeData.preparingTime,
     });
 
   if (error) {

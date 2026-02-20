@@ -9,16 +9,29 @@
     "sections": {
       "basicInfo": "Основна інформація",
       "ingredients": "Інгредієнти",
-      "steps": "Кроки приготування"
+      "steps": "Кроки приготування",
+      "heroImage": "Головне зображення"
     },
     "fields": {
       "title": "Назва рецепту",
       "titlePlaceholder": "Введіть назву рецепту",
+      "titlePlaceholderUk": "Введіть назву українською",
+      "titlePlaceholderEn": "Enter title in English",
       "likes": "Вподобання",
       "category": "Категорія",
       "ingredientPlaceholder": "Введіть інгредієнт",
+      "ingredientPlaceholderUk": "Інгредієнт (UK)",
+      "ingredientPlaceholderEn": "Ingredient (EN)",
+      "quantity": "Кількість",
       "step": "Крок",
-      "stepDescPlaceholder": "Опишіть крок {step}..."
+      "stepDescPlaceholder": "Опишіть крок {step}...",
+      "stepDescLabelUk": "Опис кроку (UK)",
+      "stepDescLabelEn": "Step description (EN)",
+      "stepDescPlaceholderUk": "Опишіть крок українською...",
+      "stepDescPlaceholderEn": "Describe the step in English...",
+      "premiumContent": "Платний контент",
+      "preparingTime": "Час приготування",
+      "minutes": "Хвилин"
     },
     "buttons": {
       "add": "Додати",
@@ -26,6 +39,21 @@
       "deleteStep": "Видалити крок",
       "addNewStep": "Додати новий крок",
       "create": "Створити рецепт"
+    },
+    "tabs": {
+      "uk": "UK Українська",
+      "en": "EN English",
+      "hint": "Заповніть поля на обох мовах, перемикаючись між табами"
+    },
+    "validation": {
+      "fillAllFields": "Заповніть всі поля",
+      "fillAllIngredientFields": "Заповніть всі поля інгредієнта (UK та EN)",
+      "enterTitleBothLanguages": "Введіть назву на обох мовах",
+      "enterStepsBothLanguages": "Введіть опис кроків на обох мовах",
+      "reloadHeroImage": "Перезавантажте головне зображення",
+      "recipeNotUploaded": "Рецепт не завантажено, спробуйте ще раз",
+      "addAtLeastOneIngredient": "Додайте хоча б один інгредієнт",
+      "addAtLeastOneStep": "Додайте хоча б один крок"
     }
   },
   "list": {
