@@ -8,6 +8,7 @@ export const fetchRecipesPagination = async (pageParam: number) => {
   const {data, error} = await supabase
     .from("recipes")
     .select('*')
+    .order("created_at", {ascending: false})
     .range(start, end);
 
   if (error) throw error;

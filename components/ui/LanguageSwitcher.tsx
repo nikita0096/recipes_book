@@ -22,14 +22,14 @@ const LanguageSwitcher = () => {
       </Link>
       <Link
         href={pathname}
-        locale="uk"
+        locale="ua"
         className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
-          locale === 'uk'
+          locale === 'ua'
             ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
             : 'text-gray-600 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400'
         }`}
       >
-        UK
+        UA
       </Link>
     </div>
   );

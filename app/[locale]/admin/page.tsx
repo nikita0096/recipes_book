@@ -4,31 +4,32 @@ import React, {useEffect, useState} from 'react';
 import Image from 'next/image';
 import {useUserStore} from "@/store/useUserStore";
 import {useRouter} from "@/i18n/navigation";
-import {useTranslations} from "next-intl";
+import {useLocale, useTranslations} from "next-intl";
 import {Controller, SubmitHandler, useFieldArray, useForm} from "react-hook-form";
 import {v4 as uuidv4} from 'uuid';
-import {insertRecipe, IUploadData} from "@/services/db/insertRecipeToDatabase";
+import {insertRecipe, IUploadData, LocalizedText} from "@/services/db/insertRecipeToDatabase";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {MdDeleteForever} from "react-icons/md";
 import {Spinner} from "@/components/ui/spinner";
 import {units} from "@/constants/units";
+import {categories} from "@/constants/categories";
 
-type Locale = 'en' | 'uk';
+type Locale = 'en' | 'ua';
 
 type UnitValue = typeof units[number]['value'];
 
 export interface Ingredients {
-  value: { en: string; uk: string };
+  value: { en: string; ua: string };
   quantity: string;
   unit: UnitValue;
   id: string;
 }
 
 export interface IFormValues {
-  title: { en: string; uk: string };
+  title: { en: string; ua: string };
   likes: number;
   category: string;
-  recipeSteps: { desc: { en: string; uk: string }; image: File | null }[];
+  recipeSteps: { desc: { en: string; ua: string }; image: File | null }[];
   ingredientEn: string;
   ingredientUk: string;
   ingredients: Ingredients[];
@@ -39,48 +40,15 @@ export interface IFormValues {
   preparingTime: number;
 }
 
-interface LanguageTabsProps {
-  activeTab: Locale;
-  setActiveTab: (tab: Locale) => void;
-  t: (key: string) => string;
-}
-
-const LanguageTabs = ({activeTab, setActiveTab, t}: LanguageTabsProps) => (
-  <div className="flex gap-2 mb-4">
-    <button
-      type="button"
-      onClick={() => setActiveTab('uk')}
-      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-        activeTab === 'uk'
-          ? 'bg-amber-500 text-white'
-          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-      }`}
-    >
-      {t('form.tabs.uk')}
-    </button>
-    <button
-      type="button"
-      onClick={() => setActiveTab('en')}
-      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-        activeTab === 'en'
-          ? 'bg-amber-500 text-white'
-          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-      }`}
-    >
-      {t('form.tabs.en')}
-    </button>
-  </div>
-);
-
 const Page = () => {
   const [mounted, setMounted] = useState<boolean>(false);
   const [stepImageUrls, setStepImageUrls] = useState<string[]>([]);
   const [heroImg, setHeroImg] = useState<string | null>(null);
   const [isPending, setIsPending] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<Locale>('uk');
 
   const [validationErrorIngredients, setValidationErrorIngredients] = useState('');
+  const locale = useLocale();
 
   const t = useTranslations('admin');
 
@@ -96,9 +64,9 @@ const Page = () => {
   } = useForm<IFormValues>({
     defaultValues: {
       recipeSteps: [],
-      title: {en: '', uk: ''},
+      title: {en: '', ua: ''},
       likes: 0,
-      category: 'Desserts',
+      category: categories.find(cat => cat.en === 'Desserts')?.en,
       ingredientEn: '',
       ingredientUk: '',
       ingredientQuantity: '',
@@ -106,7 +74,7 @@ const Page = () => {
       ingredients: [],
       heroImg: null,
       isPremium: true,
-      preparingTime: 0
+      preparingTime: 0,
     }
   });
 
@@ -145,7 +113,7 @@ const Page = () => {
     }
 
     appendIngredient({
-      value: {en: ingredientEn, uk: ingredientUk},
+      value: {en: ingredientEn, ua: ingredientUk},
       quantity: quantity,
       unit: unit,
       id: uuidv4()
@@ -209,19 +177,20 @@ const Page = () => {
       return null;
     }
 
-    if (!data.title.en || !data.title.uk) {
+    if (!data.title.en || !data.title.ua) {
       setError(t('form.validation.enterTitleBothLanguages'));
       return null;
     }
 
     for (const step of data.recipeSteps) {
-      if (!step.desc.en || !step.desc.uk) {
+      if (!step.desc.en || !step.desc.ua) {
         setError(t('form.validation.enterStepsBothLanguages'));
         return null;
       }
     }
 
     const steps = [];
+    const category: LocalizedText = categories.find(cat => cat.en === data.category);
 
     for (const step of data.recipeSteps) {
       const {desc, image} = step;
@@ -266,13 +235,14 @@ const Page = () => {
 
     return {
       title: data.title,
-      category: data.category,
+      category: category,
       likes: data.likes,
       recipeSteps: steps,
       ingredients: data.ingredients,
       heroImgUrl: heroImgResult.imageUrl,
       isPremium: data.isPremium,
       preparingTime: data.preparingTime,
+      videoUrl: ''
     };
   };
 
@@ -322,14 +292,6 @@ const Page = () => {
             id="add-new-recipe-form"
             className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 md:p-8 border border-amber-100 dark:border-gray-700">
 
-        {/* Language Tabs */}
-        <div className="mb-6">
-          <LanguageTabs activeTab={activeTab} setActiveTab={setActiveTab} t={t}/>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t('form.tabs.hint')}
-          </p>
-        </div>
-
         {/* Basic Info Section */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
@@ -339,23 +301,18 @@ const Page = () => {
           </h2>
 
           <div className="space-y-4">
-            {/* Title with tabs */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                {t('form.fields.title')} ({activeTab.toUpperCase()})
+                {t('form.fields.title')}
               </label>
-              <div className={activeTab === 'uk' ? 'block' : 'hidden'}>
-                <input {...register('title.uk', {required: true})}
-                       className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
-                       type="text"
-                       placeholder={t('form.fields.titlePlaceholderUk')}/>
-              </div>
-              <div className={activeTab === 'en' ? 'block' : 'hidden'}>
-                <input {...register('title.en', {required: true})}
-                       className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
-                       type="text"
-                       placeholder={t('form.fields.titlePlaceholderEn')}/>
-              </div>
+              <input {...register('title.ua', {required: true})}
+                     className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
+                     type="text"
+                     placeholder={t('form.fields.titlePlaceholderUk')}/>
+              <input {...register('title.en', {required: true})}
+                     className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors mt-2"
+                     type="text"
+                     placeholder={t('form.fields.titlePlaceholderEn')}/>
             </div>
 
             <div className="flex gap-3 items-center">
@@ -381,8 +338,8 @@ const Page = () => {
                   className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors cursor-pointer"
                   {...register('category')}
                 >
-                  {['Desserts', 'Appetizers', 'Breakfast', 'Dinner', 'Soups', 'Salads', 'Main dishes', 'Side dishes'].map((category, i) => (
-                    <option key={i} value={category}>{category}</option>
+                  {categories.filter(cat => cat.en !== "All recipes").map((category, i) => (
+                    <option key={i} value={category.en}>{category.ua}</option>
                   ))}
                 </select>
               </div>
@@ -453,7 +410,7 @@ const Page = () => {
                     >
                       {units.map((unit) => (
                         <option key={unit.value} value={unit.value}>
-                          {unit.label.uk} / {unit.label.en} ({unit.title.uk})
+                          {unit.label.ua} / {unit.label.en} ({unit.title.ua})
                         </option>
                       ))}
                     </select>
@@ -480,7 +437,7 @@ const Page = () => {
                 className="flex flex-row items-center gap-2 px-3 py-2 rounded-full bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gray-700 dark:to-gray-600 border border-amber-200 dark:border-gray-500 text-gray-700 dark:text-gray-200"
                 key={item.id}
               >
-                <span className="font-medium">{item.value.uk}</span>
+                <span className="font-medium">{item.value.ua}</span>
                 <span className="text-gray-400">|</span>
                 <span className="text-gray-500 dark:text-gray-400">{item.value.en}</span>
                 <span className="text-amber-600">-</span>
@@ -607,10 +564,10 @@ const Page = () => {
                       {t('form.fields.stepDescLabelUk')}
                     </label>
                     <textarea
-                      {...register(`recipeSteps.${index}.desc.uk`, {required: t('form.validation.addAtLeastOneStep')})}
+                      {...register(`recipeSteps.${index}.desc.ua`, {required: t('form.validation.addAtLeastOneStep')})}
                       placeholder={t('form.fields.stepDescPlaceholderUk')}
                       rows={3}
-                      className={`w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 ${errors.recipeSteps?.[index]?.desc?.uk ? 'border-red-400' : 'border-amber-200 dark:border-gray-600'} rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors resize-none`}
+                      className={`w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 ${errors.recipeSteps?.[index]?.desc?.ua ? 'border-red-400' : 'border-amber-200 dark:border-gray-600'} rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors resize-none`}
                     />
                   </div>
                   <div>
@@ -640,7 +597,7 @@ const Page = () => {
           <button
             className={`mt-4 w-full py-3 rounded-xl border-2 border-dashed ${error && stepFields.length === 0 ? 'border-red-400' : 'border-amber-300 dark:border-gray-500'} text-amber-600 dark:text-amber-400 font-medium hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors`}
             type="button"
-            onClick={() => appendStep({desc: {en: '', uk: ''}, image: null})}
+            onClick={() => appendStep({desc: {en: '', ua: ''}, image: null})}
           >
             + {t('form.buttons.addNewStep')}
           </button>

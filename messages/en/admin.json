@@ -43,7 +43,7 @@
     "tabs": {
       "uk": "UK Ukrainian",
       "en": "EN English",
-      "hint": "Fill in the fields in both languages by switching between tabs"
+      "hint": "Fill in the fields in both languages"
     },
     "validation": {
       "fillAllFields": "Fill all fields",

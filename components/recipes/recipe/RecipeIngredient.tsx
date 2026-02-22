@@ -4,7 +4,7 @@ import {useTypedLocale} from "@/hooks/useTypedLocale";
 
 interface IngredientProps {
   ingredient: {
-    value: {en: string, uk: string};
+    value: {en: string, ua: string};
     quantity: string;
     unit: string;
   }
