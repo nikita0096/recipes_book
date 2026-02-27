@@ -10,7 +10,8 @@
       "basicInfo": "Basic Information",
       "ingredients": "Ingredients",
       "steps": "Preparation Steps",
-      "heroImage": "Main Image"
+      "heroImage": "Main Image",
+      "video": "Upload video"
     },
     "fields": {
       "title": "Recipe Title",
@@ -38,7 +39,8 @@
       "addPicture": "Add picture",
       "deleteStep": "Delete step",
       "addNewStep": "Add new step",
-      "create": "Create Recipe"
+      "create": "Create Recipe",
+      "addVideo": "Add video"
     },
     "tabs": {
       "uk": "UK Ukrainian",
@@ -53,7 +55,8 @@
       "reloadHeroImage": "Reload the main image",
       "recipeNotUploaded": "Recipe was not uploaded, try again",
       "addAtLeastOneIngredient": "Add at least one ingredient",
-      "addAtLeastOneStep": "Add at least one step"
+      "addAtLeastOneStep": "Add at least one step",
+      "enterCategory": "Enter a category"
     }
   },
   "list": {
@@ -63,6 +66,9 @@
     "error": "Error loading recipes",
     "viewRecipe": "View Recipe",
     "edit": "Edit",
-    "delete": "Delete"
+    "delete": "Delete",
+    "update": "Update",
+    "save": "Save",
+    "cancel": "Cancel"
   }
 }

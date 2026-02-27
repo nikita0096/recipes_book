@@ -13,12 +13,13 @@ import {MdDeleteForever} from "react-icons/md";
 import {Spinner} from "@/components/ui/spinner";
 import {units} from "@/constants/units";
 import {categories} from "@/constants/categories";
+import AddIngredientForm from "@/components/admin/recipe/AddIngredientForm";
 
 type Locale = 'en' | 'ua';
 
 type UnitValue = typeof units[number]['value'];
 
-export interface Ingredients {
+export interface Ingredient {
   value: { en: string; ua: string };
   quantity: string;
   unit: UnitValue;
@@ -32,12 +33,13 @@ export interface IFormValues {
   recipeSteps: { desc: { en: string; ua: string }; image: File | null }[];
   ingredientEn: string;
   ingredientUk: string;
-  ingredients: Ingredients[];
+  ingredients: Ingredient[];
   heroImg: File | null;
   ingredientQuantity: string | null;
   ingredientUnit: UnitValue;
   isPremium: boolean;
   preparingTime: number;
+  videoUrl: string;
 }
 
 const Page = () => {
@@ -75,6 +77,7 @@ const Page = () => {
       heroImg: null,
       isPremium: true,
       preparingTime: 0,
+      videoUrl: ''
     }
   });
 
@@ -190,7 +193,12 @@ const Page = () => {
     }
 
     const steps = [];
-    const category: LocalizedText = categories.find(cat => cat.en === data.category);
+    const category = categories.find(cat => cat.en === data.category);
+
+    if (!category) {
+      setError(t('form.validation.enterCategory'));
+      return null;
+    }
 
     for (const step of data.recipeSteps) {
       const {desc, image} = step;
@@ -257,7 +265,8 @@ const Page = () => {
         return;
       }
 
-      await insertRecipe(recipeData);
+      // await insertRecipe(recipeData);
+      console.log(recipeData);
       reset();
       setStepImageUrls([]);
       setHeroImg(null);
@@ -339,7 +348,8 @@ const Page = () => {
                   {...register('category')}
                 >
                   {categories.filter(cat => cat.en !== "All recipes").map((category, i) => (
-                    <option key={i} value={category.en}>{category.ua}</option>
+                    <option key={i}
+                            value={category.en}>{category[locale as Locale]}</option>
                   ))}
                 </select>
               </div>
@@ -409,7 +419,8 @@ const Page = () => {
                       className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
                     >
                       {units.map((unit) => (
-                        <option key={unit.value} value={unit.value}>
+                        <option key={unit.value}
+                                value={unit.value}>
                           {unit.label.ua} / {unit.label.en} ({unit.title.ua})
                         </option>
                       ))}
@@ -604,6 +615,27 @@ const Page = () => {
           {error && stepFields.length === 0 && (
             <p className='text-center pt-2 text-red-500'>{t('form.validation.addAtLeastOneStep')}</p>
           )}
+        </div>
+
+        {/*Video section*/}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+            <span
+              className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-amber-600 dark:text-amber-400 text-sm font-bold">5</span>
+            {t('form.sections.video')}
+          </h2>
+          <div
+            className="w-full h-40 flex items-center justify-center border-2 border-dashed border-amber-200 dark:border-gray-500 rounded-xl mb-3 bg-white dark:bg-gray-800">
+            <label
+              className="cursor-pointer px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors">
+              <input
+                type="file"
+                hidden
+                multiple={false}
+              />
+              {t('form.buttons.addVideo')}
+            </label>
+          </div>
         </div>
 
         {/* Submit Button */}
