@@ -14,14 +14,14 @@ import {useRouter} from "next/navigation";
 import SortableStep from "@/app/[locale]/admin/recipes/[recipe]/SortableStep";
 import {useTypedLocale} from "@/hooks/useTypedLocale";
 import {CiEdit} from "react-icons/ci";
-import {MdDelete} from "react-icons/md";
+import {MdDelete, MdDeleteForever} from "react-icons/md";
 import {categories} from "@/constants/categories";
 import {IoCheckmark, IoClose} from "react-icons/io5";
 import {units} from "@/constants/units";
-import {IFormValues, Ingredient} from "@/app/[locale]/admin/page";
+import {IFormValues, Ingredient, UnitValue} from "@/app/[locale]/admin/page";
 import {LocalizedText} from "@/services/db/insertRecipeToDatabase";
-import AddIngredientForm from "@/components/admin/recipe/AddIngredientForm";
 import {Controller, useFieldArray, useForm} from "react-hook-form";
+import {v4 as uuidv4} from "uuid";
 
 // Types for editing
 type EditingField =
@@ -37,12 +37,31 @@ interface EditingValues {
   category: string;
   title: { ua: string; en: string };
   ingredients: Ingredient[];
-  recipeSteps: { desc: LocalizedText; imgUrl: File | string | null, id: string }[];
+  recipeSteps: { desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string }[];
   likes: number;
   ingredientEn: string;
-  ingredientUk: string;
+  ingredientUa: string;
   ingredientQuantity: string | null;
   ingredientUnit: UnitValue;
+}
+
+interface EditingStepData {
+  id: string;
+  desc: { ua: string; en: string };
+  imgUrl: string | null;
+  newImage: File | null;
+}
+
+interface EditedValues {
+  heroImage: string;
+  category: string;
+  title: { ua: string; en: string };
+  ingredient: Ingredient | null;
+  step: {
+    index: number;
+    imgUrl: string;
+    desc: { ua: string; en: string };
+  } | null;
 }
 
 const initialEditedValues: EditedValues = {
@@ -55,10 +74,15 @@ const initialEditedValues: EditedValues = {
 
 const Page = () => {
   const params = useParams<{ recipe: string }>();
+
   const [recipe, setRecipe] = useState<IRecipe | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [isEditingIngredient, setIsEditingIngredient] = useState<Record<string, boolean>>({});
+  const [editingIngredientsData, setEditingIngredientsData] = useState<Record<string, Ingredient>>({});
+  const [isEditingStep, setIsEditingStep] = useState<Record<string, boolean>>({});
+  const [editingStepsData, setEditingStepsData] = useState<Record<string, EditingStepData>>({});
 
   const [updatedHeroImg, setUpdateHeroImg] = useState<string | null>(null);
 
@@ -82,14 +106,14 @@ const Page = () => {
     formState: {errors}
   } = useForm<EditingValues>({
     defaultValues: {
-      heroImg: recipe?.heroImg,
-      category: recipe?.category,
-      title: recipe?.title,
-      ingredients: recipe?.ingredients,
-      recipeSteps: recipe?.recipeSteps,
-      likes: recipe?.likes,
+      heroImg: '',
+      category: '',
+      title: { ua: '', en: ''},
+      ingredients: [],
+      recipeSteps: [],
+      likes: 0,
       ingredientEn: '',
-      ingredientUk: '',
+      ingredientUa: '',
       ingredientQuantity: '',
       ingredientUnit: units[0].value,
     }
@@ -125,15 +149,6 @@ const Page = () => {
           ...data,
           title: parsedTitle
         });
-
-        if (data) {
-          setValue('title', parsedTitle);
-          setValue('heroImg', data.heroImg);
-          setValue('category', data.category);
-          setValue('ingredients', data.ingredients);
-          setValue('recipeSteps', data.recipeSteps);
-          setValue('likes', data.likes);
-        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Recipe not found');
       } finally {
@@ -143,6 +158,8 @@ const Page = () => {
 
     loadRecipe();
   }, [params.recipe]);
+
+  console.log(recipe?.recipeSteps, stepFields)
 
   const titleParsed = parseJson(recipe?.title) as LocalizedText;
 
@@ -159,6 +176,15 @@ const Page = () => {
   });
 
   const toggleEditButton = () => {
+    if (recipe) {
+      setValue('title', titleParsed);
+      setValue('heroImg', recipe.heroImg);
+      setValue('category', recipe.category);
+      setValue('ingredients', recipe.ingredients);
+      setValue('recipeSteps', recipe.recipeSteps.map(step => ({ ...step, imgFile: null })));
+      setValue('likes', recipe.likes);
+    }
+
     setIsEditing(!isEditing);
   }
 
@@ -168,8 +194,8 @@ const Page = () => {
     router.push(`/admin/recipes`);
   }
 
-  const handleHeroImgFile = (e) => {
-    const file = e.target.files[0];
+  const handleHeroImgFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
 
     if (!file) {
       return;
@@ -177,7 +203,35 @@ const Page = () => {
 
     const url = URL.createObjectURL(file);
     setUpdateHeroImg(url);
-    setValue('heroImg', file);
+    setValue('heroImg', url);
+  }
+
+  const addNewIngredient = () => {
+    const ingredientUa = getValues('ingredientUa')?.trim();
+    const ingredientEn = getValues('ingredientEn')?.trim();
+    const quantity = getValues('ingredientQuantity')?.trim();
+    const unit = getValues('ingredientUnit');
+
+    if (!ingredientUa || !ingredientEn || !quantity || !unit) {
+      return;
+    }
+
+    const newIngredient = {
+      value: {en: ingredientEn, ua: ingredientUa},
+      quantity: quantity,
+      unit: unit,
+      id: uuidv4()
+    };
+
+    appendIngredient(newIngredient);
+    // setRecipe(prev => prev ? {
+    //   ...prev,
+    //   ingredients: [...prev.ingredients, newIngredient]
+    // } : prev);
+    resetField('ingredientUa');
+    resetField('ingredientEn');
+    resetField('ingredientQuantity');
+    resetField('ingredientUnit');
   }
 
   const startEditing = (field: EditingField) => {
@@ -193,37 +247,147 @@ const Page = () => {
     setEditingField(field);
   };
 
-  const startEditingIngredient = (ingredient: Ingredients) => {
-    const valueParsed = typeof ingredient.value === 'string'
-      ? parseJson(ingredient.value) as { ua: string; en: string }
-      : ingredient.value;
-
-    setEditedValues(prev => ({
+  const startEditingIngredient = (ingredient: Ingredient) => {
+    setIsEditingIngredient(prev => ({
       ...prev,
-      ingredient: {
-        id: ingredient.id,
-        value: valueParsed,
-        quantity: ingredient.quantity,
-        unit: ingredient.unit,
-      },
-    }));
-    setEditingField(`ingredient-${ingredient.id}`);
-  };
+      [ingredient.id]: true
+    }))
 
-  const startEditingStep = (step: IRecipe['recipeSteps'][0], index: number) => {
+    setEditingIngredientsData(prev => ({
+      ...prev,
+      [ingredient.id]: { ...ingredient },
+    }));
+  }
+
+  const cancelIngredientsEditing = (id: string) => {
+    setIsEditingIngredient(prev => (
+      Object.fromEntries(
+        Object.entries(prev).filter(([key]) => key !== id)
+      )
+    ))
+  }
+
+  const handleIngredientChange = (id: string, name: string, value: string) => {
+    console.log(name);
+    if(name === 'quantity' || name === 'unit') {
+      setEditingIngredientsData(prev => ({
+        ...prev,
+        [id]: {
+          ...prev[id],
+          [name]: value,
+        }
+      }))
+    } else {
+      const locale = name.split('.')[1];
+      setEditingIngredientsData(prev => ({
+        ...prev,
+        [id]: {
+          ...prev[id],
+          value: {
+            ...prev[id].value,
+            [locale]: value,
+          },
+        }
+      }))
+    }
+  }
+
+  const saveIngredientsChanges = (id: string) => {
+    const updatedIngredient = {...editingIngredientsData[id]}
+
+    const ingredientsFormData = getValues('ingredients');
+
+    setValue('ingredients', ingredientsFormData.map(item => item.id === id ? updatedIngredient : item));
+
+    cancelIngredientsEditing(id);
+  }
+
+  const startEditingStep = (step: { id: string; desc: LocalizedText | string; imgUrl: string | null; imgFile?: File | null }) => {
     const descParsed = typeof step.desc === 'string'
-      ? parseJson(step.desc) as { ua: string; en: string }
+      ? parseJson(step.desc) as unknown as { ua: string; en: string }
       : step.desc;
 
-    setEditedValues(prev => ({
+    setIsEditingStep(prev => ({
       ...prev,
-      step: {
-        index,
-        imgUrl: step.imgUrl || '',
-        desc: descParsed,
-      },
+      [step.id]: true
     }));
-    setEditingField(`step-${index}`);
+
+    setEditingStepsData(prev => ({
+      ...prev,
+      [step.id]: {
+        id: step.id,
+        desc: { ...descParsed },
+        imgUrl: step.imgUrl,
+        newImage: step.imgFile ?? null,
+      }
+    }));
+  };
+
+  const cancelStepEditing = (id: string) => {
+    setIsEditingStep(prev =>
+      Object.fromEntries(
+        Object.entries(prev).filter(([key]) => key !== id)
+      )
+    );
+    setEditingStepsData(prev =>
+      Object.fromEntries(
+        Object.entries(prev).filter(([key]) => key !== id)
+      )
+    );
+  };
+
+  const handleStepChange = (id: string, field: 'ua' | 'en', value: string) => {
+    setEditingStepsData(prev => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        desc: {
+          ...prev[id].desc,
+          [field]: value,
+        }
+      }
+    }));
+  };
+
+  const handleStepImageChange = (id: string, file: File) => {
+    const previewUrl = URL.createObjectURL(file);
+    setEditingStepsData(prev => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        imgUrl: previewUrl,
+        newImage: file,
+      }
+    }));
+  };
+
+  const deleteStepImage = (id: string) => {
+    setEditingStepsData(prev => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        imgUrl: null,
+        newImage: null,
+      }
+    }));
+  };
+
+  const saveStepChanges = (id: string) => {
+    const editedStep = editingStepsData[id];
+    const stepsFormData = getValues('recipeSteps');
+
+    setValue('recipeSteps', stepsFormData.map(step =>
+      step.id === id
+        ? {
+          ...step,
+          desc: editedStep.desc,
+          imgUrl: editedStep.imgUrl,
+          imgFile: editedStep.newImage ?? step.imgFile,
+        }
+        : step
+    ));
+
+    cancelStepEditing(id);
   };
 
   const saveEdit = () => {
@@ -263,20 +427,9 @@ const Page = () => {
     }
 
     // TODO: Add API call to save changes
-    cancelEdit();
+
   };
 
-  const cancelEdit = () => {
-    setEditingField(null);
-    setEditedValues(initialEditedValues);
-  };
-
-  const updateEditedValue = <K extends keyof EditedValues>(
-    key: K,
-    value: EditedValues[K]
-  ) => {
-    setEditedValues(prev => ({...prev, [key]: value}));
-  };
 
   if (isLoading) {
     return <LoadingPage/>;
@@ -304,8 +457,6 @@ const Page = () => {
       </div>
     );
   }
-
-  console.log(getValues())
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-900 dark:to-gray-800">
@@ -341,7 +492,6 @@ const Page = () => {
                   <select
                     {...register('category')}
                     value={editedValues.category}
-                    onChange={(e) => updateEditedValue('category', e.target.value)}
                     className="px-4 py-1 text-sm font-medium text-amber-900 bg-amber-100 rounded-full border-2 border-amber-300 focus:outline-none focus:border-amber-500"
                   >
                     {categories.filter(cat => cat.en !== 'All recipes').map((category) => (
@@ -435,7 +585,14 @@ const Page = () => {
             </div>
           </div>
         </div>
-        <div className='absolute top-3 right-3 flex flex-col gap-2'>
+        <div className='absolute top-3 right-3 flex flex-col gap-7'>
+          <button
+            className='flex flex-row items-center gap-2 px-4 py-2 bg-red-500 font-medium rounded-xl hover:bg-red-400 transition-colors shadow-md'
+            onClick={() => handleDeleteRecipe(recipe.id)}
+          >
+            <MdDelete/>
+            <span>{tAdmin('list.delete')}</span>
+          </button>
           {isEditing ? (
             <div className={`flex flex-col items-center gap-2`}>
               <button
@@ -451,18 +608,11 @@ const Page = () => {
             </div>
           ) : (
             <button
-              className='flex flex-row items-center gap-2 px-4 py-2 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors shadow-md'
+              className='flex flex-row items-center gap-2 px-6 py-2 bg-amber-700 text-white font-medium rounded-xl hover:bg-amber-500 transition-colors shadow-md'
               onClick={toggleEditButton}>
               <CiEdit className="text-xl"/> <span>{tAdmin('list.edit')}</span>
             </button>
           )}
-          <button
-            className='flex flex-row items-center gap-2 px-4 py-2 bg-red-100 dark:bg-red-900/30 text-white-600 dark:text-white-400 font-medium rounded-xl hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors shadow-md'
-            onClick={() => handleDeleteRecipe(recipe.id)}
-          >
-            <MdDelete/>
-            <span>{tAdmin('list.delete')}</span>
-          </button>
         </div>
       </section>
 
@@ -485,21 +635,19 @@ const Page = () => {
 
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {recipe.ingredients.map((item) => (
-                <div key={item.id}>
-                  {editingField === `ingredient-${item.id}` && editedValues.ingredient ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {(!isEditing ? recipe.ingredients : ingredientFields).map((ingredient, i) => (
+                <div key={ingredient.id}>
+                  {isEditingIngredient[ingredient.id] ? (
                     <div className="p-3 rounded-xl bg-amber-50 dark:bg-gray-700 border-2 border-amber-400">
                       <div className="space-y-2 mb-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-gray-500 w-6">UK:</span>
+                          <span className="text-xs font-medium text-gray-500 w-6">UA:</span>
                           <input
                             type="text"
-                            value={editedValues.ingredient.value.ua}
-                            onChange={(e) => updateEditedValue('ingredient', {
-                              ...editedValues.ingredient!,
-                              value: {...editedValues.ingredient!.value, ua: e.target.value}
-                            })}
+                            name='value.ua'
+                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                            value={editingIngredientsData[ingredient.id].value.ua}
                             className="flex-1 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                           />
                         </div>
@@ -507,31 +655,25 @@ const Page = () => {
                           <span className="text-xs font-medium text-gray-500 w-6">EN:</span>
                           <input
                             type="text"
-                            value={editedValues.ingredient.value.en}
-                            onChange={(e) => updateEditedValue('ingredient', {
-                              ...editedValues.ingredient!,
-                              value: {...editedValues.ingredient!.value, en: e.target.value}
-                            })}
+                            name='value.en'
+                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                            value={editingIngredientsData[ingredient.id].value.en}
                             className="flex-1 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                           />
                         </div>
                         <div className="flex gap-2">
                           <input
                             type="text"
-                            value={editedValues.ingredient.quantity}
-                            onChange={(e) => updateEditedValue('ingredient', {
-                              ...editedValues.ingredient!,
-                              quantity: e.target.value
-                            })}
+                            name='quantity'
+                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                            value={editingIngredientsData[ingredient.id].quantity}
                             placeholder="Qty"
                             className="w-16 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                           />
                           <select
-                            value={editedValues.ingredient.unit}
-                            onChange={(e) => updateEditedValue('ingredient', {
-                              ...editedValues.ingredient!,
-                              unit: e.target.value
-                            })}
+                            name='unit'
+                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                            value={editingIngredientsData[ingredient.id].unit}
                             className="flex-1 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                           >
                             {units.map((u) => (
@@ -541,15 +683,15 @@ const Page = () => {
                           </select>
                         </div>
                       </div>
-                      <div className="flex gap-2 justify-end">
+                      <div className="flex gap-5 justify-end">
                         <button
-                          onClick={saveEdit}
+                          onClick={() => saveIngredientsChanges(ingredient.id)}
                           className="p-1 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
                         >
                           <IoCheckmark className="text-sm"/>
                         </button>
                         <button
-                          onClick={cancelEdit}
+                          onClick={() => cancelIngredientsEditing(ingredient.id)}
                           className="p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                         >
                           <IoClose className="text-sm"/>
@@ -560,19 +702,27 @@ const Page = () => {
                     <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gray-700 dark:to-gray-600 border border-amber-100 dark:border-gray-600">
                       <div className="flex items-center gap-3">
                         <span className="w-2 h-2 rounded-full bg-amber-500"/>
-                        <p className="text-gray-700 dark:text-gray-200 font-medium">{item.value[locale]}</p>
+                        <p className="text-gray-700 dark:text-gray-200 font-medium">{ingredient.value[locale]}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-amber-600 dark:text-amber-400 font-medium whitespace-nowrap">
-                          {item.quantity} {item.unit}
+                          {ingredient.quantity} {ingredient.unit}
                         </span>
                         {isEditing && (
-                          <button
-                            onClick={() => startEditingIngredient(item)}
-                            className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-full hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors shadow-md p-1"
-                          >
-                            <CiEdit className="text-lg"/>
-                          </button>
+                          <div className='flex items-center gap-2'>
+                            <button
+                              onClick={() => startEditingIngredient(ingredient)}
+                              className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-full hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors shadow-md p-1"
+                            >
+                              <CiEdit className="text-lg"/>
+                            </button>
+                            <button
+                              onClick={() => removeIngredient(i)}
+                              className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-full hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors shadow-md p-1"
+                            >
+                              <MdDelete className='text-lg'/>
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -584,61 +734,55 @@ const Page = () => {
           </div>
           {isEditing && (
             <div className="space-y-3 mb-4 mt-4">
-              <Controller
-                name='ingredients'
-                control={control}
-                rules={{required: 'Ingredients are required'}}
-                render={() => (
-                  <div className="space-y-3">
-                    {/* Ingredient name inputs for both languages */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <input {...register('ingredientUk')}
-                             className={error !== null && getValues('ingredients').length === 0 ?
-                               "w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-red-400 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors" :
-                               "w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
-                             }
-                             type="text"
-                             placeholder={tAdmin('form.fields.ingredientPlaceholderUk')}/>
-                      <input {...register('ingredientEn')}
-                             className={error !== null && getValues('ingredients').length === 0 ?
-                               "w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-red-400 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors" :
-                               "w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
-                             }
-                             type="text"
-                             placeholder={tAdmin('form.fields.ingredientPlaceholderEn')}/>
-                    </div>
+              <h3>{tAdmin('form.sections.addIngredient')}</h3>
+              <div className="space-y-3">
+                {/* Ingredient name inputs for both languages */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <input {...register('ingredientUa')}
+                         className={error !== null && getValues('ingredients').length === 0 ?
+                           "w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-red-400 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors" :
+                           "w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
+                         }
+                         type="text"
+                         placeholder={tAdmin('form.fields.ingredientPlaceholderUa')}/>
+                  <input {...register('ingredientEn')}
+                         className={error !== null && getValues('ingredients').length === 0 ?
+                           "w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-red-400 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors" :
+                           "w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
+                         }
+                         type="text"
+                         placeholder={tAdmin('form.fields.ingredientPlaceholderEn')}/>
+                </div>
 
-                    {/* Quantity and Unit */}
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <input {...register('ingredientQuantity')}
-                             className={error !== null && getValues('ingredients').length === 0 ?
-                               "flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-red-400 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors" :
-                               "flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
-                             }
-                             type="text"
-                             placeholder={tAdmin('form.fields.quantity')}/>
-                      <select
-                        {...register('ingredientUnit')}
-                        className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
-                      >
-                        {units.map((unit) => (
-                          <option key={unit.value}
-                                  value={unit.value}>
-                            {unit.label.ua} / {unit.label.en} ({unit.title.ua})
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        className="px-6 py-3 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors"
-                        onClick={(e) => handleIngredientsForm(e)}
-                      >
-                        {tAdmin('form.buttons.add')}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              />
-              {errors.ingredients && <p className='text-red-500'>{t('form.validation.addAtLeastOneIngredient')}</p>}
+                {/* Quantity and Unit */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input {...register('ingredientQuantity')}
+                         className={error !== null && getValues('ingredients').length === 0 ?
+                           "flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-red-400 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors" :
+                           "flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
+                         }
+                         type="text"
+                         placeholder={tAdmin('form.fields.quantity')}/>
+                  <select
+                    {...register('ingredientUnit')}
+                    className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
+                  >
+                    {units.map((unit) => (
+                      <option key={unit.value}
+                              value={unit.value}>
+                        {unit.label.ua} / {unit.label.en} ({unit.title.ua})
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    className="px-6 py-3 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors"
+                    onClick={addNewIngredient}
+                  >
+                    {tAdmin('form.buttons.add')}
+                  </button>
+                </div>
+              </div>
+              {errors.ingredients && <p className='text-red-500'>{tAdmin('form.validation.addAtLeastOneIngredient')}</p>}
             </div>
           )}
         </section>
@@ -661,91 +805,135 @@ const Page = () => {
           </div>
 
           <div className="space-y-8">
-            {recipe.recipeSteps.map((step, i) => (
-              <div key={step.id || i}>
-                {editingField === `step-${i}` && editedValues.step ? (
+            {(!isEditing ? recipe.recipeSteps : stepFields).map((step, i) => (
+              <div key={step.id}>
+                {isEditingStep[step.id] ? (
                   <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border-2 border-amber-400">
                     <div className="p-6">
-                      <h4 className="font-bold text-gray-900 dark:text-white mb-4">Step {i + 1}</h4>
+                      <h4 className="font-bold text-gray-900 dark:text-white mb-4">{tRecipes('singlePage.step')} {i + 1}</h4>
 
-                      {/* Image URL */}
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image
-                          URL</label>
-                        <input
-                          type="text"
-                          value={editedValues.step.imgUrl}
-                          onChange={(e) => updateEditedValue('step', {
-                            ...editedValues.step!,
-                            imgUrl: e.target.value
-                          })}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                        />
-                      </div>
+                      {/* Image */}
+                      {editingStepsData[step.id]?.imgUrl ? (
+                        <div className="relative mb-4">
+                          <Image
+                            className="rounded-xl w-full object-cover max-h-64"
+                            width={500}
+                            height={300}
+                            src={editingStepsData[step.id].imgUrl!}
+                            alt={`Step ${i + 1} image`}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => deleteStepImage(step.id)}
+                            className="absolute top-2 right-2 w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
+                          >
+                            <MdDeleteForever className="text-xl"/>
+                          </button>
+                          <label className="absolute bottom-2 right-2 cursor-pointer px-3 py-1.5 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors shadow-lg">
+                            <input
+                              type="file"
+                              hidden
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleStepImageChange(step.id, file);
+                              }}
+                            />
+                            {tAdmin('form.buttons.changeImage')}
+                          </label>
+                        </div>
+                      ) : (
+                        <div className="w-full h-40 flex items-center justify-center border-2 border-dashed border-amber-200 dark:border-gray-500 rounded-xl mb-4 bg-gray-50 dark:bg-gray-700">
+                          <label className="cursor-pointer px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors">
+                            <input
+                              type="file"
+                              hidden
+                              accept="image/*"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleStepImageChange(step.id, file);
+                              }}
+                            />
+                            {tAdmin('form.buttons.addPicture')}
+                          </label>
+                        </div>
+                      )}
 
                       {/* Description UK */}
                       <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description
-                          (UK)</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          {tAdmin('form.fields.descriptionUa')}
+                        </label>
                         <textarea
-                          value={editedValues.step.desc.ua}
-                          onChange={(e) => updateEditedValue('step', {
-                            ...editedValues.step!,
-                            desc: {...editedValues.step!.desc, ua: e.target.value}
-                          })}
+                          value={editingStepsData[step.id]?.desc.ua ?? ''}
+                          onChange={(e) => handleStepChange(step.id, 'ua', e.target.value)}
                           rows={3}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:border-amber-500"
                         />
                       </div>
 
                       {/* Description EN */}
                       <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description
-                          (EN)</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          {tAdmin('form.fields.descriptionEn')}
+                        </label>
                         <textarea
-                          value={editedValues.step.desc.en}
-                          onChange={(e) => updateEditedValue('step', {
-                            ...editedValues.step!,
-                            desc: {...editedValues.step!.desc, en: e.target.value}
-                          })}
+                          value={editingStepsData[step.id]?.desc.en ?? ''}
+                          onChange={(e) => handleStepChange(step.id, 'en', e.target.value)}
                           rows={3}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:border-amber-500"
                         />
                       </div>
 
-                      <div className="flex gap-2 justify-end">
+                      <div className="flex gap-3 justify-end">
                         <button
-                          onClick={cancelEdit}
-                          className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-white rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                          onClick={() => saveStepChanges(step.id)}
+                          className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
                         >
-                          Cancel
+                          <IoCheckmark className="text-lg"/>
                         </button>
                         <button
-                          onClick={saveEdit}
-                          className="px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+                          onClick={() => cancelStepEditing(step.id)}
+                          className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                         >
-                          Save
+                          <IoClose className="text-lg"/>
                         </button>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-                    <SortableStep step={step}
-                                  id={i}/>
+                    <SortableStep step={step} id={i}/>
                     {isEditing && (
-                      <button
-                        onClick={() => startEditingStep(step, i)}
-                        className="absolute top-3 right-3 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors shadow-md p-2 z-10"
-                      >
-                        <CiEdit className="text-2xl"/>
-                      </button>
+                      <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+                        <button
+                          onClick={() => startEditingStep(step)}
+                          className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors shadow-md p-2"
+                        >
+                          <CiEdit className="text-2xl"/>
+                        </button>
+                        <button
+                          onClick={() => removeStep(i)}
+                          className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded-xl hover:bg-red-200 dark:hover:bg-red-900 transition-colors shadow-md p-2"
+                        >
+                          <MdDelete className="text-2xl"/>
+                        </button>
+                      </div>
                     )}
                   </div>
                 )}
               </div>
             ))}
           </div>
+          {isEditing && (
+            <button
+              className={`mt-4 w-full py-3 rounded-xl border-2 border-dashed ${error && stepFields.length === 0 ? 'border-red-400' : 'border-amber-300 dark:border-gray-500'} text-amber-600 dark:text-amber-400 font-medium hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors`}
+              type="button"
+              onClick={() => appendStep({desc: {en: '', ua: ''}, imgUrl: null, imgFile: null, id: uuidv4()})}
+            >
+              + {tAdmin('form.buttons.addNewStep')}
+            </button>
+          )}
         </section>
 
         {/* Back Button */}

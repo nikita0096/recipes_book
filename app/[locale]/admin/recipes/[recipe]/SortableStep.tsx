@@ -35,6 +35,7 @@ const SortableStep = ({step, id}: SortableStepProps) => {
               alt={`${tRecipes('singlePage.step')} ${id + 1}`}
               fill
               className="object-cover"
+              unoptimized={step.imgUrl.startsWith('blob:')}
             />
           </div>
         )

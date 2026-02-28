@@ -13,11 +13,10 @@ import {MdDeleteForever} from "react-icons/md";
 import {Spinner} from "@/components/ui/spinner";
 import {units} from "@/constants/units";
 import {categories} from "@/constants/categories";
-import AddIngredientForm from "@/components/admin/recipe/AddIngredientForm";
 
 type Locale = 'en' | 'ua';
 
-type UnitValue = typeof units[number]['value'];
+export type UnitValue = typeof units[number]['value'];
 
 export interface Ingredient {
   value: { en: string; ua: string };
@@ -32,7 +31,7 @@ export interface IFormValues {
   category: string;
   recipeSteps: { desc: { en: string; ua: string }; image: File | null }[];
   ingredientEn: string;
-  ingredientUk: string;
+  ingredientUa: string;
   ingredients: Ingredient[];
   heroImg: File | null;
   ingredientQuantity: string | null;
@@ -70,7 +69,7 @@ const Page = () => {
       likes: 0,
       category: categories.find(cat => cat.en === 'Desserts')?.en,
       ingredientEn: '',
-      ingredientUk: '',
+      ingredientUa: '',
       ingredientQuantity: '',
       ingredientUnit: units[0].value,
       ingredients: [],
@@ -105,23 +104,23 @@ const Page = () => {
 
   const handleIngredientsForm = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    const ingredientUk = getValues('ingredientUk')?.trim();
+    const ingredientUa = getValues('ingredientUa')?.trim();
     const ingredientEn = getValues('ingredientEn')?.trim();
     const quantity = getValues('ingredientQuantity')?.trim();
     const unit = getValues('ingredientUnit');
 
-    if (!ingredientUk || !ingredientEn || !quantity || !unit) {
+    if (!ingredientUa || !ingredientEn || !quantity || !unit) {
       setValidationErrorIngredients(t('form.validation.fillAllIngredientFields'));
       return;
     }
 
     appendIngredient({
-      value: {en: ingredientEn, ua: ingredientUk},
+      value: {en: ingredientEn, ua: ingredientUa},
       quantity: quantity,
       unit: unit,
       id: uuidv4()
     });
-    resetField('ingredientUk');
+    resetField('ingredientUa');
     resetField('ingredientEn');
     resetField('ingredientQuantity');
     resetField('ingredientUnit');
@@ -265,8 +264,8 @@ const Page = () => {
         return;
       }
 
-      // await insertRecipe(recipeData);
-      console.log(recipeData);
+      await insertRecipe(recipeData);
+
       reset();
       setStepImageUrls([]);
       setHeroImg(null);
@@ -317,7 +316,7 @@ const Page = () => {
               <input {...register('title.ua', {required: true})}
                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
                      type="text"
-                     placeholder={t('form.fields.titlePlaceholderUk')}/>
+                     placeholder={t('form.fields.titlePlaceholderUa')}/>
               <input {...register('title.en', {required: true})}
                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors mt-2"
                      type="text"
@@ -326,7 +325,7 @@ const Page = () => {
 
             <div className="flex gap-3 items-center">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t('form.fields.premiumContent')}:</label>
-              <input className="text-2xl"
+              <input className="w-5 h-5 accent-green-500"
                      type="checkbox" {...register('isPremium')}/>
             </div>
 
@@ -389,13 +388,13 @@ const Page = () => {
                 <div className="space-y-3">
                   {/* Ingredient name inputs for both languages */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input {...register('ingredientUk')}
+                    <input {...register('ingredientUa')}
                            className={error !== null && getValues('ingredients').length === 0 ?
                              "w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-red-400 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors" :
                              "w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
                            }
                            type="text"
-                           placeholder={t('form.fields.ingredientPlaceholderUk')}/>
+                           placeholder={t('form.fields.ingredientPlaceholder')}/>
                     <input {...register('ingredientEn')}
                            className={error !== null && getValues('ingredients').length === 0 ?
                              "w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-red-400 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors" :
@@ -572,11 +571,11 @@ const Page = () => {
                 <div className="space-y-3">
                   <div>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
-                      {t('form.fields.stepDescLabelUk')}
+                      {t('form.fields.stepDescLabel')}
                     </label>
                     <textarea
                       {...register(`recipeSteps.${index}.desc.ua`, {required: t('form.validation.addAtLeastOneStep')})}
-                      placeholder={t('form.fields.stepDescPlaceholderUk')}
+                      placeholder={t('form.fields.stepDescPlaceholder')}
                       rows={3}
                       className={`w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 ${errors.recipeSteps?.[index]?.desc?.ua ? 'border-red-400' : 'border-amber-200 dark:border-gray-600'} rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors resize-none`}
                     />

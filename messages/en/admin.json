@@ -11,25 +11,28 @@
       "ingredients": "Ingredients",
       "steps": "Preparation Steps",
       "heroImage": "Main Image",
-      "video": "Upload video"
+      "video": "Upload video",
+      "addIngredient": "Add new ingredient"
     },
     "fields": {
       "title": "Recipe Title",
       "titlePlaceholder": "Enter recipe title",
-      "titlePlaceholderUk": "Enter title in Ukrainian",
+      "titlePlaceholderUa": "Enter title in Ukrainian",
       "titlePlaceholderEn": "Enter title in English",
       "likes": "Likes",
       "category": "Category",
       "ingredientPlaceholder": "Enter ingredient",
-      "ingredientPlaceholderUk": "Ingredient (UK)",
+      "ingredientPlaceholderUa": "Ingredient (UA)",
       "ingredientPlaceholderEn": "Ingredient (EN)",
       "quantity": "Quantity",
       "step": "Step",
       "stepDescPlaceholder": "Describe step {step}...",
-      "stepDescLabelUk": "Step description (UK)",
+      "stepDescLabelUa": "Step description (UA)",
       "stepDescLabelEn": "Step description (EN)",
-      "stepDescPlaceholderUk": "Describe the step in Ukrainian...",
+      "stepDescPlaceholderUa": "Describe the step in Ukrainian...",
       "stepDescPlaceholderEn": "Describe the step in English...",
+      "descriptionUa": "Description (Ukrainian)",
+      "descriptionEn": "Description (English)",
       "premiumContent": "Premium content",
       "preparingTime": "Preparing time",
       "minutes": "Minutes"
@@ -37,19 +40,20 @@
     "buttons": {
       "add": "Add",
       "addPicture": "Add picture",
+      "changeImage": "Change image",
       "deleteStep": "Delete step",
       "addNewStep": "Add new step",
       "create": "Create Recipe",
       "addVideo": "Add video"
     },
     "tabs": {
-      "uk": "UK Ukrainian",
+      "uk": "UA Ukrainian",
       "en": "EN English",
       "hint": "Fill in the fields in both languages"
     },
     "validation": {
       "fillAllFields": "Fill all fields",
-      "fillAllIngredientFields": "Fill all ingredient fields (UK and EN)",
+      "fillAllIngredientFields": "Fill all ingredient fields (UA and EN)",
       "enterTitleBothLanguages": "Enter title in both languages",
       "enterStepsBothLanguages": "Enter steps description in both languages",
       "reloadHeroImage": "Reload the main image",
@@ -67,7 +71,7 @@
     "viewRecipe": "View Recipe",
     "edit": "Edit",
     "delete": "Delete",
-    "update": "Update",
+    "update": "Update picture",
     "save": "Save",
     "cancel": "Cancel"
   }
