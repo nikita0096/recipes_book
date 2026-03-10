@@ -1,14 +1,14 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
-import {Ingredients} from "@/app/[locale]/admin/page";
+import {Ingredient, LocalizedText} from "@/types/forms";
 
-export type LocalizedText = { en: string; ua: string };
+export type { LocalizedText };
 
 export interface IUploadData {
   title: LocalizedText;
   likes: number;
   category: LocalizedText;
   recipeSteps: { desc: LocalizedText, imgUrl: string | null, id: string }[];
-  ingredients: Ingredients[];
+  ingredients: Ingredient[];
   heroImgUrl: string | null;
   isPremium: boolean;
   preparingTime: number;

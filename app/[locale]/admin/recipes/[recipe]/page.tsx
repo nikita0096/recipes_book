@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import {Link} from "@/i18n/navigation";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {useParams} from "next/navigation";
 import {IRecipe, parseJson} from "@/types/recipe";
 import {fetchRecipe} from "@/services/db/fetchRecipe";
@@ -11,38 +11,48 @@ import {useTranslations} from "next-intl";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {deleteRecipe} from "@/services/db/deleteRecipe";
 import {useRouter} from "next/navigation";
-import SortableStep from "@/app/[locale]/admin/recipes/[recipe]/SortableStep";
+import {SortableStep} from "@/components/admin";
+import {
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors, TouchSensor
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy
+} from "@dnd-kit/sortable";
 import {useTypedLocale} from "@/hooks/useTypedLocale";
 import {CiEdit} from "react-icons/ci";
 import {MdDelete, MdDeleteForever} from "react-icons/md";
 import {categories} from "@/constants/categories";
 import {IoCheckmark, IoClose} from "react-icons/io5";
 import {units} from "@/constants/units";
-import {IFormValues, Ingredient, UnitValue} from "@/app/[locale]/admin/page";
-import {LocalizedText} from "@/services/db/insertRecipeToDatabase";
+import {Ingredient, LocalizedText, UnitValue} from "@/types/forms";
 import {Controller, useFieldArray, useForm} from "react-hook-form";
 import {v4 as uuidv4} from "uuid";
+import {CSS} from "@dnd-kit/utilities";
+import SortableIngredient from "@/components/admin/SortableIngredient";
 
-// Types for editing
-type EditingField =
-  | 'heroImage'
-  | 'category'
-  | 'title'
-  | `ingredient-${string}`
-  | `step-${number}`
-  | null;
+type StepFields = { desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string }
 
 interface EditingValues {
   heroImg: string;
-  category: string;
+  category: { ua: string; en: string };
   title: { ua: string; en: string };
   ingredients: Ingredient[];
-  recipeSteps: { desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string }[];
+  recipeSteps: StepFields[];
   likes: number;
   ingredientEn: string;
   ingredientUa: string;
   ingredientQuantity: string | null;
   ingredientUnit: UnitValue;
+  videoUrl: string;
 }
 
 interface EditingStepData {
@@ -54,7 +64,7 @@ interface EditingStepData {
 
 interface EditedValues {
   heroImage: string;
-  category: string;
+  category: { ua: string; en: string };
   title: { ua: string; en: string };
   ingredient: Ingredient | null;
   step: {
@@ -66,7 +76,7 @@ interface EditedValues {
 
 const initialEditedValues: EditedValues = {
   heroImage: '',
-  category: '',
+  category: {ua: '', en: ''},
   title: {ua: '', en: ''},
   ingredient: null,
   step: null,
@@ -76,8 +86,10 @@ const Page = () => {
   const params = useParams<{ recipe: string }>();
 
   const [recipe, setRecipe] = useState<IRecipe | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isEditingIngredient, setIsEditingIngredient] = useState<Record<string, boolean>>({});
   const [editingIngredientsData, setEditingIngredientsData] = useState<Record<string, Ingredient>>({});
@@ -85,8 +97,9 @@ const Page = () => {
   const [editingStepsData, setEditingStepsData] = useState<Record<string, EditingStepData>>({});
 
   const [updatedHeroImg, setUpdateHeroImg] = useState<string | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
 
-  const [editingField, setEditingField] = useState<EditingField>(null);
   const [editedValues, setEditedValues] = useState<EditedValues>(initialEditedValues);
 
   const locale = useTypedLocale();
@@ -103,12 +116,13 @@ const Page = () => {
     setValue,
     resetField,
     getValues,
+    watch,
     formState: {errors}
   } = useForm<EditingValues>({
     defaultValues: {
       heroImg: '',
-      category: '',
-      title: { ua: '', en: ''},
+      category: {ua: '', en: ''},
+      title: {ua: '', en: ''},
       ingredients: [],
       recipeSteps: [],
       likes: 0,
@@ -116,6 +130,7 @@ const Page = () => {
       ingredientUa: '',
       ingredientQuantity: '',
       ingredientUnit: units[0].value,
+      videoUrl: '',
     }
   });
 
@@ -123,6 +138,7 @@ const Page = () => {
     fields: ingredientFields,
     append: appendIngredient,
     remove: removeIngredient,
+    move: moveIngredient,
   } = useFieldArray({
     control,
     name: 'ingredients',
@@ -132,10 +148,17 @@ const Page = () => {
     fields: stepFields,
     append: appendStep,
     remove: removeStep,
+    move: moveStep,
   } = useFieldArray({
     control,
     name: 'recipeSteps',
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {activationConstraint: {distance: 6}}),
+    useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates}),
+    useSensor(TouchSensor, {activationConstraint: {distance: 8}}),
+  );
 
   useEffect(() => {
     const loadRecipe = async () => {
@@ -159,9 +182,8 @@ const Page = () => {
     loadRecipe();
   }, [params.recipe]);
 
-  console.log(recipe?.recipeSteps, stepFields)
-
-  const titleParsed = parseJson(recipe?.title) as LocalizedText;
+  const titleParsed: LocalizedText = recipe ? parseJson(recipe.title) : {ua: '', en: ''};
+  const categoryParsed: LocalizedText = recipe ? parseJson(recipe.category) : {ua: '', en: ''};
 
   const router = useRouter();
 
@@ -179,13 +201,24 @@ const Page = () => {
     if (recipe) {
       setValue('title', titleParsed);
       setValue('heroImg', recipe.heroImg);
-      setValue('category', recipe.category);
+      setValue('category', categoryParsed);
       setValue('ingredients', recipe.ingredients);
-      setValue('recipeSteps', recipe.recipeSteps.map(step => ({ ...step, imgFile: null })));
+      setValue('recipeSteps', recipe.recipeSteps.map(step => ({...step, imgFile: null})));
       setValue('likes', recipe.likes);
+      setValue('videoUrl', recipe.videoUrl ?? '');
     }
 
-    setIsEditing(!isEditing);
+    setIsEditing(true);
+  }
+
+  console.log(getValues('category'));
+
+  const cancelEditButton = () => {
+    setIsEditing(false);
+    setUpdateHeroImg(null);
+    setEditingStepsData({});
+    setIsEditingIngredient({})
+    reset();
   }
 
   const handleDeleteRecipe = (id: number) => {
@@ -204,6 +237,23 @@ const Page = () => {
     const url = URL.createObjectURL(file);
     setUpdateHeroImg(url);
     setValue('heroImg', url);
+  }
+
+  const handleVideoFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    setVideoFile(file);
+    setVideoPreviewUrl(url);
+  }
+
+  const removeVideoFile = () => {
+    setVideoFile(null);
+    setVideoPreviewUrl(null);
   }
 
   const addNewIngredient = () => {
@@ -234,18 +284,18 @@ const Page = () => {
     resetField('ingredientUnit');
   }
 
-  const startEditing = (field: EditingField) => {
-    if (!recipe) return;
-
-    setEditedValues({
-      heroImage: recipe.recipeSteps[0]?.imgUrl || '',
-      category: recipe.category,
-      title: titleParsed,
-      ingredient: null,
-      step: null,
-    });
-    setEditingField(field);
-  };
+  // const startEditing = (field: EditingField) => {
+  //   if (!recipe) return;
+  //
+  //   setEditedValues({
+  //     heroImage: recipe.recipeSteps[0]?.imgUrl || '',
+  //     category: recipe.category,
+  //     title: titleParsed,
+  //     ingredient: null,
+  //     step: null,
+  //   });
+  //   setEditingField(field);
+  // };
 
   const startEditingIngredient = (ingredient: Ingredient) => {
     setIsEditingIngredient(prev => ({
@@ -255,7 +305,7 @@ const Page = () => {
 
     setEditingIngredientsData(prev => ({
       ...prev,
-      [ingredient.id]: { ...ingredient },
+      [ingredient.id]: {...ingredient},
     }));
   }
 
@@ -268,8 +318,7 @@ const Page = () => {
   }
 
   const handleIngredientChange = (id: string, name: string, value: string) => {
-    console.log(name);
-    if(name === 'quantity' || name === 'unit') {
+    if (name === 'quantity' || name === 'unit') {
       setEditingIngredientsData(prev => ({
         ...prev,
         [id]: {
@@ -302,7 +351,12 @@ const Page = () => {
     cancelIngredientsEditing(id);
   }
 
-  const startEditingStep = (step: { id: string; desc: LocalizedText | string; imgUrl: string | null; imgFile?: File | null }) => {
+  const startEditingStep = (step: {
+    id: string;
+    desc: LocalizedText | string;
+    imgUrl: string | null;
+    imgFile?: File | null
+  }) => {
     const descParsed = typeof step.desc === 'string'
       ? parseJson(step.desc) as unknown as { ua: string; en: string }
       : step.desc;
@@ -316,11 +370,19 @@ const Page = () => {
       ...prev,
       [step.id]: {
         id: step.id,
-        desc: { ...descParsed },
+        desc: {...descParsed},
         imgUrl: step.imgUrl,
         newImage: step.imgFile ?? null,
       }
     }));
+  };
+
+  const addNewStep = () => {
+    const newId = uuidv4();
+    const newStep = {desc: {en: '', ua: ''}, imgUrl: null, imgFile: null, id: newId};
+    appendStep(newStep);
+    // setTimeout нужен чтобы startEditingStep выполнился после того как React обновит stepFields
+    setTimeout(() => startEditingStep(newStep), 0);
   };
 
   const cancelStepEditing = (id: string) => {
@@ -390,44 +452,64 @@ const Page = () => {
     cancelStepEditing(id);
   };
 
-  const saveEdit = () => {
-    if (!recipe || !editingField) return;
+  // const saveEdit = () => {
+  //   if (!recipe || !editingField) return;
+  //
+  //   if (editingField === 'category') {
+  //     setRecipe({...recipe, category: editedValues.category});
+  //   } else if (editingField === 'title') {
+  //     setRecipe({...recipe, title: editedValues.title});
+  //   } else if (editingField === 'heroImage') {
+  //     const updatedSteps = [...recipe.recipeSteps];
+  //     if (updatedSteps[0]) {
+  //       updatedSteps[0] = {...updatedSteps[0], imgUrl: editedValues.heroImage};
+  //     }
+  //     setRecipe({...recipe, recipeSteps: updatedSteps});
+  //   } else if (editingField.startsWith('ingredient-') && editedValues.ingredient) {
+  //     const updatedIngredients = recipe.ingredients.map(ing =>
+  //       ing.id === editedValues.ingredient!.id
+  //         ? {
+  //           ...ing,
+  //           value: editedValues.ingredient!.value,
+  //           quantity: editedValues.ingredient!.quantity,
+  //           unit: editedValues.ingredient!.unit,
+  //         }
+  //         : ing
+  //     );
+  //     setRecipe({...recipe, ingredients: updatedIngredients});
+  //   } else if (editingField.startsWith('step-') && editedValues.step) {
+  //     const updatedSteps = [...recipe.recipeSteps];
+  //     const idx = editedValues.step.index;
+  //     updatedSteps[idx] = {
+  //       ...updatedSteps[idx],
+  //       imgUrl: editedValues.step.imgUrl,
+  //       desc: editedValues.step.desc,
+  //     };
+  //     setRecipe({...recipe, recipeSteps: updatedSteps});
+  //   }
+  //
+  //   // TODO: Add API call to save changes
+  //
+  // };
 
-    if (editingField === 'category') {
-      setRecipe({...recipe, category: editedValues.category});
-    } else if (editingField === 'title') {
-      setRecipe({...recipe, title: editedValues.title});
-    } else if (editingField === 'heroImage') {
-      const updatedSteps = [...recipe.recipeSteps];
-      if (updatedSteps[0]) {
-        updatedSteps[0] = {...updatedSteps[0], imgUrl: editedValues.heroImage};
-      }
-      setRecipe({...recipe, recipeSteps: updatedSteps});
-    } else if (editingField.startsWith('ingredient-') && editedValues.ingredient) {
-      const updatedIngredients = recipe.ingredients.map(ing =>
-        ing.id === editedValues.ingredient!.id
-          ? {
-            ...ing,
-            value: editedValues.ingredient!.value,
-            quantity: editedValues.ingredient!.quantity,
-            unit: editedValues.ingredient!.unit,
-          }
-          : ing
-      );
-      setRecipe({...recipe, ingredients: updatedIngredients});
-    } else if (editingField.startsWith('step-') && editedValues.step) {
-      const updatedSteps = [...recipe.recipeSteps];
-      const idx = editedValues.step.index;
-      updatedSteps[idx] = {
-        ...updatedSteps[idx],
-        imgUrl: editedValues.step.imgUrl,
-        desc: editedValues.step.desc,
-      };
-      setRecipe({...recipe, recipeSteps: updatedSteps});
+  const stepsToRender = isEditing ? stepFields : (recipe?.recipeSteps ?? []);
+  const stepIds = stepsToRender.map((step) => step.id);
+
+  const handleDragEnd = (event: DragEndEvent, fields: StepFields[] | Ingredient[], type: 'steps' | 'ingredients') => {
+    if (!isEditing) return;
+    const {active, over} = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = fields.findIndex((step) => step.id === active.id);
+    const newIndex = fields.findIndex((step) => step.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    if (type === 'ingredients') {
+      moveIngredient(oldIndex, newIndex);
+    } else {
+      moveStep(oldIndex, newIndex);
     }
-
-    // TODO: Add API call to save changes
-
   };
 
 
@@ -490,8 +572,13 @@ const Page = () => {
               {isEditing ? (
                 <div className="flex items-center gap-2 mb-4">
                   <select
-                    {...register('category')}
-                    value={editedValues.category}
+                    value={watch('category')?.en || ''}
+                    onChange={(e) => {
+                      const selected = categories.find(cat => cat.en === e.target.value);
+                      if (selected) {
+                        setValue('category', selected);
+                      }
+                    }}
                     className="px-4 py-1 text-sm font-medium text-amber-900 bg-amber-100 rounded-full border-2 border-amber-300 focus:outline-none focus:border-amber-500"
                   >
                     {categories.filter(cat => cat.en !== 'All recipes').map((category) => (
@@ -505,7 +592,7 @@ const Page = () => {
               ) : (
                 <div className="flex items-start justify-start gap-2">
                   <span className="inline-block px-4 py-1 mb-4 text-sm font-medium text-amber-900 bg-amber-100 rounded-full">
-                    {recipe.category}
+                    {categoryParsed && categoryParsed[locale]}
                   </span>
                 </div>
               )}
@@ -538,7 +625,7 @@ const Page = () => {
                   </h1>
                   {isEditing && (
                     <button
-                      onClick={() => startEditing('title')}
+
                       className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors shadow-md p-1"
                     >
                       <CiEdit className="text-2xl"/>
@@ -597,12 +684,12 @@ const Page = () => {
             <div className={`flex flex-col items-center gap-2`}>
               <button
                 className='flex flex-row items-center gap-2 px-4 py-2 w-full bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors shadow-md'
-                onClick={toggleEditButton}>
+                onClick={cancelEditButton}>
                 <CiEdit className="text-xl"/> <span>{tAdmin('list.save')}</span>
               </button>
               <button
                 className='flex flex-row items-center gap-2 px-4 py-2 w-full bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shadow-md'
-                onClick={toggleEditButton}>
+                onClick={cancelEditButton}>
                 <CiEdit className="text-xl"/> <span>{tAdmin('list.cancel')}</span>
               </button>
             </div>
@@ -635,102 +722,88 @@ const Page = () => {
 
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {(!isEditing ? recipe.ingredients : ingredientFields).map((ingredient, i) => (
-                <div key={ingredient.id}>
-                  {isEditingIngredient[ingredient.id] ? (
-                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-gray-700 border-2 border-amber-400">
-                      <div className="space-y-2 mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-gray-500 w-6">UA:</span>
-                          <input
-                            type="text"
-                            name='value.ua'
-                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
-                            value={editingIngredientsData[ingredient.id].value.ua}
-                            className="flex-1 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-gray-500 w-6">EN:</span>
-                          <input
-                            type="text"
-                            name='value.en'
-                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
-                            value={editingIngredientsData[ingredient.id].value.en}
-                            className="flex-1 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                          <input
-                            type="text"
-                            name='quantity'
-                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
-                            value={editingIngredientsData[ingredient.id].quantity}
-                            placeholder="Qty"
-                            className="w-16 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                          />
-                          <select
-                            name='unit'
-                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
-                            value={editingIngredientsData[ingredient.id].unit}
-                            className="flex-1 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
-                          >
-                            {units.map((u) => (
-                              <option key={u.value}
-                                      value={u.value}>{u.label[locale]}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                      <div className="flex gap-5 justify-end">
-                        <button
-                          onClick={() => saveIngredientsChanges(ingredient.id)}
-                          className="p-1 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
-                        >
-                          <IoCheckmark className="text-sm"/>
-                        </button>
-                        <button
-                          onClick={() => cancelIngredientsEditing(ingredient.id)}
-                          className="p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                        >
-                          <IoClose className="text-sm"/>
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 dark:from-gray-700 dark:to-gray-600 border border-amber-100 dark:border-gray-600">
-                      <div className="flex items-center gap-3">
-                        <span className="w-2 h-2 rounded-full bg-amber-500"/>
-                        <p className="text-gray-700 dark:text-gray-200 font-medium">{ingredient.value[locale]}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-amber-600 dark:text-amber-400 font-medium whitespace-nowrap">
-                          {ingredient.quantity} {ingredient.unit}
-                        </span>
-                        {isEditing && (
-                          <div className='flex items-center gap-2'>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={(e) => handleDragEnd(e, ingredientFields, 'ingredients')}>
+              <SortableContext items={ingredientFields.map(f => f.id)}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {(!isEditing ? recipe.ingredients : ingredientFields).map((ingredient, i) => (
+                    <div key={ingredient.id}>
+                      {isEditingIngredient[ingredient.id] ? (
+                        <div className="p-3 rounded-xl bg-amber-50 dark:bg-gray-700 border-2 border-amber-400">
+                          <div className="space-y-2 mb-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-gray-500 w-6">UA:</span>
+                              <input
+                                type="text"
+                                name='value.ua'
+                                onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                                value={editingIngredientsData[ingredient.id].value.ua}
+                                className="flex-1 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                              />
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-medium text-gray-500 w-6">EN:</span>
+                              <input
+                                type="text"
+                                name='value.en'
+                                onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                                value={editingIngredientsData[ingredient.id].value.en}
+                                className="flex-1 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                name='quantity'
+                                onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                                value={editingIngredientsData[ingredient.id].quantity}
+                                placeholder="Qty"
+                                className="w-16 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                              />
+                              <select
+                                name='unit'
+                                onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                                value={editingIngredientsData[ingredient.id].unit}
+                                className="flex-1 px-2 py-1 text-sm rounded border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                              >
+                                {units.map((u) => (
+                                  <option key={u.value}
+                                          value={u.value}>{u.label[locale]}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                          <div className="flex gap-5 justify-end">
                             <button
-                              onClick={() => startEditingIngredient(ingredient)}
-                              className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-full hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors shadow-md p-1"
+                              onClick={() => saveIngredientsChanges(ingredient.id)}
+                              className="p-1 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
                             >
-                              <CiEdit className="text-lg"/>
+                              <IoCheckmark className="text-sm"/>
                             </button>
                             <button
-                              onClick={() => removeIngredient(i)}
-                              className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-full hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors shadow-md p-1"
+                              onClick={() => cancelIngredientsEditing(ingredient.id)}
+                              className="p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                             >
-                              <MdDelete className='text-lg'/>
+                              <IoClose className="text-sm"/>
                             </button>
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      ) : (
+                        <SortableIngredient key={ingredient.id}
+                                            ingredient={ingredient}
+                                            ingredientId={ingredient.id}
+                                            index={i}
+                                            isEditing={isEditing}
+                                            startEditingIngredient={startEditingIngredient}
+                                            removeIngredient={removeIngredient}/>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
-              ))}
-
-            </div>
+              </SortableContext>
+            </DndContext>
           </div>
           {isEditing && (
             <div className="space-y-3 mb-4 mt-4">
@@ -782,13 +855,14 @@ const Page = () => {
                   </button>
                 </div>
               </div>
-              {errors.ingredients && <p className='text-red-500'>{tAdmin('form.validation.addAtLeastOneIngredient')}</p>}
+              {errors.ingredients &&
+                <p className='text-red-500'>{tAdmin('form.validation.addAtLeastOneIngredient')}</p>}
             </div>
           )}
         </section>
 
         {/* Steps Section */}
-        <section>
+        <section className="mb-16">
           <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
               <svg className="w-5 h-5 text-amber-600 dark:text-amber-300"
@@ -804,136 +878,213 @@ const Page = () => {
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{tRecipes('singlePage.preparationSteps')}</h2>
           </div>
 
-          <div className="space-y-8">
-            {(!isEditing ? recipe.recipeSteps : stepFields).map((step, i) => (
-              <div key={step.id}>
-                {isEditingStep[step.id] ? (
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border-2 border-amber-400">
-                    <div className="p-6">
-                      <h4 className="font-bold text-gray-900 dark:text-white mb-4">{tRecipes('singlePage.step')} {i + 1}</h4>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={(e) => handleDragEnd(e, stepFields, 'steps')}
+          >
+            <SortableContext items={stepIds}
+                             strategy={verticalListSortingStrategy}>
+              <div className='space-y-4'>
+                {stepsToRender.map((step, i) => (
+                  <div key={step.id}>
+                    {isEditingStep[step.id] ? (
+                      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden border-2 border-amber-400">
+                        <div className="p-6">
+                          <h4 className="font-bold text-gray-900 dark:text-white mb-4">{tRecipes('singlePage.step')} {i + 1}</h4>
 
-                      {/* Image */}
-                      {editingStepsData[step.id]?.imgUrl ? (
-                        <div className="relative mb-4">
-                          <Image
-                            className="rounded-xl w-full object-cover max-h-64"
-                            width={500}
-                            height={300}
-                            src={editingStepsData[step.id].imgUrl!}
-                            alt={`Step ${i + 1} image`}
-                          />
-                          <button
-                            type="button"
-                            onClick={() => deleteStepImage(step.id)}
-                            className="absolute top-2 right-2 w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
-                          >
-                            <MdDeleteForever className="text-xl"/>
-                          </button>
-                          <label className="absolute bottom-2 right-2 cursor-pointer px-3 py-1.5 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors shadow-lg">
-                            <input
-                              type="file"
-                              hidden
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) handleStepImageChange(step.id, file);
-                              }}
+                          {/* Image */}
+                          {editingStepsData[step.id]?.imgUrl ? (
+                            <div className="relative mb-4">
+                              <Image
+                                className="rounded-xl w-full object-cover max-h-64"
+                                width={500}
+                                height={300}
+                                src={editingStepsData[step.id].imgUrl!}
+                                alt={`Step ${i + 1} image`}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => deleteStepImage(step.id)}
+                                className="absolute top-2 right-2 w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
+                              >
+                                <MdDeleteForever className="text-xl"/>
+                              </button>
+                              <label className="absolute bottom-2 right-2 cursor-pointer px-3 py-1.5 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors shadow-lg">
+                                <input
+                                  type="file"
+                                  hidden
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleStepImageChange(step.id, file);
+                                  }}
+                                />
+                                {tAdmin('form.buttons.changeImage')}
+                              </label>
+                            </div>
+                          ) : (
+                            <div className="w-full h-40 flex items-center justify-center border-2 border-dashed border-amber-200 dark:border-gray-500 rounded-xl mb-4 bg-gray-50 dark:bg-gray-700">
+                              <label className="cursor-pointer px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors">
+                                <input
+                                  type="file"
+                                  hidden
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleStepImageChange(step.id, file);
+                                  }}
+                                />
+                                {tAdmin('form.buttons.addPicture')}
+                              </label>
+                            </div>
+                          )}
+
+                          {/* Description UK */}
+                          <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              {tAdmin('form.fields.descriptionUa')}
+                            </label>
+                            <textarea
+                              value={editingStepsData[step.id]?.desc.ua ?? ''}
+                              onChange={(e) => handleStepChange(step.id, 'ua', e.target.value)}
+                              rows={3}
+                              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:border-amber-500"
                             />
-                            {tAdmin('form.buttons.changeImage')}
-                          </label>
-                        </div>
-                      ) : (
-                        <div className="w-full h-40 flex items-center justify-center border-2 border-dashed border-amber-200 dark:border-gray-500 rounded-xl mb-4 bg-gray-50 dark:bg-gray-700">
-                          <label className="cursor-pointer px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors">
-                            <input
-                              type="file"
-                              hidden
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) handleStepImageChange(step.id, file);
-                              }}
+                          </div>
+
+                          {/* Description EN */}
+                          <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              {tAdmin('form.fields.descriptionEn')}
+                            </label>
+                            <textarea
+                              value={editingStepsData[step.id]?.desc.en ?? ''}
+                              onChange={(e) => handleStepChange(step.id, 'en', e.target.value)}
+                              rows={3}
+                              className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:border-amber-500"
                             />
-                            {tAdmin('form.buttons.addPicture')}
-                          </label>
+                          </div>
+
+                          <div className="flex gap-3 justify-end">
+                            <button
+                              onClick={() => saveStepChanges(step.id)}
+                              className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
+                            >
+                              <IoCheckmark className="text-lg"/>
+                            </button>
+                            <button
+                              onClick={() => cancelStepEditing(step.id)}
+                              className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                            >
+                              <IoClose className="text-lg"/>
+                            </button>
+                          </div>
                         </div>
-                      )}
-
-                      {/* Description UK */}
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          {tAdmin('form.fields.descriptionUa')}
-                        </label>
-                        <textarea
-                          value={editingStepsData[step.id]?.desc.ua ?? ''}
-                          onChange={(e) => handleStepChange(step.id, 'ua', e.target.value)}
-                          rows={3}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:border-amber-500"
-                        />
                       </div>
-
-                      {/* Description EN */}
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          {tAdmin('form.fields.descriptionEn')}
-                        </label>
-                        <textarea
-                          value={editingStepsData[step.id]?.desc.en ?? ''}
-                          onChange={(e) => handleStepChange(step.id, 'en', e.target.value)}
-                          rows={3}
-                          className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:border-amber-500"
-                        />
-                      </div>
-
-                      <div className="flex gap-3 justify-end">
-                        <button
-                          onClick={() => saveStepChanges(step.id)}
-                          className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
-                        >
-                          <IoCheckmark className="text-lg"/>
-                        </button>
-                        <button
-                          onClick={() => cancelStepEditing(step.id)}
-                          className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                        >
-                          <IoClose className="text-lg"/>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-                    <SortableStep step={step} id={i}/>
-                    {isEditing && (
-                      <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
-                        <button
-                          onClick={() => startEditingStep(step)}
-                          className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors shadow-md p-2"
-                        >
-                          <CiEdit className="text-2xl"/>
-                        </button>
-                        <button
-                          onClick={() => removeStep(i)}
-                          className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded-xl hover:bg-red-200 dark:hover:bg-red-900 transition-colors shadow-md p-2"
-                        >
-                          <MdDelete className="text-2xl"/>
-                        </button>
-                      </div>
+                    ) : (
+                      <SortableStep step={step}
+                                    stepId={step.id}
+                                    index={i}
+                                    isEditing={isEditing}
+                                    onEdit={() => startEditingStep(step)}
+                                    onRemove={() => removeStep(i)}/>
                     )}
                   </div>
-                )}
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
           {isEditing && (
             <button
               className={`mt-4 w-full py-3 rounded-xl border-2 border-dashed ${error && stepFields.length === 0 ? 'border-red-400' : 'border-amber-300 dark:border-gray-500'} text-amber-600 dark:text-amber-400 font-medium hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors`}
               type="button"
-              onClick={() => appendStep({desc: {en: '', ua: ''}, imgUrl: null, imgFile: null, id: uuidv4()})}
+              onClick={addNewStep}
             >
               + {tAdmin('form.buttons.addNewStep')}
             </button>
           )}
+        </section>
+
+        {/* Video Section */}
+        <section className="mb-16">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
+              <svg className="w-5 h-5 text-amber-600 dark:text-amber-300"
+                   fill="none"
+                   stroke="currentColor"
+                   viewBox="0 0 24 24">
+                <path strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                <path strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{tAdmin('form.fields.videoUrl')}</h2>
+          </div>
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            {isEditing ? (
+              <div className="space-y-4">
+                {videoPreviewUrl || recipe?.videoUrl ? (
+                  <div className="relative aspect-video rounded-xl overflow-hidden">
+                    <video
+                      className="w-full h-full object-cover"
+                      src={videoPreviewUrl || recipe?.videoUrl}
+                      controls
+                    />
+                    <button
+                      type="button"
+                      onClick={removeVideoFile}
+                      className="absolute top-2 right-2 w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
+                    >
+                      <MdDeleteForever className="text-xl"/>
+                    </button>
+                    <label className="absolute bottom-2 right-2 cursor-pointer px-3 py-1.5 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors shadow-lg">
+                      <input
+                        type="file"
+                        hidden
+                        accept="video/*"
+                        onChange={handleVideoFile}
+                      />
+                      {tAdmin('form.buttons.changeImage')}
+                    </label>
+                  </div>
+                ) : (
+                  <div className="w-full h-40 flex items-center justify-center border-2 border-dashed border-amber-200 dark:border-gray-500 rounded-xl bg-gray-50 dark:bg-gray-700">
+                    <label className="cursor-pointer px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors">
+                      <input
+                        type="file"
+                        hidden
+                        accept="video/*"
+                        onChange={handleVideoFile}
+                      />
+                      + {tAdmin('form.buttons.addVideo')}
+                    </label>
+                  </div>
+                )}
+              </div>
+            ) : (
+              recipe?.videoUrl ? (
+                <div className="relative aspect-video rounded-xl overflow-hidden">
+                  <video
+                    className="w-full h-full object-cover"
+                    src={recipe.videoUrl}
+                    controls
+                  />
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-500 dark:text-gray-400 mb-4">
+                    {tAdmin('form.fields.noVideo')}
+                  </p>
+                </div>
+              )
+            )}
+          </div>
         </section>
 
         {/* Back Button */}

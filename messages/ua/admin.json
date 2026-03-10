@@ -35,7 +35,9 @@
       "descriptionEn": "Опис (Англійська)",
       "premiumContent": "Платний контент",
       "preparingTime": "Час приготування",
-      "minutes": "Хвилин"
+      "minutes": "Хвилин",
+      "videoUrl": "Відео",
+      "noVideo": "Відео недоступне"
     },
     "buttons": {
       "add": "Додати",

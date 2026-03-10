@@ -1,17 +1,16 @@
-import {Ingredients} from "@/app/[locale]/admin/page";
-import {LocalizedText} from "@/services/db/insertRecipeToDatabase";
-import {useTranslations} from "next-intl";
+import { Ingredient, LocalizedText } from './forms';
 
 export interface IRecipe {
   id: number;
   title: LocalizedText;
   likes: number;
-  category: string;
+  category: LocalizedText;
   recipeSteps: { desc: LocalizedText, imgUrl: string | null, id: string }[];
-  ingredients: Ingredients[];
+  ingredients: Ingredient[];
   heroImg: string;
   isPremium: boolean;
   preparingTime: number;
+  videoUrl?: string;
 }
 
 export const parseJson = <T>(value: T | string): T => {

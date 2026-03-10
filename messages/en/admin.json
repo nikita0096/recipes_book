@@ -35,7 +35,9 @@
       "descriptionEn": "Description (English)",
       "premiumContent": "Premium content",
       "preparingTime": "Preparing time",
-      "minutes": "Minutes"
+      "minutes": "Minutes",
+      "videoUrl": "Video",
+      "noVideo": "No video available"
     },
     "buttons": {
       "add": "Add",

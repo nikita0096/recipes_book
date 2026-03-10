@@ -17,6 +17,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipe}) => {
   const t = useTranslations('recipes');
 
   const title = parseJson(recipe.title);
+  const categoryParsed =parseJson(recipe.category);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-900 dark:to-gray-800">
@@ -33,7 +34,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipe}) => {
         <div className="absolute bottom-0 left-0 right-0 p-8 md:p-16">
           <div className="max-w-4xl mx-auto">
             <span className="inline-block px-4 py-1 mb-4 text-sm font-medium text-amber-900 bg-amber-100 rounded-full">
-              {recipe.category}
+              {categoryParsed && categoryParsed[locale]}
             </span>
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
               {title[locale]}

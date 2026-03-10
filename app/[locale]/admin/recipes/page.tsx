@@ -1,6 +1,6 @@
 'use client';
 
-import AdminRecipesItems from "./AdminRecipesItems";
+import {AdminRecipesItems} from "@/components/admin";
 import LoadingPage from "@/components/ui/LoadingPage";
 import {useRecipes} from "@/hooks/useRecipes";
 import React, {useMemo} from "react";

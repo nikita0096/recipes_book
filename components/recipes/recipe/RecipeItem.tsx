@@ -15,6 +15,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe}) => {
   const locale = useTypedLocale();
 
   const title = parseJson(recipe.title);
+  const categoryParsed =parseJson(recipe.category);
 
   const tCommon = useTranslations('common');
   const tRecipes = useTranslations('recipes');
@@ -42,7 +43,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe}) => {
 
       <div className="p-5">
         <span className="inline-block px-3 py-1 mb-3 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/30 rounded-full">
-          {recipe.category}
+          {categoryParsed && categoryParsed[locale]}
         </span>
 
         <h5 className="text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-2">

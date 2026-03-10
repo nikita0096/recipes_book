@@ -1,5 +1,5 @@
 import {PropsWithChildren} from "react";
-import AdminNavBar from "./AdminNavBar";
+import AdminNavBar from "@/components/admin/AdminNavBar";
 import {createClient} from "@/lib/supabase/ServerComponentClient";
 import {redirect} from "next/navigation";
 

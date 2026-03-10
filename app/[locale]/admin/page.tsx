@@ -7,39 +7,13 @@ import {useRouter} from "@/i18n/navigation";
 import {useLocale, useTranslations} from "next-intl";
 import {Controller, SubmitHandler, useFieldArray, useForm} from "react-hook-form";
 import {v4 as uuidv4} from 'uuid';
-import {insertRecipe, IUploadData, LocalizedText} from "@/services/db/insertRecipeToDatabase";
+import {insertRecipe, IUploadData} from "@/services/db/insertRecipeToDatabase";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {MdDeleteForever} from "react-icons/md";
 import {Spinner} from "@/components/ui/spinner";
 import {units} from "@/constants/units";
 import {categories} from "@/constants/categories";
-
-type Locale = 'en' | 'ua';
-
-export type UnitValue = typeof units[number]['value'];
-
-export interface Ingredient {
-  value: { en: string; ua: string };
-  quantity: string;
-  unit: UnitValue;
-  id: string;
-}
-
-export interface IFormValues {
-  title: { en: string; ua: string };
-  likes: number;
-  category: string;
-  recipeSteps: { desc: { en: string; ua: string }; image: File | null }[];
-  ingredientEn: string;
-  ingredientUa: string;
-  ingredients: Ingredient[];
-  heroImg: File | null;
-  ingredientQuantity: string | null;
-  ingredientUnit: UnitValue;
-  isPremium: boolean;
-  preparingTime: number;
-  videoUrl: string;
-}
+import {IFormValues, Locale} from "@/types/forms";
 
 const Page = () => {
   const [mounted, setMounted] = useState<boolean>(false);

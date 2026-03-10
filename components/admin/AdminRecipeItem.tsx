@@ -11,6 +11,7 @@ import {useTranslations} from "next-intl";
 import {RECIPE_PLACEHOLDER_IMAGE} from "@/constants/images";
 import {useTypedLocale} from "@/hooks/useTypedLocale";
 import {MdDelete} from "react-icons/md";
+import {LocalizedText} from "@/types";
 
 interface AdminRecipeItemProps {
   recipe: IRecipe;
@@ -23,6 +24,7 @@ const AdminRecipeItem: React.FC<AdminRecipeItemProps> = ({recipe}) => {
   const tRecipes = useTranslations('recipes');
 
   const title = parseJson(recipe.title);
+  const categoryParsed =parseJson(recipe.category);
 
   const queryClient = useQueryClient();
 
@@ -59,7 +61,7 @@ const AdminRecipeItem: React.FC<AdminRecipeItemProps> = ({recipe}) => {
 
         <div className="p-5">
         <span className="inline-block px-3 py-1 mb-3 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/30 rounded-full">
-          {recipe.category}
+          {categoryParsed && categoryParsed[locale]}
         </span>
 
           <h5 className="text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-2">
