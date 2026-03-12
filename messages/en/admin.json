@@ -26,6 +26,7 @@
       "ingredientPlaceholderEn": "Ingredient (EN)",
       "quantity": "Quantity",
       "step": "Step",
+      "stepDescLabel": "Step description",
       "stepDescPlaceholder": "Describe step {step}...",
       "stepDescLabelUa": "Step description (UA)",
       "stepDescLabelEn": "Step description (EN)",
@@ -62,7 +63,8 @@
       "recipeNotUploaded": "Recipe was not uploaded, try again",
       "addAtLeastOneIngredient": "Add at least one ingredient",
       "addAtLeastOneStep": "Add at least one step",
-      "enterCategory": "Enter a category"
+      "enterCategory": "Enter a category",
+      "videoUploadingError": "Something went wrong with uploading. Remove and upload the video again and create new recipe."
     }
   },
   "list": {

@@ -14,11 +14,16 @@ import {Spinner} from "@/components/ui/spinner";
 import {units} from "@/constants/units";
 import {categories} from "@/constants/categories";
 import {IFormValues, Locale} from "@/types/forms";
+import {uploadVideoToStorage} from "@/services/storage/uploadVideoToStorage";
 
 const Page = () => {
   const [mounted, setMounted] = useState<boolean>(false);
+
   const [stepImageUrls, setStepImageUrls] = useState<string[]>([]);
   const [heroImg, setHeroImg] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoError, setVideoError] = useState<string | null>(null);
+
   const [isPending, setIsPending] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +55,7 @@ const Page = () => {
       heroImg: null,
       isPremium: true,
       preparingTime: 0,
-      videoUrl: ''
+      videoFile: null
     }
   });
 
@@ -101,21 +106,29 @@ const Page = () => {
     setValidationErrorIngredients('');
   };
 
-  const handleFiles = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0] ?? null;
+    const type = e.target.files?.[0]?.type.split('/')[0];
+    console.log(type);
 
-    if (file !== null) {
+    if (!file) return;
+
+    if (type === 'image') {
       const url = URL.createObjectURL(file);
       setStepImageUrls(prevState => {
         const newUrls = [...prevState];
         newUrls[index] = url;
         return newUrls;
       });
-    }
 
-    setValue(`recipeSteps.${index}.image`, file, {
-      shouldValidate: true,
-    });
+      setValue(`recipeSteps.${index}.image`, file, {
+        shouldValidate: true,
+      });
+    } else if (type === 'video') {
+      const originalUrl = URL.createObjectURL(file);
+      setVideoUrl(originalUrl);
+      setValue('videoFile', file);
+    }
   };
 
   const deleteStepsImg = (index: number) => {
@@ -163,6 +176,11 @@ const Page = () => {
         setError(t('form.validation.enterStepsBothLanguages'));
         return null;
       }
+    }
+
+    if (!data.videoFile) {
+      setError(t('form.validation.enterVideoFile'));
+      return null;
     }
 
     const steps = [];
@@ -214,6 +232,17 @@ const Page = () => {
       return null;
     }
 
+    const filePath = `${folder}/${uuidv4()}`;
+    const {videoUrl, error} = await uploadVideoToStorage({
+      videoFile: data.videoFile, bucket: 'videos',
+      filePath: filePath
+    });
+
+    if (error) {
+      setVideoError(t('form.validation.videoUploadingError'));
+      return null;
+    }
+
     return {
       title: data.title,
       category: category,
@@ -223,9 +252,10 @@ const Page = () => {
       heroImgUrl: heroImgResult.imageUrl,
       isPremium: data.isPremium,
       preparingTime: data.preparingTime,
-      videoUrl: ''
+      videoUrl: videoUrl
     };
   };
+
 
   const onSubmit: SubmitHandler<IFormValues> = async (formData) => {
     setIsPending(true);
@@ -243,6 +273,7 @@ const Page = () => {
       reset();
       setStepImageUrls([]);
       setHeroImg(null);
+      setVideoUrl(null);
     } catch {
       setError(t('form.validation.recipeNotUploaded'));
     } finally {
@@ -534,6 +565,7 @@ const Page = () => {
                         type="file"
                         hidden
                         multiple={false}
+                        accept="image/*"
                         onChange={(e) => handleFiles(e, index)}
                       />
                       {t('form.buttons.addPicture')}
@@ -549,7 +581,7 @@ const Page = () => {
                     </label>
                     <textarea
                       {...register(`recipeSteps.${index}.desc.ua`, {required: t('form.validation.addAtLeastOneStep')})}
-                      placeholder={t('form.fields.stepDescPlaceholder')}
+                      placeholder={t('form.fields.stepDescPlaceholderUa')}
                       rows={3}
                       className={`w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 ${errors.recipeSteps?.[index]?.desc?.ua ? 'border-red-400' : 'border-amber-200 dark:border-gray-600'} rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors resize-none`}
                     />
@@ -598,22 +630,46 @@ const Page = () => {
             {t('form.sections.video')}
           </h2>
           <div
-            className="w-full h-40 flex items-center justify-center border-2 border-dashed border-amber-200 dark:border-gray-500 rounded-xl mb-3 bg-white dark:bg-gray-800">
-            <label
-              className="cursor-pointer px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors">
-              <input
-                type="file"
-                hidden
-                multiple={false}
-              />
-              {t('form.buttons.addVideo')}
-            </label>
+            className="w-full min-h-30 flex items-center justify-center border-2 border-dashed border-amber-200 dark:border-gray-500 rounded-xl mb-3 bg-white dark:bg-gray-800 relative">
+            {videoUrl ? (
+              <div className='p-1 relative flex flex-col items-center gap-2'>
+                <video className='rounded-lg'
+                       src={videoUrl}
+                       controls></video>
+                {videoError && (
+                  <p className='text-amber-600 dark:text-amber-400 text-sm'>
+                    {videoError} (using original file)
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-2">
+                <label
+                  className="cursor-pointer px-4 py-2 rounded-xl bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors">
+                  <Controller
+                    name='videoFile'
+                    control={control}
+                    rules={{required: 'Video is required'}}
+                    render={() => (
+                      <input
+                        type="file"
+                        hidden
+                        multiple={false}
+                        accept="video/*"
+                        onChange={(e) => handleFiles(e, 0)}
+                      />
+                    )}
+                  />
+                  {t('form.buttons.addVideo')}
+                </label>
+                {errors.videoFile && <p className='text-red-500'>{errors.videoFile.message}</p>}
+              </div>
+            )}
           </div>
         </div>
-
         {/* Submit Button */}
         <button
-          className="w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-lg font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
+          className="flex flex-row items-center justify-center w-full py-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-lg font-semibold transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
           type="submit"
           disabled={isPending}
         >

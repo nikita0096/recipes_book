@@ -26,5 +26,5 @@ export interface IFormValues {
   ingredientUnit: UnitValue;
   isPremium: boolean;
   preparingTime: number;
-  videoUrl: string;
+  videoFile: File | null;
 }

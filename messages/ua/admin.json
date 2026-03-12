@@ -26,6 +26,7 @@
       "ingredientPlaceholderEn": "Ingredient (EN)",
       "quantity": "Кількість",
       "step": "Крок",
+      "stepDescLabel": "Опис кроку",
       "stepDescPlaceholder": "Опишіть крок {step}...",
       "stepDescLabelUa": "Опис кроку (UA)",
       "stepDescLabelEn": "Step description (EN)",
@@ -62,7 +63,8 @@
       "recipeNotUploaded": "Рецепт не завантажено, спробуйте ще раз",
       "addAtLeastOneIngredient": "Додайте хоча б один інгредієнт",
       "addAtLeastOneStep": "Додайте хоча б один крок",
-      "enterCategory": "Додайте категорiю"
+      "enterCategory": "Додайте категорiю",
+      "videoUploadingError": "Щось пішло не так із завантаженням. Видаліть відео та завантажте його знову, а потім створіть новий рецепт."
     }
   },
   "list": {
