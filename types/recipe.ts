@@ -1,7 +1,7 @@
 import { Ingredient, LocalizedText } from './forms';
 
 export interface IRecipe {
-  id: number;
+  id: string;
   title: LocalizedText;
   likes: number;
   category: LocalizedText;

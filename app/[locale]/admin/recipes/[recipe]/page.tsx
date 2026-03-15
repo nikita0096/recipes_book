@@ -24,7 +24,6 @@ import {
 import {
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy
 } from "@dnd-kit/sortable";
 import {useTypedLocale} from "@/hooks/useTypedLocale";
@@ -34,15 +33,17 @@ import {categories} from "@/constants/categories";
 import {IoCheckmark, IoClose} from "react-icons/io5";
 import {units} from "@/constants/units";
 import {Ingredient, LocalizedText, UnitValue} from "@/types/forms";
-import {Controller, useFieldArray, useForm} from "react-hook-form";
+import {SubmitHandler, useFieldArray, useForm} from "react-hook-form";
 import {v4 as uuidv4} from "uuid";
-import {CSS} from "@dnd-kit/utilities";
 import SortableIngredient from "@/components/admin/SortableIngredient";
+import {updateRecipeData} from "@/services/db/updateRecipe";
+import {prepareUpdateData} from "./utils/prepareUpdateData";
 
 type StepFields = { desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string }
 
-interface EditingValues {
+export interface EditingValues {
   heroImg: string;
+  heroImgFile: File | null;
   category: { ua: string; en: string };
   title: { ua: string; en: string };
   ingredients: Ingredient[];
@@ -53,34 +54,11 @@ interface EditingValues {
   ingredientQuantity: string | null;
   ingredientUnit: UnitValue;
   videoUrl: string;
+  videoFile: File | null;
+  preparingTime: number;
+  isPremium: boolean;
 }
 
-interface EditingStepData {
-  id: string;
-  desc: { ua: string; en: string };
-  imgUrl: string | null;
-  newImage: File | null;
-}
-
-interface EditedValues {
-  heroImage: string;
-  category: { ua: string; en: string };
-  title: { ua: string; en: string };
-  ingredient: Ingredient | null;
-  step: {
-    index: number;
-    imgUrl: string;
-    desc: { ua: string; en: string };
-  } | null;
-}
-
-const initialEditedValues: EditedValues = {
-  heroImage: '',
-  category: {ua: '', en: ''},
-  title: {ua: '', en: ''},
-  ingredient: null,
-  step: null,
-};
 
 const Page = () => {
   const params = useParams<{ recipe: string }>();
@@ -89,18 +67,16 @@ const Page = () => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isEditingIngredient, setIsEditingIngredient] = useState<Record<string, boolean>>({});
   const [editingIngredientsData, setEditingIngredientsData] = useState<Record<string, Ingredient>>({});
   const [isEditingStep, setIsEditingStep] = useState<Record<string, boolean>>({});
-  const [editingStepsData, setEditingStepsData] = useState<Record<string, EditingStepData>>({});
+  const [prevStepChanges, setPrevStepChanges] = useState<Record<string, StepFields[]>>({});
 
   const [updatedHeroImg, setUpdateHeroImg] = useState<string | null>(null);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
-
-  const [editedValues, setEditedValues] = useState<EditedValues>(initialEditedValues);
 
   const locale = useTypedLocale();
 
@@ -121,6 +97,7 @@ const Page = () => {
   } = useForm<EditingValues>({
     defaultValues: {
       heroImg: '',
+      heroImgFile: null,
       category: {ua: '', en: ''},
       title: {ua: '', en: ''},
       ingredients: [],
@@ -131,6 +108,9 @@ const Page = () => {
       ingredientQuantity: '',
       ingredientUnit: units[0].value,
       videoUrl: '',
+      videoFile: null,
+      preparingTime: 0,
+      isPremium: false
     }
   });
 
@@ -139,6 +119,7 @@ const Page = () => {
     append: appendIngredient,
     remove: removeIngredient,
     move: moveIngredient,
+    update: updateIngredient,
   } = useFieldArray({
     control,
     name: 'ingredients',
@@ -206,23 +187,23 @@ const Page = () => {
       setValue('recipeSteps', recipe.recipeSteps.map(step => ({...step, imgFile: null})));
       setValue('likes', recipe.likes);
       setValue('videoUrl', recipe.videoUrl ?? '');
+      setValue('preparingTime', recipe.preparingTime);
+      setValue('isPremium', recipe.isPremium);
     }
 
     setIsEditing(true);
   }
 
-  console.log(getValues('category'));
-
   const cancelEditButton = () => {
     setIsEditing(false);
     setUpdateHeroImg(null);
-    setEditingStepsData({});
+    setIsEditingStep({});
     setIsEditingIngredient({})
     reset();
   }
 
-  const handleDeleteRecipe = (id: number) => {
-    deleteRecipeMutation.mutate(id.toString());
+  const handleDeleteRecipe = (id: string) => {
+    deleteRecipeMutation.mutate(id);
 
     router.push(`/admin/recipes`);
   }
@@ -235,7 +216,7 @@ const Page = () => {
     }
 
     const url = URL.createObjectURL(file);
-    setUpdateHeroImg(url);
+    setValue('heroImgFile', file);
     setValue('heroImg', url);
   }
 
@@ -247,13 +228,13 @@ const Page = () => {
     }
 
     const url = URL.createObjectURL(file);
-    setVideoFile(file);
-    setVideoPreviewUrl(url);
+    setValue('videoFile', file);
+    setValue('videoUrl', url);
   }
 
   const removeVideoFile = () => {
-    setVideoFile(null);
-    setVideoPreviewUrl(null);
+    setValue('videoFile', null);
+    setValue('videoUrl', recipe?.videoUrl ?? '');
   }
 
   const addNewIngredient = () => {
@@ -274,28 +255,12 @@ const Page = () => {
     };
 
     appendIngredient(newIngredient);
-    // setRecipe(prev => prev ? {
-    //   ...prev,
-    //   ingredients: [...prev.ingredients, newIngredient]
-    // } : prev);
+
     resetField('ingredientUa');
     resetField('ingredientEn');
     resetField('ingredientQuantity');
     resetField('ingredientUnit');
   }
-
-  // const startEditing = (field: EditingField) => {
-  //   if (!recipe) return;
-  //
-  //   setEditedValues({
-  //     heroImage: recipe.recipeSteps[0]?.imgUrl || '',
-  //     category: recipe.category,
-  //     title: titleParsed,
-  //     ingredient: null,
-  //     step: null,
-  //   });
-  //   setEditingField(field);
-  // };
 
   const startEditingIngredient = (ingredient: Ingredient) => {
     setIsEditingIngredient(prev => ({
@@ -344,36 +309,18 @@ const Page = () => {
   const saveIngredientsChanges = (id: string) => {
     const updatedIngredient = {...editingIngredientsData[id]}
 
-    const ingredientsFormData = getValues('ingredients');
-
-    setValue('ingredients', ingredientsFormData.map(item => item.id === id ? updatedIngredient : item));
+    const index = ingredientFields.findIndex(item => item.id === id);
+    if (index !== -1) {
+      updateIngredient(index, updatedIngredient);
+    }
 
     cancelIngredientsEditing(id);
   }
 
-  const startEditingStep = (step: {
-    id: string;
-    desc: LocalizedText | string;
-    imgUrl: string | null;
-    imgFile?: File | null
-  }) => {
-    const descParsed = typeof step.desc === 'string'
-      ? parseJson(step.desc) as unknown as { ua: string; en: string }
-      : step.desc;
-
+  const startEditingStep = (stepId: string) => {
     setIsEditingStep(prev => ({
       ...prev,
-      [step.id]: true
-    }));
-
-    setEditingStepsData(prev => ({
-      ...prev,
-      [step.id]: {
-        id: step.id,
-        desc: {...descParsed},
-        imgUrl: step.imgUrl,
-        newImage: step.imgFile ?? null,
-      }
+      [stepId]: true
     }));
   };
 
@@ -381,119 +328,69 @@ const Page = () => {
     const newId = uuidv4();
     const newStep = {desc: {en: '', ua: ''}, imgUrl: null, imgFile: null, id: newId};
     appendStep(newStep);
-    // setTimeout нужен чтобы startEditingStep выполнился после того как React обновит stepFields
-    setTimeout(() => startEditingStep(newStep), 0);
+    // setTimeout(() => startEditingStep(newStep), 0);
   };
 
-  const cancelStepEditing = (id: string) => {
+  const handleCloseStepEditing = (id: string) => {
     setIsEditingStep(prev =>
       Object.fromEntries(
         Object.entries(prev).filter(([key]) => key !== id)
       )
     );
-    setEditingStepsData(prev =>
-      Object.fromEntries(
-        Object.entries(prev).filter(([key]) => key !== id)
-      )
-    );
+  }
+
+  const cancelStepEditing = (id: string) => {
+    handleCloseStepEditing(id);
+
+    // const index = stepFields.findIndex(item => item.id === id);
+    // if (index === -1 || !recipe?.recipeSteps[index]) return;
+    //
+    // if(!prevStepChanges[index]) {
+    //   const originalStep = recipe.recipeSteps[index];
+    //   setValue(`recipeSteps.${index}.desc`, originalStep.desc);
+    //   setValue(`recipeSteps.${index}.imgUrl`, originalStep.imgUrl);
+    //   setValue(`recipeSteps.${index}.imgFile`, null);
+    // } else if(prevStepChanges[index].length >= 1) {
+    //   const prevStepChangesArray = prevStepChanges[index];
+    //   const prevState = prevStepChangesArray.pop();
+    //   setValue(`recipeSteps.${index}.desc`, prevState.desc);
+    //   setValue(`recipeSteps.${index}.imgUrl`, prevState.imgUrl);
+    //   setValue(`recipeSteps.${index}.imgFile`, null);
+    // }
   };
 
   const handleStepChange = (id: string, field: 'ua' | 'en', value: string) => {
-    setEditingStepsData(prev => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        desc: {
-          ...prev[id].desc,
-          [field]: value,
-        }
-      }
-    }));
+    const index = stepFields.findIndex(item => item.id === id);
+    if (index === -1) return;
+
+    setValue(`recipeSteps.${index}.desc.${field}`, value);
   };
 
   const handleStepImageChange = (id: string, file: File) => {
+    const index = stepFields.findIndex(item => item.id === id);
+    if (index === -1) return;
+
     const previewUrl = URL.createObjectURL(file);
-    setEditingStepsData(prev => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        imgUrl: previewUrl,
-        newImage: file,
-      }
-    }));
+    setValue(`recipeSteps.${index}.imgUrl`, previewUrl);
+    setValue(`recipeSteps.${index}.imgFile`, file);
   };
 
   const deleteStepImage = (id: string) => {
-    setEditingStepsData(prev => ({
-      ...prev,
-      [id]: {
-        ...prev[id],
-        imgUrl: null,
-        newImage: null,
-      }
-    }));
+    const index = stepFields.findIndex(item => item.id === id);
+    if (index === -1) return;
+
+    setValue(`recipeSteps.${index}.imgUrl`, null);
+    setValue(`recipeSteps.${index}.imgFile`, null);
   };
 
   const saveStepChanges = (id: string) => {
-    const editedStep = editingStepsData[id];
-    const stepsFormData = getValues('recipeSteps');
+    const index = stepFields.findIndex(item => item.id === id);
+    if (index === -1) return;
 
-    setValue('recipeSteps', stepsFormData.map(step =>
-      step.id === id
-        ? {
-          ...step,
-          desc: editedStep.desc,
-          imgUrl: editedStep.imgUrl,
-          imgFile: editedStep.newImage ?? step.imgFile,
-        }
-        : step
-    ));
-
-    cancelStepEditing(id);
+    const currentStep = stepFields.find(item => item.id === id);
+    // setPrevStepChanges(prev => prev[id]: [...prev[id], currentStep]);
+    handleCloseStepEditing(id);
   };
-
-  // const saveEdit = () => {
-  //   if (!recipe || !editingField) return;
-  //
-  //   if (editingField === 'category') {
-  //     setRecipe({...recipe, category: editedValues.category});
-  //   } else if (editingField === 'title') {
-  //     setRecipe({...recipe, title: editedValues.title});
-  //   } else if (editingField === 'heroImage') {
-  //     const updatedSteps = [...recipe.recipeSteps];
-  //     if (updatedSteps[0]) {
-  //       updatedSteps[0] = {...updatedSteps[0], imgUrl: editedValues.heroImage};
-  //     }
-  //     setRecipe({...recipe, recipeSteps: updatedSteps});
-  //   } else if (editingField.startsWith('ingredient-') && editedValues.ingredient) {
-  //     const updatedIngredients = recipe.ingredients.map(ing =>
-  //       ing.id === editedValues.ingredient!.id
-  //         ? {
-  //           ...ing,
-  //           value: editedValues.ingredient!.value,
-  //           quantity: editedValues.ingredient!.quantity,
-  //           unit: editedValues.ingredient!.unit,
-  //         }
-  //         : ing
-  //     );
-  //     setRecipe({...recipe, ingredients: updatedIngredients});
-  //   } else if (editingField.startsWith('step-') && editedValues.step) {
-  //     const updatedSteps = [...recipe.recipeSteps];
-  //     const idx = editedValues.step.index;
-  //     updatedSteps[idx] = {
-  //       ...updatedSteps[idx],
-  //       imgUrl: editedValues.step.imgUrl,
-  //       desc: editedValues.step.desc,
-  //     };
-  //     setRecipe({...recipe, recipeSteps: updatedSteps});
-  //   }
-  //
-  //   // TODO: Add API call to save changes
-  //
-  // };
-
-  const stepsToRender = isEditing ? stepFields : (recipe?.recipeSteps ?? []);
-  const stepIds = stepsToRender.map((step) => step.id);
 
   const handleDragEnd = (event: DragEndEvent, fields: StepFields[] | Ingredient[], type: 'steps' | 'ingredients') => {
     if (!isEditing) return;
@@ -540,8 +437,68 @@ const Page = () => {
     );
   }
 
+  const watchedSteps = watch('recipeSteps');
+  const stepsToRender = isEditing
+    ? stepFields.map((field, i) => ({ ...watchedSteps[i], id: field.id }))
+    : recipe?.recipeSteps;
+  const stepIds = stepFields.map((step) => step.id);
+
+  const onSaveChanges: SubmitHandler<EditingValues> = async (formData) => {
+    if (!recipe) return;
+
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const result = await prepareUpdateData({
+        formData,
+        recipe,
+        updatedHeroImg,
+      });
+
+      if (!result.success || !result.data) {
+        setSaveError(result.error || 'Failed to prepare data');
+        setIsSaving(false);
+        return;
+      }
+
+      const {data, error: updateError} = await updateRecipeData(result.data, recipe.id);
+
+      if (updateError || !data) {
+        console.log(error)
+        setSaveError(updateError || 'Failed to update recipe');
+        setIsSaving(false);
+        return;
+      }
+
+      // Update local state with new data
+      setRecipe(prev => prev ? {
+        ...prev,
+        title: result.data!.title,
+        category: result.data!.category,
+        likes: result.data!.likes,
+        recipeSteps: result.data!.recipeSteps,
+        ingredients: result.data!.ingredients,
+        heroImg: result.data!.heroImg,
+        videoUrl: result.data!.videoUrl,
+        preparingTime: result.data!.preparingTime,
+        isPremium: result.data!.isPremium,
+      } : prev);
+      setIsEditing(false);
+      setUpdateHeroImg(null);
+      setIsEditingStep({});
+      setIsEditingIngredient({});
+      setSaveError(null);
+
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save changes');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-linear-to-b from-amber-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Hero Section */}
       <section className="relative h-[70vh] w-full overflow-hidden">
         <Image
@@ -565,7 +522,7 @@ const Page = () => {
             </label>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"/>
+        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/30 to-transparent"/>
         <div className="absolute bottom-0 left-0 right-0 p-8 md:p-16">
           <div className="max-w-4xl mx-auto">
             <div className='relative'>
@@ -669,6 +626,36 @@ const Page = () => {
                 </svg>
                 {recipe.recipeSteps.length}<span>{tRecipes('singlePage.steps')}</span>
               </span>
+
+            </div>
+            <div className='flex items-center gap-5 my-2'>
+              {isEditing ? (
+                <div className='relative'>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    {tAdmin('form.fields.preparingTime')}
+                  </label>
+                  <div className='relative'>
+                    <input {...register('preparingTime', {required: true, min: 1, max: 1000})}
+                           name="preparingTime"
+                           aria-invalid={errors.preparingTime ? "true" : "false"}
+                           className="relative z-0 w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
+                           type="number"/>
+                    <span
+                      className='absolute top-0 right-0 w-2/10 h-full text-center flex justify-center items-center text-xs sm:text-md pr-3'>{tAdmin('form.fields.minutes')}</span>
+                  </div>
+                </div>
+              ) : (
+                  <span>Preparing Time: {recipe.preparingTime} {tAdmin('form.fields.minutes')}</span>
+              )}
+              {isEditing ? (
+                <div className="flex gap-3 items-center">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{tAdmin('form.fields.premiumContent')}:</label>
+                <input className="w-5 h-5 accent-green-500"
+                       type="checkbox" {...register('isPremium')}/>
+              </div>
+              ) : (
+                <span>{recipe.isPremium ? 'Premium content' : null}</span>
+              )}
             </div>
           </div>
         </div>
@@ -683,15 +670,23 @@ const Page = () => {
           {isEditing ? (
             <div className={`flex flex-col items-center gap-2`}>
               <button
-                className='flex flex-row items-center gap-2 px-4 py-2 w-full bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors shadow-md'
-                onClick={cancelEditButton}>
-                <CiEdit className="text-xl"/> <span>{tAdmin('list.save')}</span>
+                className='flex flex-row items-center gap-2 px-4 py-2 w-full bg-green-500 text-white rounded-xl hover:bg-green-600 transition-colors shadow-md disabled:opacity-50'
+                onClick={handleSubmit(onSaveChanges)}
+                disabled={isSaving}>
+                <CiEdit className="text-xl"/>
+                <span>{isSaving ? 'Saving...' : tAdmin('list.save')}</span>
               </button>
               <button
-                className='flex flex-row items-center gap-2 px-4 py-2 w-full bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shadow-md'
-                onClick={cancelEditButton}>
+                className='flex flex-row items-center gap-2 px-4 py-2 w-full bg-red-500 text-white rounded-xl hover:bg-red-600 transition-colors shadow-md disabled:opacity-50'
+                onClick={cancelEditButton}
+                disabled={isSaving}>
                 <CiEdit className="text-xl"/> <span>{tAdmin('list.cancel')}</span>
               </button>
+              {saveError && (
+                <div className='px-3 py-2 bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 rounded-xl text-sm max-w-xs text-center'>
+                  {saveError}
+                </div>
+              )}
             </div>
           ) : (
             <button
@@ -809,7 +804,6 @@ const Page = () => {
             <div className="space-y-3 mb-4 mt-4">
               <h3>{tAdmin('form.sections.addIngredient')}</h3>
               <div className="space-y-3">
-                {/* Ingredient name inputs for both languages */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <input {...register('ingredientUa')}
                          className={error !== null && getValues('ingredients').length === 0 ?
@@ -894,13 +888,13 @@ const Page = () => {
                           <h4 className="font-bold text-gray-900 dark:text-white mb-4">{tRecipes('singlePage.step')} {i + 1}</h4>
 
                           {/* Image */}
-                          {editingStepsData[step.id]?.imgUrl ? (
+                          {step.imgUrl ? (
                             <div className="relative mb-4">
                               <Image
                                 className="rounded-xl w-full object-cover max-h-64"
                                 width={500}
                                 height={300}
-                                src={editingStepsData[step.id].imgUrl!}
+                                src={step.imgUrl}
                                 alt={`Step ${i + 1} image`}
                               />
                               <button
@@ -946,7 +940,7 @@ const Page = () => {
                               {tAdmin('form.fields.descriptionUa')}
                             </label>
                             <textarea
-                              value={editingStepsData[step.id]?.desc.ua ?? ''}
+                              value={typeof step.desc === 'string' ? '' : step.desc.ua}
                               onChange={(e) => handleStepChange(step.id, 'ua', e.target.value)}
                               rows={3}
                               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:border-amber-500"
@@ -959,7 +953,7 @@ const Page = () => {
                               {tAdmin('form.fields.descriptionEn')}
                             </label>
                             <textarea
-                              value={editingStepsData[step.id]?.desc.en ?? ''}
+                              value={typeof step.desc === 'string' ? '' : step.desc.en}
                               onChange={(e) => handleStepChange(step.id, 'en', e.target.value)}
                               rows={3}
                               className="w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:border-amber-500"
@@ -987,7 +981,7 @@ const Page = () => {
                                     stepId={step.id}
                                     index={i}
                                     isEditing={isEditing}
-                                    onEdit={() => startEditingStep(step)}
+                                    onEdit={() => startEditingStep(step.id)}
                                     onRemove={() => removeStep(i)}/>
                     )}
                   </div>
@@ -1029,11 +1023,11 @@ const Page = () => {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
             {isEditing ? (
               <div className="space-y-4">
-                {videoPreviewUrl || recipe?.videoUrl ? (
+                {watch('videoUrl') ? (
                   <div className="relative aspect-video rounded-xl overflow-hidden">
                     <video
                       className="w-full h-full object-cover"
-                      src={videoPreviewUrl || recipe?.videoUrl}
+                      src={watch('videoUrl')}
                       controls
                     />
                     <button
@@ -1050,7 +1044,7 @@ const Page = () => {
                         accept="video/*"
                         onChange={handleVideoFile}
                       />
-                      {tAdmin('form.buttons.changeImage')}
+                      {tAdmin('form.buttons.changeVideo')}
                     </label>
                   </div>
                 ) : (

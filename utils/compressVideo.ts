@@ -40,7 +40,6 @@ export async function compressVideo(
   const stream = canvas.captureStream(fps);
   const chunks: BlobPart[] = [];
 
-  // Определяем поддерживаемый MIME тип
   const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
     ? 'video/webm;codecs=vp9'
     : MediaRecorder.isTypeSupported('video/webm;codecs=vp8')

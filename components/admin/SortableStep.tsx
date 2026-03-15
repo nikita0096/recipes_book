@@ -49,8 +49,8 @@ const SortableStep = ({step, stepId, index, isEditing, onEdit, onRemove}: Sortab
           />
         </div>
       )}
-      <div className="p-6">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-row items-center justify-between gap-2 p-6">
+        <div className="flex flex-row items-center justify-center gap-4">
           <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md">
             <span className="text-white font-bold">{index + 1}</span>
           </div>
@@ -62,32 +62,33 @@ const SortableStep = ({step, stepId, index, isEditing, onEdit, onRemove}: Sortab
               {step.desc[locale]}
             </p>
           </div>
-          <div
+
+        </div>
+        {isEditing && (
+          <div className=" flex items-center gap-5 z-10">
+            <button
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={onEdit}
+              className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors shadow-md p-2"
+            >
+              <CiEdit className="text-3xl"/>
+            </button>
+            <button
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={onRemove}
+              className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded-xl hover:bg-red-200 dark:hover:bg-red-900 transition-colors shadow-md p-2"
+            >
+              <MdDelete className="text-3xl"/>
+            </button>
+            <div
               className='touch-none select-none'
               {...attributes}
               {...listeners}>
-            <MdDragIndicator className={`text-5xl ${isEditing ? "cursor-grabbing" : ""}`} />
+              <MdDragIndicator className={`text-5xl ${isEditing ? "cursor-grabbing" : ""}`}/>
+            </div>
           </div>
-        </div>
+        )}
       </div>
-      {isEditing && (
-        <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
-          <button
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={onEdit}
-            className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors shadow-md p-2"
-          >
-            <CiEdit className="text-3xl"/>
-          </button>
-          <button
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={onRemove}
-            className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded-xl hover:bg-red-200 dark:hover:bg-red-900 transition-colors shadow-md p-2"
-          >
-            <MdDelete className="text-3xl"/>
-          </button>
-        </div>
-      )}
     </div>
   );
 }
