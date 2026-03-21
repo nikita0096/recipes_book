@@ -594,22 +594,25 @@ const Page = () => {
 
             <div className="flex items-center gap-4 text-white/90">
               <span className="flex items-center gap-2">
-                <svg className="w-5 h-5"
-                     fill="currentColor"
-                     viewBox="0 0 20 20">
-                  <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"/>
-                </svg>
                 {isEditing ? (
                   <div>
                     <label
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{tAdmin('form.fields.likes')}</label>
+                      className="block text-sm font-medium text-white mb-1">{tAdmin('form.fields.likes')}
+                    </label>
                     <input {...register('likes')}
                            className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
                            type="number"
                            placeholder="0"/>
                   </div>
                 ) : (
-                  <span>{recipe.likes}</span>
+                  <>
+                    <svg className="w-5 h-5"
+                         fill="currentColor"
+                         viewBox="0 0 20 20">
+                      <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"/>
+                    </svg>
+                    <span>{recipe.likes}</span>
+                  </>
                 )}
 
               </span>
@@ -631,7 +634,7 @@ const Page = () => {
             <div className='flex items-center gap-5 my-2'>
               {isEditing ? (
                 <div className='relative'>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label className="block text-sm font-medium text-white mb-1">
                     {tAdmin('form.fields.preparingTime')}
                   </label>
                   <div className='relative'>
@@ -649,7 +652,7 @@ const Page = () => {
               )}
               {isEditing ? (
                 <div className="flex gap-3 items-center">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{tAdmin('form.fields.premiumContent')}:</label>
+                <label className="block text-sm font-medium text-white">{tAdmin('form.fields.premiumContent')}:</label>
                 <input className="w-5 h-5 accent-green-500"
                        type="checkbox" {...register('isPremium')}/>
               </div>

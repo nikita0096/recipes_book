@@ -95,9 +95,9 @@ const Header: React.FC = () => {
                 className='text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-400 font-medium transition-colors'>
             {t('nav.recipes')}
           </Link>
-          <Link href={PAGES.SOCIAL}
+          <Link href={PAGES.ABOUT}
                 className='text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-400 font-medium transition-colors'>
-            {t('nav.socialMedia')}
+            {t('nav.about')}
           </Link>
           {user?.role === 'admin' && (
             <Link href={PAGES.ADMIN_PANEL}

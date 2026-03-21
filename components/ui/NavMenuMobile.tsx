@@ -47,10 +47,10 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
                 </Link>
                 <Link
                   onClick={() => setIsShowNav(false)}
-                  href={PAGES.SOCIAL}
+                  href={PAGES.ABOUT}
                   className='text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-400 font-medium text-lg transition-colors py-2 border-b border-amber-100 dark:border-gray-700'
                 >
-                  {t('nav.socialMedia')}
+                  {t('nav.about')}
                 </Link>
                 {user?.role === 'admin' && (
                   <Link

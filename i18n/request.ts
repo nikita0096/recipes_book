@@ -11,7 +11,8 @@ export default getRequestConfig(async ({requestLocale}) => {
   const home = (await import(`../messages/${locale}/home.json`)).default;
   const recipes = (await import(`../messages/${locale}/recipes.json`)).default;
   const admin = (await import(`../messages/${locale}/admin.json`)).default;
-  const socialMedia = (await import(`../messages/${locale}/socialMedia.json`)).default;
+  const about = (await import(`../messages/${locale}/about.json`)).default;
+  const footer = (await import(`../messages/${locale}/footer.json`)).default;
 
   return {
     locale,
@@ -20,7 +21,8 @@ export default getRequestConfig(async ({requestLocale}) => {
       home,
       recipes,
       admin,
-      socialMedia
+      about,
+      footer
     }
   };
 });

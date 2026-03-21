@@ -2,7 +2,7 @@
 export const PAGES = {
   HOME: '/',
   RECIPES: '/recipes',
-  SOCIAL: '/social',
+  ABOUT: '/about',
   ADMIN_PANEL: '/admin',
   RECIPE: (id: string): string => `/recipes/${id}`,
   PROFILE: (id: string): string => `/profile/${id}`,

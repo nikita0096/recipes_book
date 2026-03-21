@@ -3,7 +3,31 @@
     "words": ["Recipes", "Masterclasses", "Desserts", "Magic"],
     "byAuthor": "by Yuliia Stohantseva"
   },
+  "hero": {
+    "welcome": "Welcome to",
+    "tagline": "Discover the art of creating exquisite desserts with unique author recipes",
+    "scroll": "Scroll to explore"
+  },
   "cta": {
-    "exploreRecipes": "Explore Recipes"
+    "exploreRecipes": "Explore Recipes",
+    "viewFeatured": "View Featured"
+  },
+  "featured": {
+    "badge": "Top Picks",
+    "title": "Featured Recipes",
+    "subtitle": "Discover our most loved desserts crafted with passion and expertise",
+    "viewAll": "View All Recipes",
+    "minutes": "min"
+  },
+  "about": {
+    "badge": "About the Author",
+    "title": "Meet Yuliia",
+    "description": "With over a decade of experience in pastry arts, Yuliia creates desserts that are not just treats, but works of art. Each recipe is carefully crafted and tested to ensure perfect results every time.",
+    "description2": "From classic European pastries to innovative modern creations, explore a world of sweet possibilities guided by an expert hand.",
+    "stats": {
+      "recipes": "Recipes",
+      "years": "Years Experience",
+      "followers": "Happy Bakers"
+    }
   }
 }
