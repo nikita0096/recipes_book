@@ -47,7 +47,7 @@ const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout, setIsOpenAuthPage}
             <div id='aut__bar_overlay' className='fixed inset-0 min-h-screen' onClick={() => setIsOpenUserMenu(!isOpenUserMenu)}>
               <div className='absolute top-12 right-0 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-amber-100 dark:border-gray-700 overflow-hidden z-50'>
                 <Link
-                  href={PAGES.PROFILE(user.name)}
+                  href={PAGES.PROFILE(user.id)}
                   className='block px-4 py-3 text-gray-700 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors'
                 >
                   {t('auth.profile')}

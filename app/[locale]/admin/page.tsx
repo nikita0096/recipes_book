@@ -13,8 +13,9 @@ import {MdDeleteForever} from "react-icons/md";
 import {Spinner} from "@/components/ui/spinner";
 import {units} from "@/constants/units";
 import {categories} from "@/constants/categories";
-import {IFormValues, Locale} from "@/types/forms";
+import {IFormValues, Ingredient, Locale} from "@/types/forms";
 import {uploadVideoToStorage} from "@/services/storage/uploadVideoToStorage";
+import {insertPremiumRecipePart, IUploadPrivateData} from "@/services/db/insertPremiumRecipeToDb";
 
 const Page = () => {
   const [mounted, setMounted] = useState<boolean>(false);
@@ -261,14 +262,44 @@ const Page = () => {
     setIsPending(true);
 
     try {
-      const recipeData: IUploadData | null = await handleFormData(formData, formData.title.en);
+      const recipeData: IUploadData & Omit<IUploadPrivateData, 'recipeId'> | null = await handleFormData(formData, formData.title.en);
 
       if (recipeData === null) {
         setIsPending(false);
-        return;
+        throw new Error();
       }
 
-      await insertRecipe(recipeData);
+      if(recipeData.isPremium) {
+        const newRecipe = await insertRecipe({
+          title: recipeData.title,
+          likes: recipeData.likes,
+          category: recipeData.category,
+          ingredients: recipeData.ingredients,
+          heroImgUrl: recipeData.heroImgUrl,
+          isPremium: recipeData.isPremium,
+          preparingTime: recipeData.preparingTime,
+        });
+
+        await insertPremiumRecipePart({
+          recipeId: newRecipe.id,
+          recipeSteps: recipeData.recipeSteps,
+          videoUrl: recipeData.videoUrl,
+        });
+      } else {
+        await insertRecipe({
+          title: recipeData.title,
+          likes: recipeData.likes,
+          category: recipeData.category,
+          ingredients: recipeData.ingredients,
+          heroImgUrl: recipeData.heroImgUrl,
+          isPremium: recipeData.isPremium,
+          preparingTime: recipeData.preparingTime,
+          recipeSteps: recipeData.recipeSteps,
+          videoUrl: recipeData.videoUrl,
+        });
+      }
+
+
 
       reset();
       setStepImageUrls([]);

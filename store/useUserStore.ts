@@ -3,6 +3,7 @@ import {create} from "zustand/react";
 export type UserRole = 'admin' | 'user';
 
 export interface IUserState {
+  id: string;
   name: string;
   avatar_url: string | null;
   role: UserRole;

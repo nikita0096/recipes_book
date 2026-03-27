@@ -35,6 +35,7 @@ const Header: React.FC = () => {
         const profile = await getUserProfile(data.id);
 
         setUserData({
+          id: data.id,
           name: name || '',
           avatar_url: avatar_url || '',
           role: profile?.role || 'user',
@@ -44,6 +45,7 @@ const Header: React.FC = () => {
     }
 
     updateUserData();
+
 
     const {data: {subscription}} = supabase.auth.onAuthStateChange((event) => {
 

@@ -9,6 +9,8 @@ const Page = () => {
   const params = useParams<{ recipe: string }>();
   const {selectedRecipe, setSelectedRecipe, isLoading, error} = useRecipesStore();
 
+  console.log(selectedRecipe)
+
   useEffect(() => {
     setSelectedRecipe(params.recipe);
 

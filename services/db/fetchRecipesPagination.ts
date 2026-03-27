@@ -1,4 +1,6 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
+import {toCamelCase} from "@/utils/parseCamelcase";
+import {IRecipe} from "@/types";
 
 export const fetchRecipesPagination = async (pageParam: number) => {
 
@@ -13,8 +15,10 @@ export const fetchRecipesPagination = async (pageParam: number) => {
 
   if (error) throw error;
 
+  const parsedData = data.map((recipe) => toCamelCase(recipe));
+
   return {
-    data,
+    data: parsedData as IRecipe[],
     nextCursor: data.length === 9 ? pageParam + 1 : undefined,
   };
 }

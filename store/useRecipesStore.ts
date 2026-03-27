@@ -1,6 +1,7 @@
 import {create} from "zustand/react";
 import {IRecipe} from "@/types/recipe";
 import {supabase} from "@/lib/supabase/ClientComponentClient";
+import {toCamelCase} from "@/utils/parseCamelcase";
 
 interface RecipesState {
   recipes: IRecipe[];
@@ -44,10 +45,12 @@ export const useRecipesStore = create<RecipesState>((set, get) => ({
       return;
     }
 
+    const parsedData = toCamelCase(data);
+
     set({
       isLoading: false,
       error: null,
-      selectedRecipe: data,
+      selectedRecipe: parsedData as IRecipe,
     });
   },
   // getRecipes: async (page = 0, pageSize = 10) => {
