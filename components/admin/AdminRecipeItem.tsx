@@ -18,7 +18,7 @@ interface AdminRecipeItemProps {
 }
 
 const AdminRecipeItem: React.FC<AdminRecipeItemProps> = ({recipe}) => {
-  const [image, setImage] = useState<string>(recipe.recipeSteps[0]?.imgUrl || RECIPE_PLACEHOLDER_IMAGE);
+  const [image, setImage] = useState<string>(recipe.heroImg || RECIPE_PLACEHOLDER_IMAGE);
   const locale = useTypedLocale();
   const t = useTranslations('admin');
   const tRecipes = useTranslations('recipes');

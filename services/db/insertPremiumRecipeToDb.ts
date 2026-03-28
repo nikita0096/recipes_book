@@ -1,15 +1,7 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
-import {LocalizedText} from "@/types/forms";
+import {IRecipePremiumUpload} from "@/types/recipe";
 
-export type { LocalizedText };
-
-export interface IUploadPrivateData {
-  recipeId: string;
-  recipeSteps: { desc: LocalizedText, imgUrl: string | null, id: string }[];
-  videoUrl: string;
-}
-
-export const insertPremiumRecipePart = async (recipeData: IUploadPrivateData) => {
+export const insertPremiumRecipePart = async (recipeData: IRecipePremiumUpload) => {
   const { error} = await supabase
     .from('recipes_premium')
     .insert({

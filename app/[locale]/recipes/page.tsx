@@ -4,14 +4,15 @@ import React, {useMemo, useState} from 'react';
 import RecipesList from "@/components/recipes/RecipesList";
 import {useRecipes} from "@/hooks/useRecipes";
 import LoadingPage from "@/components/ui/LoadingPage";
-import {useLocale, useTranslations} from "next-intl";
+import {useTranslations} from "next-intl";
+import {useTypedLocale} from "@/hooks/useTypedLocale";
 
 const Recipes = () => {
 
   const [searchValue, setSearchValue] = useState('');
   const [selectValue, setSelectValue] = useState('All recipes');
 
-  const locale = useLocale();
+  const locale = useTypedLocale();
 
   const tRecipes = useTranslations('recipes');
   const tCommon = useTranslations('common');
@@ -32,17 +33,13 @@ const Recipes = () => {
   const filteredRecipes = useMemo(() => {
     let recipes = allRecipes;
 
-    // if (selectValue !== 'All recipes') {
-    //   recipes = recipes.filter((recipe) => recipe.category === selectValue);
-    // }
-
     if (searchValue !== '') {
       const search = searchValue.toLowerCase().trim();
-      recipes = recipes?.filter((recipe) => recipe.title.toLowerCase().includes(search));
+      recipes = recipes?.filter((recipe) => recipe.title[locale].toLowerCase().includes(search));
     }
 
     return recipes;
-  }, [allRecipes, searchValue, selectValue]);
+  }, [allRecipes, searchValue, selectValue, locale]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

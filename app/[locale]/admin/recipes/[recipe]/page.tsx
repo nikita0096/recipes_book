@@ -38,6 +38,7 @@ import {v4 as uuidv4} from "uuid";
 import SortableIngredient from "@/components/admin/SortableIngredient";
 import {updateRecipeData} from "@/services/db/updateRecipe";
 import {prepareUpdateData} from "./utils/prepareUpdateData";
+import {fetchPremiumRecipe} from "@/services/db/fetchPremiumRecipe";
 
 type StepFields = { desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string }
 
@@ -146,8 +147,12 @@ const Page = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const data = await fetchRecipe(params.recipe);
+        const data = await fetchPremiumRecipe(params.recipe);
         const parsedTitle = parseJson(data?.title);
+
+        if(data.isPremium) {
+
+        }
 
         setRecipe({
           ...data,

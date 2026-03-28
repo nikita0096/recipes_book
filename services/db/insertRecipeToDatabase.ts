@@ -1,21 +1,7 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
-import {Ingredient, LocalizedText} from "@/types/forms";
+import {IRecipeUpload} from "@/types/recipe";
 
-export type { LocalizedText };
-
-export interface IUploadData {
-  title: LocalizedText;
-  likes: number;
-  category: LocalizedText;
-  ingredients: Ingredient[];
-  heroImgUrl: string | null;
-  isPremium: boolean;
-  preparingTime: number;
-  videoUrl?: string;
-  recipeSteps?: { desc: LocalizedText, imgUrl: string | null, id: string }[];
-}
-
-export const insertRecipe = async (recipeData: IUploadData) => {
+export const insertRecipe = async (recipeData: IRecipeUpload) => {
   const { data, error} = await supabase
     .from('recipes')
     .insert({
@@ -23,13 +9,13 @@ export const insertRecipe = async (recipeData: IUploadData) => {
       category: recipeData.category,
       likes: recipeData.likes,
       ingredients: recipeData.ingredients,
-      hero_img: recipeData.heroImgUrl,
+      hero_img: recipeData.heroImg,
       is_premium: recipeData.isPremium,
       preparing_time: recipeData.preparingTime,
       video_url: recipeData.videoUrl ? recipeData.videoUrl : null,
       recipe_steps: recipeData.recipeSteps ? recipeData.recipeSteps : null,
     })
-    .select('id')   // <-- запрашиваем id обратно
+    .select('id')
     .single();
 
   if (error) {

@@ -7,7 +7,7 @@ import {useRouter} from "@/i18n/navigation";
 import {useLocale, useTranslations} from "next-intl";
 import {Controller, SubmitHandler, useFieldArray, useForm} from "react-hook-form";
 import {v4 as uuidv4} from 'uuid';
-import {insertRecipe, IUploadData} from "@/services/db/insertRecipeToDatabase";
+import {insertRecipe} from "@/services/db/insertRecipeToDatabase";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {MdDeleteForever} from "react-icons/md";
 import {Spinner} from "@/components/ui/spinner";
@@ -15,7 +15,9 @@ import {units} from "@/constants/units";
 import {categories} from "@/constants/categories";
 import {IFormValues, Ingredient, Locale} from "@/types/forms";
 import {uploadVideoToStorage} from "@/services/storage/uploadVideoToStorage";
-import {insertPremiumRecipePart, IUploadPrivateData} from "@/services/db/insertPremiumRecipeToDb";
+import {insertPremiumRecipePart} from "@/services/db/insertPremiumRecipeToDb";
+import {IRecipeUpload, IRecipePremiumUpload} from "@/types/recipe";
+import {fetchPremiumRecipe} from "@/services/db/fetchPremiumRecipe";
 
 const Page = () => {
   const [mounted, setMounted] = useState<boolean>(false);
@@ -250,7 +252,7 @@ const Page = () => {
       likes: data.likes,
       recipeSteps: steps,
       ingredients: data.ingredients,
-      heroImgUrl: heroImgResult.imageUrl,
+      heroImg: heroImgResult.imageUrl,
       isPremium: data.isPremium,
       preparingTime: data.preparingTime,
       videoUrl: videoUrl
@@ -262,7 +264,7 @@ const Page = () => {
     setIsPending(true);
 
     try {
-      const recipeData: IUploadData & Omit<IUploadPrivateData, 'recipeId'> | null = await handleFormData(formData, formData.title.en);
+      const recipeData: IRecipeUpload & Omit<IRecipePremiumUpload, 'recipeId'> | null = await handleFormData(formData, formData.title.en);
 
       if (recipeData === null) {
         setIsPending(false);
@@ -275,10 +277,11 @@ const Page = () => {
           likes: recipeData.likes,
           category: recipeData.category,
           ingredients: recipeData.ingredients,
-          heroImgUrl: recipeData.heroImgUrl,
+          heroImg: recipeData.heroImg,
           isPremium: recipeData.isPremium,
           preparingTime: recipeData.preparingTime,
         });
+
 
         await insertPremiumRecipePart({
           recipeId: newRecipe.id,
@@ -291,7 +294,7 @@ const Page = () => {
           likes: recipeData.likes,
           category: recipeData.category,
           ingredients: recipeData.ingredients,
-          heroImgUrl: recipeData.heroImgUrl,
+          heroImg: recipeData.heroImg,
           isPremium: recipeData.isPremium,
           preparingTime: recipeData.preparingTime,
           recipeSteps: recipeData.recipeSteps,
