@@ -1,37 +1,70 @@
 import {v4 as uuidv4} from "uuid";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {uploadVideoToStorage} from "@/services/storage/uploadVideoToStorage";
+import {deleteImage, deleteVideo} from "@/services/storage/deleteFromStorage";
 import {EditingValues} from "../page";
-import {IRecipe} from "@/types/recipe";
-import {UpdateRecipeData} from "@/services/db/updateRecipe";
+import {
+  IRecipe,
+  RecipeStep,
+  UpdateRecipeDataPublic,
+  UpdateRecipeDataPremiumMain,
+  UpdateRecipeDataPremiumPart,
+} from "@/types/recipe";
 
 export interface PrepareUpdateDataParams {
   formData: EditingValues;
   recipe: IRecipe;
-  updatedHeroImg: string | null;
 }
 
-export interface PrepareUpdateDataResult {
-  success: boolean;
-  data?: UpdateRecipeData;
-  error?: string;
+// Результат для public рецепта (остаётся или становится public)
+export interface PrepareUpdateDataResultPublic {
+  success: true;
+  isPremium: false;
+  wasPremium: boolean; // true если был premium → public
+  data: UpdateRecipeDataPublic;
 }
+
+// Результат для premium рецепта (остаётся или становится premium)
+export interface PrepareUpdateDataResultPremium {
+  success: true;
+  isPremium: true;
+  wasPremium: boolean; // false если был public → premium
+  mainData: UpdateRecipeDataPremiumMain;
+  premiumData: UpdateRecipeDataPremiumPart;
+}
+
+// Результат с ошибкой
+export interface PrepareUpdateDataResultError {
+  success: false;
+  error: string;
+}
+
+export type PrepareUpdateDataResult =
+  | PrepareUpdateDataResultPublic
+  | PrepareUpdateDataResultPremium
+  | PrepareUpdateDataResultError;
 
 export const prepareUpdateData = async ({
   formData,
   recipe,
-  updatedHeroImg,
 }: PrepareUpdateDataParams): Promise<PrepareUpdateDataResult> => {
   try {
-    const folder = recipe.title.en;
+    // Use recipe.id as folder name - it never changes
+    const folder = recipe.id;
 
     // Process steps - upload new images if needed
-    const processedSteps = [];
+    const processedSteps: RecipeStep[] = [];
     for (const step of formData.recipeSteps) {
       let imgUrl = step.imgUrl;
 
       // If there's a new image file, upload it
       if (step.imgFile) {
+        // Find old image URL for this step and delete it
+        const oldStep = recipe.recipeSteps.find(s => s.id === step.id);
+        if (oldStep?.imgUrl) {
+          await deleteImage(oldStep.imgUrl);
+        }
+
         const filePath = `${folder}/${uuidv4()}`;
         const {imageUrl, error: uploadError} = await uploadImage({
           file: step.imgFile,
@@ -53,15 +86,44 @@ export const prepareUpdateData = async ({
       });
     }
 
-    // Process hero image if changed (starts with blob:)
+    // Find and delete images from removed steps
+    const newStepIds = new Set(formData.recipeSteps.map(s => s.id));
+    for (const oldStep of recipe.recipeSteps) {
+      if (!newStepIds.has(oldStep.id) && oldStep.imgUrl) {
+        await deleteImage(oldStep.imgUrl);
+      }
+    }
+
+    // Process hero image if there's a new file
     let heroImgUrl = formData.heroImg;
-    if (formData.heroImg.startsWith('blob:') && updatedHeroImg) {
-      heroImgUrl = recipe.heroImg;
+    if (formData.heroImgFile) {
+      // Delete old hero image before uploading new one
+      if (recipe.heroImg) {
+        await deleteImage(recipe.heroImg);
+      }
+
+      const filePath = `${folder}/heroImg-${uuidv4()}`;
+      const {imageUrl, error: heroError} = await uploadImage({
+        file: formData.heroImgFile,
+        bucket: 'images',
+        filePath: filePath
+      });
+
+      if (heroError) {
+        return {success: false, error: 'Failed to upload hero image'};
+      }
+
+      heroImgUrl = imageUrl;
     }
 
     // Process video if there's a new file
-    let videoUrl = formData.videoUrl;
+    let videoUrl = recipe.videoUrl;
     if (formData.videoFile) {
+      // Delete old video before uploading new one
+      if (recipe.videoUrl) {
+        await deleteVideo(recipe.videoUrl);
+      }
+
       const filePath = `${folder}/${uuidv4()}`;
       const {videoUrl: newVideoUrl, error: videoError} = await uploadVideoToStorage({
         videoFile: formData.videoFile,
@@ -76,25 +138,61 @@ export const prepareUpdateData = async ({
       videoUrl = newVideoUrl;
     }
 
-    // Prepare data for update
-    const updateData: UpdateRecipeData = {
+    // Prepare ingredients
+    const ingredients = formData.ingredients.map(ing => ({
+      id: ing.id,
+      value: ing.value,
+      quantity: ing.quantity,
+      unit: ing.unit
+    }));
+
+    // Return different structure based on target isPremium
+    if (formData.isPremium) {
+      // Target: Premium
+      const mainData: UpdateRecipeDataPremiumMain = {
+        title: formData.title,
+        category: formData.category,
+        likes: Number(formData.likes),
+        ingredients,
+        heroImg: heroImgUrl,
+        preparingTime: formData.preparingTime,
+        isPremium: true as const,
+      };
+
+      const premiumData: UpdateRecipeDataPremiumPart = {
+        recipeId: recipe.id,
+        recipeSteps: processedSteps,
+        videoUrl: videoUrl,
+      };
+
+      return {
+        success: true,
+        isPremium: true,
+        wasPremium: recipe.isPremium, // false = public→premium, true = premium→premium
+        mainData,
+        premiumData,
+      };
+    }
+
+    // Target: Public
+    const data: UpdateRecipeDataPublic = {
       title: formData.title,
       category: formData.category,
       likes: Number(formData.likes),
       recipeSteps: processedSteps,
-      ingredients: formData.ingredients.map(ing => ({
-        id: ing.id,
-        value: ing.value,
-        quantity: ing.quantity,
-        unit: ing.unit
-      })),
+      ingredients,
       heroImg: heroImgUrl,
-      videoUrl: videoUrl || undefined,
+      videoUrl: videoUrl,
       preparingTime: formData.preparingTime,
-      isPremium: formData.isPremium
+      isPremium: false as const,
     };
 
-    return {success: true, data: updateData};
+    return {
+      success: true,
+      isPremium: false,
+      wasPremium: recipe.isPremium, // true = premium→public, false = public→public
+      data,
+    };
   } catch (err) {
     return {
       success: false,

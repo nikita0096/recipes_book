@@ -36,9 +36,14 @@ import {Ingredient, LocalizedText, UnitValue} from "@/types/forms";
 import {SubmitHandler, useFieldArray, useForm} from "react-hook-form";
 import {v4 as uuidv4} from "uuid";
 import SortableIngredient from "@/components/admin/SortableIngredient";
-import {updateRecipeData} from "@/services/db/updateRecipe";
+import {
+  updateRecipePublic,
+  updateRecipePremium,
+  convertPublicToPremium,
+  convertPremiumToPublic,
+} from "@/services/db/updateRecipe";
 import {prepareUpdateData} from "./utils/prepareUpdateData";
-import {fetchPremiumRecipe} from "@/services/db/fetchPremiumRecipe";
+import {fetchRecipeAdmin} from "@/services/db/fetchRecipeAdmin";
 
 type StepFields = { desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string }
 
@@ -147,12 +152,8 @@ const Page = () => {
       try {
         setIsLoading(true);
         setError(null);
-        const data = await fetchPremiumRecipe(params.recipe);
+        const data = await fetchRecipeAdmin(params.recipe);
         const parsedTitle = parseJson(data?.title);
-
-        if(data.isPremium) {
-
-        }
 
         setRecipe({
           ...data,
@@ -442,12 +443,6 @@ const Page = () => {
     );
   }
 
-  const watchedSteps = watch('recipeSteps');
-  const stepsToRender = isEditing
-    ? stepFields.map((field, i) => ({ ...watchedSteps[i], id: field.id }))
-    : recipe?.recipeSteps;
-  const stepIds = stepFields.map((step) => step.id);
-
   const onSaveChanges: SubmitHandler<EditingValues> = async (formData) => {
     if (!recipe) return;
 
@@ -458,37 +453,81 @@ const Page = () => {
       const result = await prepareUpdateData({
         formData,
         recipe,
-        updatedHeroImg,
       });
 
-      if (!result.success || !result.data) {
+      if (!result.success) {
         setSaveError(result.error || 'Failed to prepare data');
         setIsSaving(false);
         return;
       }
 
-      const {data, error: updateError} = await updateRecipeData(result.data, recipe.id);
+      let updatedRecipe: IRecipe | null = null;
 
-      if (updateError || !data) {
-        console.log(error)
-        setSaveError(updateError || 'Failed to update recipe');
-        setIsSaving(false);
-        return;
+      if (result.isPremium && result.wasPremium) {
+        // Premium → Premium: update both tables
+        const premiumResult = result as import('./utils/prepareUpdateData').PrepareUpdateDataResultPremium;
+        const {data, error: updateError} = await updateRecipePremium(
+          premiumResult.mainData,
+          premiumResult.premiumData,
+          recipe.id
+        );
+
+        if (updateError || !data) {
+          setSaveError(updateError || 'Failed to update recipe');
+          setIsSaving(false);
+          return;
+        }
+        updatedRecipe = data;
+
+      } else if (result.isPremium && !result.wasPremium) {
+        // Public → Premium: update main + INSERT premium
+        const premiumResult = result as import('./utils/prepareUpdateData').PrepareUpdateDataResultPremium;
+        const {data, error: updateError} = await convertPublicToPremium(
+          premiumResult.mainData,
+          premiumResult.premiumData,
+          recipe.id
+        );
+
+        if (updateError || !data) {
+          setSaveError(updateError || 'Failed to convert to premium');
+          setIsSaving(false);
+          return;
+        }
+        updatedRecipe = data;
+
+      } else if (!result.isPremium && result.wasPremium) {
+        // Premium → Public: update main + DELETE premium
+        const publicResult = result as import('./utils/prepareUpdateData').PrepareUpdateDataResultPublic;
+        const {data, error: updateError} = await convertPremiumToPublic(
+          publicResult.data,
+          recipe.id
+        );
+
+        if (updateError || !data) {
+          setSaveError(updateError || 'Failed to convert to public');
+          setIsSaving(false);
+          return;
+        }
+        updatedRecipe = data;
+
+      } else {
+        // Public → Public: update main table only
+        const publicResult = result as import('./utils/prepareUpdateData').PrepareUpdateDataResultPublic;
+        const {data, error: updateError} = await updateRecipePublic(
+          publicResult.data,
+          recipe.id
+        );
+
+        if (updateError || !data) {
+          setSaveError(updateError || 'Failed to update recipe');
+          setIsSaving(false);
+          return;
+        }
+        updatedRecipe = data;
       }
 
       // Update local state with new data
-      setRecipe(prev => prev ? {
-        ...prev,
-        title: result.data!.title,
-        category: result.data!.category,
-        likes: result.data!.likes,
-        recipeSteps: result.data!.recipeSteps,
-        ingredients: result.data!.ingredients,
-        heroImg: result.data!.heroImg,
-        videoUrl: result.data!.videoUrl,
-        preparingTime: result.data!.preparingTime,
-        isPremium: result.data!.isPremium,
-      } : prev);
+      setRecipe(updatedRecipe);
       setIsEditing(false);
       setUpdateHeroImg(null);
       setIsEditingStep({});
@@ -502,12 +541,20 @@ const Page = () => {
     }
   }
 
+  const watchedSteps = watch('recipeSteps');
+  const stepsToRender = isEditing
+    ? stepFields.map((field, i) => ({ ...watchedSteps[i], id: field.id }))
+    : recipe?.recipeSteps;
+  const stepIds = stepFields.map((step) => step.id);
+
+  const mainImage = watch('heroImg');
+
   return (
     <div className="min-h-screen bg-linear-to-b from-amber-50 to-white dark:from-gray-900 dark:to-gray-800">
       {/* Hero Section */}
       <section className="relative h-[70vh] w-full overflow-hidden">
         <Image
-          src={updatedHeroImg === null ? recipe.heroImg : updatedHeroImg}
+          src={mainImage === '' ? recipe.heroImg : mainImage}
           alt={titleParsed ? titleParsed[locale] : ''}
           fill
           className="object-cover"

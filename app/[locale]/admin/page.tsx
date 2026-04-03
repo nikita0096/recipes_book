@@ -7,7 +7,7 @@ import {useRouter} from "@/i18n/navigation";
 import {useLocale, useTranslations} from "next-intl";
 import {Controller, SubmitHandler, useFieldArray, useForm} from "react-hook-form";
 import {v4 as uuidv4} from 'uuid';
-import {insertRecipe} from "@/services/db/insertRecipeToDatabase";
+import {insertRecipePublic, insertRecipePremiumMain} from "@/services/db/insertRecipeToDatabase";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {MdDeleteForever} from "react-icons/md";
 import {Spinner} from "@/components/ui/spinner";
@@ -16,8 +16,12 @@ import {categories} from "@/constants/categories";
 import {IFormValues, Ingredient, Locale} from "@/types/forms";
 import {uploadVideoToStorage} from "@/services/storage/uploadVideoToStorage";
 import {insertPremiumRecipePart} from "@/services/db/insertPremiumRecipeToDb";
-import {IRecipeUpload, IRecipePremiumUpload} from "@/types/recipe";
-import {fetchPremiumRecipe} from "@/services/db/fetchPremiumRecipe";
+import {
+  IRecipeUploadPublic,
+  IRecipeUploadPremiumMain,
+  IRecipePremiumUpload,
+  RecipeStep,
+} from "@/types/recipe";
 
 const Page = () => {
   const [mounted, setMounted] = useState<boolean>(false);
@@ -27,6 +31,7 @@ const Page = () => {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoError, setVideoError] = useState<string | null>(null);
 
+  const [isSuccess, setIsSuccess] = useState(false);
   const [isPending, setIsPending] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -250,12 +255,11 @@ const Page = () => {
       title: data.title,
       category: category,
       likes: data.likes,
-      recipeSteps: steps,
+      recipeSteps: steps as RecipeStep[],
       ingredients: data.ingredients,
       heroImg: heroImgResult.imageUrl,
-      isPremium: data.isPremium,
       preparingTime: data.preparingTime,
-      videoUrl: videoUrl
+      videoUrl: videoUrl,
     };
   };
 
@@ -264,46 +268,58 @@ const Page = () => {
     setIsPending(true);
 
     try {
-      const recipeData: IRecipeUpload & Omit<IRecipePremiumUpload, 'recipeId'> | null = await handleFormData(formData, formData.title.en);
+      // Generate recipe ID before upload - used as folder name in storage
+      const recipeId = uuidv4();
+
+      const recipeData = await handleFormData(formData, recipeId);
 
       if (recipeData === null) {
         setIsPending(false);
         throw new Error();
       }
 
-      if(recipeData.isPremium) {
-        const newRecipe = await insertRecipe({
+      if (formData.isPremium) {
+        // Premium рецепт: insert в main table + premium table
+        const premiumMainData: IRecipeUploadPremiumMain = {
+          id: recipeId,
           title: recipeData.title,
           likes: recipeData.likes,
           category: recipeData.category,
           ingredients: recipeData.ingredients,
           heroImg: recipeData.heroImg,
-          isPremium: recipeData.isPremium,
+          isPremium: true as const,
           preparingTime: recipeData.preparingTime,
-        });
+        };
 
+        await insertRecipePremiumMain(premiumMainData);
 
-        await insertPremiumRecipePart({
-          recipeId: newRecipe.id,
+        const premiumPartData: IRecipePremiumUpload = {
+          recipeId: recipeId,
           recipeSteps: recipeData.recipeSteps,
           videoUrl: recipeData.videoUrl,
-        });
+        };
+
+        await insertPremiumRecipePart(premiumPartData);
       } else {
-        await insertRecipe({
+        // Public рецепт: все данные в main table
+        const publicData: IRecipeUploadPublic = {
+          id: recipeId,
           title: recipeData.title,
           likes: recipeData.likes,
           category: recipeData.category,
           ingredients: recipeData.ingredients,
           heroImg: recipeData.heroImg,
-          isPremium: recipeData.isPremium,
+          isPremium: false as const,
           preparingTime: recipeData.preparingTime,
           recipeSteps: recipeData.recipeSteps,
           videoUrl: recipeData.videoUrl,
-        });
+        };
+
+        await insertRecipePublic(publicData);
       }
 
 
-
+      setIsSuccess(true);
       reset();
       setStepImageUrls([]);
       setHeroImg(null);
@@ -312,6 +328,9 @@ const Page = () => {
       setError(t('form.validation.recipeNotUploaded'));
     } finally {
       setIsPending(false);
+      const timerId = setTimeout(() => setIsSuccess(false), 5000);
+
+      return () => timerId && clearTimeout(timerId);
     }
   };
 
@@ -450,7 +469,7 @@ const Page = () => {
                              "flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-red-400 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors" :
                              "flex-1 px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
                            }
-                           type="text"
+                           type="number"
                            placeholder={t('form.fields.quantity')}/>
                     <select
                       {...register('ingredientUnit')}
@@ -710,6 +729,7 @@ const Page = () => {
           {isPending ? <Spinner/> : t('form.buttons.create')}
         </button>
         {error !== null && <p className='text-center pt-2 text-red-500'>{error}</p>}
+        {isSuccess && (<p className='text-center pt-2 text-green-500'>Recipe uploaded</p>)}
       </form>
     </div>
   );

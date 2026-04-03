@@ -1,9 +1,10 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {IRecipe, IRecipePublic, IRecipePremiumFull} from "@/types/recipe";
 
-export const fetchRecipe = async (id: string): Promise<IRecipe> => {
-  const {data, error} = await supabase.from('recipes')
-    .select()
+export const fetchRecipeAdmin = async (id: string): Promise<IRecipe> => {
+  const {data, error} = await supabase
+    .from('recipes')
+    .select('*')
     .eq('id', id)
     .single();
 
@@ -25,14 +26,16 @@ export const fetchRecipe = async (id: string): Promise<IRecipe> => {
     } satisfies IRecipePublic;
   }
 
-  // Premium рецепт - нужно fetch из premium table
+  // Premium рецепт - fetch из premium table
   const {data: premiumData, error: premiumError} = await supabase
     .from('recipes_premium')
     .select('*')
     .eq('recipe_id', id)
     .single();
 
-  if (premiumError) throw premiumError;
+  if (premiumError) {
+    throw premiumError;
+  }
 
   return {
     id: data.id,
