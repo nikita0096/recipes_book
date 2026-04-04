@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, {useEffect} from 'react';
 import Image from 'next/image';
 import { IRecipe, parseJson } from '@/types/recipe';
 import { Link } from '@/i18n/navigation';
@@ -41,7 +41,7 @@ const FeaturedRecipeCard: React.FC<FeaturedRecipeCardProps> = ({ recipe, index }
           <Image
             fill
             className="object-cover transition-transform duration-700 group-hover:scale-105"
-            src={recipe.heroImg}
+            src={recipe.heroImg || RECIPE_PLACEHOLDER_IMAGE}
             alt={title[locale]}
           />
 

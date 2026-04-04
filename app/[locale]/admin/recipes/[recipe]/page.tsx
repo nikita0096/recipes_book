@@ -543,11 +543,13 @@ const Page = () => {
 
   const watchedSteps = watch('recipeSteps');
   const stepsToRender = isEditing
-    ? stepFields.map((field, i) => ({ ...watchedSteps[i], id: field.id }))
+    ? stepFields.map((field, i) => ({...watchedSteps[i], id: field.id}))
     : recipe?.recipeSteps;
   const stepIds = stepFields.map((step) => step.id);
 
   const mainImage = watch('heroImg');
+
+  const isVideoChanged = watch('videoFile');
 
   return (
     <div className="min-h-screen bg-linear-to-b from-amber-50 to-white dark:from-gray-900 dark:to-gray-800">
@@ -700,14 +702,14 @@ const Page = () => {
                   </div>
                 </div>
               ) : (
-                  <span>Preparing Time: {recipe.preparingTime} {tAdmin('form.fields.minutes')}</span>
+                <span>Preparing Time: {recipe.preparingTime} {tAdmin('form.fields.minutes')}</span>
               )}
               {isEditing ? (
                 <div className="flex gap-3 items-center">
-                <label className="block text-sm font-medium text-white">{tAdmin('form.fields.premiumContent')}:</label>
-                <input className="w-5 h-5 accent-green-500"
-                       type="checkbox" {...register('isPremium')}/>
-              </div>
+                  <label className="block text-sm font-medium text-white">{tAdmin('form.fields.premiumContent')}:</label>
+                  <input className="w-5 h-5 accent-green-500"
+                         type="checkbox" {...register('isPremium')}/>
+                </div>
               ) : (
                 <span>{recipe.isPremium ? 'Premium content' : null}</span>
               )}
@@ -952,13 +954,15 @@ const Page = () => {
                                 src={step.imgUrl}
                                 alt={`Step ${i + 1} image`}
                               />
-                              <button
-                                type="button"
-                                onClick={() => deleteStepImage(step.id)}
-                                className="absolute top-2 right-2 w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
-                              >
-                                <MdDeleteForever className="text-xl"/>
-                              </button>
+                              {isVideoChanged !== null && (
+                                <button
+                                  type="button"
+                                  onClick={() => deleteStepImage(step.id)}
+                                  className="absolute top-2 right-2 w-10 h-10 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-lg"
+                                >
+                                  <MdDeleteForever className="text-xl"/>
+                                </button>
+                              )}
                               <label className="absolute bottom-2 right-2 cursor-pointer px-3 py-1.5 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors shadow-lg">
                                 <input
                                   type="file"

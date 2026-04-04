@@ -1,0 +1,39 @@
+{
+  "title": "My Profile",
+  "stats": {
+    "purchased": "Recipes Purchased",
+    "liked": "Liked",
+    "memberSince": "Member Since"
+  },
+  "sections": {
+    "purchasedRecipes": "My Purchased Recipes",
+    "likedRecipes": "Liked Recipes",
+    "quickActions": "Quick Actions"
+  },
+  "recipes": {
+    "count": "{count} recipes",
+    "purchased": "Purchased",
+    "purchasedAt": "Purchase date",
+    "view": "View",
+    "viewAll": "View all"
+  },
+  "empty": {
+    "purchasedTitle": "No purchased recipes yet",
+    "purchasedText": "Browse our premium recipes and get full access to detailed instructions",
+    "likedTitle": "No liked recipes yet",
+    "likedText": "Click the heart icon on any recipe to save it here",
+    "browseRecipes": "Browse Recipes"
+  },
+  "actions": {
+    "browseRecipes": "Browse Recipes",
+    "browseRecipesDesc": "Find a new dessert",
+    "settings": "Settings",
+    "settingsDesc": "Edit your profile",
+    "signOut": "Sign Out",
+    "signOutDesc": "Log out of your account"
+  },
+  "liked": {
+    "addHint": "Add recipes to your favorites",
+    "addHintDesc": "Click the heart icon on any recipe to save it here"
+  }
+}

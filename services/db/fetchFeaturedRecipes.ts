@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase/ClientComponentClient";
-import { IRecipe } from "@/types/recipe";
+import { IRecipe, IRecipePublic, IRecipePremiumFull } from "@/types/recipe";
 
 export const fetchFeaturedRecipes = async (): Promise<IRecipe[]> => {
   const { data, error } = await supabase
@@ -10,5 +10,33 @@ export const fetchFeaturedRecipes = async (): Promise<IRecipe[]> => {
 
   if (error) throw error;
 
-  return data || [];
+  return (data || []).map((item): IRecipe => {
+    if (!item.is_premium) {
+      return {
+        id: item.id,
+        title: item.title,
+        likes: item.likes,
+        category: item.category,
+        ingredients: item.ingredients,
+        heroImg: item.hero_img,
+        isPremium: false as const,
+        preparingTime: item.preparing_time,
+        recipeSteps: item.recipe_steps,
+        videoUrl: item.video_url,
+      } satisfies IRecipePublic;
+    }
+
+    return {
+      id: item.id,
+      title: item.title,
+      likes: item.likes,
+      category: item.category,
+      ingredients: item.ingredients,
+      heroImg: item.hero_img,
+      isPremium: true as const,
+      preparingTime: item.preparing_time,
+      recipeSteps: item.recipe_steps,
+      videoUrl: item.video_url,
+    } satisfies IRecipePremiumFull;
+  });
 };
