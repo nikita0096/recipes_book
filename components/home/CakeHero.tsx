@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 
 interface CakeHeroProps {
   words?: string[];
@@ -29,13 +30,12 @@ const CakeHero = ({
   const labelRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const layers = [
-    { id: 'l1', dy: 0, lblId: 'lbl1', threshold: 0.18, delay: 0 },
-    { id: 'c1', dy: -38, lblId: 'lblc1', threshold: 0.26, delay: 150 },
-    { id: 'l2', dy: -80, lblId: 'lbl2', threshold: 0.34, delay: 300 },
-    { id: 'c2', dy: -118, lblId: 'lblc2', threshold: 0.42, delay: 450 },
-    { id: 'l3', dy: -158, lblId: 'lbl3', threshold: 0.50, delay: 600 },
-    { id: 'glaze', dy: -202, lblId: 'lblG', threshold: 0.58, delay: 750 },
-    { id: 'candle', dy: -248, lblId: 'lblC', threshold: 0.66, delay: 900 },
+    { id: 'layer1', src: '/images/cake-layer/layer_1.jpg', dy: 0, lblId: 'lbl1', label: 'Sponge base', threshold: 0.18, delay: 0, zIndex: 1 },
+    { id: 'layer2', src: '/images/cake-layer/layer_2.jpg', dy: -70, lblId: 'lbl2', label: 'Strawberry jam', threshold: 0.26, delay: 150, zIndex: 2 },
+    { id: 'layer3', src: '/images/cake-layer/layer_3.jpg', dy: -140, lblId: 'lbl3', label: 'Pistachio cheesecake', threshold: 0.34, delay: 300, zIndex: 3 },
+    { id: 'layer4', src: '/images/cake-layer/layer_4.jpg', dy: -210, lblId: 'lbl4', label: 'Strawberry jam', threshold: 0.42, delay: 450, zIndex: 4 },
+    { id: 'layer5', src: '/images/cake-layer/layer_5.jpg', dy: -280, lblId: 'lbl5', label: 'Top sponge', threshold: 0.50, delay: 600, zIndex: 5 },
+    { id: 'layer6', src: '/images/cake-layer/layer_6.jpg', dy: -350, lblId: 'lbl6', label: 'Decoration', threshold: 0.58, delay: 750, zIndex: 6 },
   ];
 
   // Intro animation - layers falling down
@@ -56,7 +56,7 @@ const CakeHero = ({
     });
 
     // Show title after all layers landed
-    const titleDelay = 900 + 600; // last layer delay + animation time
+    const titleDelay = 750 + 600; // last layer delay + animation time
     setTimeout(() => {
       setShowTitle(true);
     }, titleDelay);
@@ -69,7 +69,6 @@ const CakeHero = ({
         if (el) {
           el.classList.remove('cake-intro-layer', 'cake-intro-landed');
           el.style.opacity = '1';
-          el.style.transform = 'translateX(-50%) translateY(0)';
         }
       });
     }, cleanupDelay);
@@ -176,7 +175,7 @@ const CakeHero = ({
         if (lbl) {
           const lblP = Math.max(0, Math.min(1, (sp - layer.threshold) / 0.14));
           lbl.style.opacity = String(lblP);
-          lbl.style.transform = `translateX(${(1 - lblP) * -10}px)`;
+          lbl.style.transform = `translateY(-50%) translateX(${(1 - lblP) * -10}px)`;
         }
       });
 
@@ -224,116 +223,29 @@ const CakeHero = ({
         <div className="cake-stage">
           <div className="cake-plate cake-intro-plate" ref={plateRef} />
 
-          <div
-            className="cake-layer cake-l1 cake-intro-layer"
-            ref={(el) => { layerRefs.current['l1'] = el; }}
-          >
+          {layers.map((layer) => (
             <div
-              className="cake-lbl"
-              style={{ bottom: '18px' }}
-              ref={(el) => { labelRefs.current['lbl1'] = el; }}
+              key={layer.id}
+              className="cake-layer cake-layer-img cake-intro-layer"
+              style={{ zIndex: layer.zIndex }}
+              ref={(el) => { layerRefs.current[layer.id] = el; }}
             >
-              Sponge base
+              <Image
+                src={layer.src}
+                alt={layer.label}
+                width={280}
+                height={120}
+                className="cake-layer-image"
+                priority
+              />
+              <div
+                className="cake-lbl"
+                ref={(el) => { labelRefs.current[layer.lblId] = el; }}
+              >
+                {layer.label}
+              </div>
             </div>
-          </div>
-
-          <div
-            className="cake-layer cake-c1 cake-intro-layer"
-            ref={(el) => { layerRefs.current['c1'] = el; }}
-          >
-            <div
-              className="cake-lbl"
-              style={{ bottom: '2px' }}
-              ref={(el) => { labelRefs.current['lblc1'] = el; }}
-            >
-              Vanilla cream
-            </div>
-          </div>
-
-          <div
-            className="cake-layer cake-l2 cake-intro-layer"
-            ref={(el) => { layerRefs.current['l2'] = el; }}
-          >
-            <div
-              className="cake-lbl"
-              style={{ bottom: '14px' }}
-              ref={(el) => { labelRefs.current['lbl2'] = el; }}
-            >
-              Second sponge
-            </div>
-          </div>
-
-          <div
-            className="cake-layer cake-c2 cake-intro-layer"
-            ref={(el) => { layerRefs.current['c2'] = el; }}
-          >
-            <div
-              className="cake-lbl"
-              style={{ bottom: '2px' }}
-              ref={(el) => { labelRefs.current['lblc2'] = el; }}
-            >
-              Berry filling
-            </div>
-          </div>
-
-          <div
-            className="cake-layer cake-l3 cake-intro-layer"
-            ref={(el) => { layerRefs.current['l3'] = el; }}
-          >
-            <div
-              className="cake-lbl"
-              style={{ bottom: '12px' }}
-              ref={(el) => { labelRefs.current['lbl3'] = el; }}
-            >
-              Top sponge
-            </div>
-          </div>
-
-          <div
-            className="cake-layer cake-glaze cake-intro-layer"
-            ref={(el) => { layerRefs.current['glaze'] = el; }}
-          >
-            <div className="cake-drip" style={{ left: '24px' }} />
-            <div className="cake-drip" style={{ left: '60px' }} />
-            <div className="cake-drip" style={{ right: '30px' }} />
-            <div
-              className="cake-lbl"
-              style={{ bottom: '6px' }}
-              ref={(el) => { labelRefs.current['lblG'] = el; }}
-            >
-              Dark chocolate glaze
-            </div>
-          </div>
-
-          <div
-            className="cake-layer cake-strawberry cake-intro-layer"
-            ref={(el) => { layerRefs.current['candle'] = el; }}
-          >
-            <div className="strawberry-leaves">
-              <div className="strawberry-leaf" />
-              <div className="strawberry-leaf" />
-              <div className="strawberry-leaf" />
-              <div className="strawberry-leaf" />
-              <div className="strawberry-leaf" />
-            </div>
-            <div className="strawberry-stem" />
-            <div className="strawberry-seeds">
-              <div className="strawberry-seed" style={{ top: '30%', left: '20%' }} />
-              <div className="strawberry-seed" style={{ top: '45%', left: '35%' }} />
-              <div className="strawberry-seed" style={{ top: '35%', left: '55%' }} />
-              <div className="strawberry-seed" style={{ top: '50%', left: '70%' }} />
-              <div className="strawberry-seed" style={{ top: '60%', left: '25%' }} />
-              <div className="strawberry-seed" style={{ top: '65%', left: '50%' }} />
-              <div className="strawberry-seed" style={{ top: '75%', left: '40%' }} />
-            </div>
-            <div
-              className="cake-lbl"
-              style={{ bottom: '20px' }}
-              ref={(el) => { labelRefs.current['lblC'] = el; }}
-            >
-              Fresh strawberry
-            </div>
-          </div>
+          ))}
         </div>
 
         <div className={`cake-scroll-hint ${showTitle ? 'cake-intro-visible' : ''}`} ref={scrollHintRef}>
