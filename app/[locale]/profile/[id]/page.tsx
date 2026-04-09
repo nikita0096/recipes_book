@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, {useEffect} from 'react';
 import { useParams } from "next/navigation";
 import { useUserStore } from "@/store/useUserStore";
 import Image from "next/image";
@@ -8,6 +8,7 @@ import { Link } from "@/i18n/navigation";
 import { PAGES } from "@/config/page.config";
 import { useTranslations } from "next-intl";
 import { useTypedLocale } from "@/hooks/useTypedLocale";
+import {getAllLikedRecipesByUser} from "@/services/db/recipe-likes/getAllLikedRecipesByUser";
 
 // Placeholder avatar for users without Google avatar
 const AVATAR_PLACEHOLDER = "https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=200&h=200&fit=crop&crop=face";
@@ -62,6 +63,7 @@ const ProfilePage = () => {
     avatar_url: null,
     role: 'user' as const,
   };
+
 
   const purchasedRecipes = mockPurchasedRecipes;
   const likedRecipes = mockLikedRecipes;

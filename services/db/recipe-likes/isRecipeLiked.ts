@@ -1,6 +1,6 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 
-export const isResipeLiked = async (recipeId: string, userId: string) => {
+export const isRecipeLiked = async (recipeId: string, userId: string) => {
   const {data, error } = await supabase
     .from('recipe_likes')
     .select('id')

@@ -1,23 +1,73 @@
 'use client';
 
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import Image from "next/image";
 import {Link} from "@/i18n/navigation";
 import {IRecipe, parseJson} from "@/types/recipe";
 import {useTranslations} from "next-intl";
 import RecipeIngredient from "@/components/recipes/recipe/RecipeIngredient";
 import {useTypedLocale} from "@/hooks/useTypedLocale";
+import {useUserStore} from "@/store/useUserStore";
+import {addNewLike} from "@/services/db/recipe-likes/addNewLike";
+import {fetchRecipe} from "@/services/db/fetchRecipe";
+import {isRecipeLiked} from "@/services/db/recipe-likes/isRecipeLiked";
+import {deleteLike} from "@/services/db/recipe-likes/deleteLike";
 
 interface RecipePageProps {
-  recipe: IRecipe;
+  recipeId: string;
 }
 
-const RecipePage: React.FC<RecipePageProps> = ({recipe}) => {
+const RecipePage: React.FC<RecipePageProps> = ({recipeId}) => {
+  const [recipe, setRecipe] = useState<IRecipe | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likes, setLikes] = useState(0);
+
   const locale = useTypedLocale();
   const t = useTranslations('recipes');
+  const {user}  = useUserStore();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const data = await fetchRecipe(recipeId);
+      setRecipe(data);
+      setLikes(data.likes);
+
+      if(user?.id && data) {
+        const liked = await isRecipeLiked(data.id, user.id);
+
+        setIsLiked(liked);
+
+        console.log(liked);
+      }
+    }
+
+    fetchData();
+  }, [recipeId, user?.id]);
+
+  if(!recipe) return null;
 
   const title = parseJson(recipe.title);
   const categoryParsed =parseJson(recipe.category);
+
+  const handleLike = async () => {
+    if(!user) return;
+
+    const isNewLiked = !isLiked;
+    setIsLiked(isNewLiked);
+    setLikes(prevState => isNewLiked ? prevState + 1 : prevState - 1);
+
+    try {
+      if(isNewLiked) {
+        await addNewLike(recipe.id, user.id);
+
+      } else {
+        await deleteLike(recipe.id, user.id);
+      }
+    } catch (error) {
+      setIsLiked(prevState => !prevState);
+      setLikes(prevState => isNewLiked ? prevState - 1 : prevState + 1);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-900 dark:to-gray-800">
@@ -30,7 +80,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipe}) => {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none" />
         <div className="absolute bottom-0 left-0 right-0 p-8 md:p-16">
           <div className="max-w-4xl mx-auto">
             <span className="inline-block px-4 py-1 mb-4 text-sm font-medium text-amber-900 bg-amber-100 rounded-full">
@@ -44,7 +94,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipe}) => {
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
                 </svg>
-                {recipe.likes} {t('singlePage.likes')}
+                {likes} {t('singlePage.likes')}
               </span>
               <span className="flex items-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,6 +111,29 @@ const RecipePage: React.FC<RecipePageProps> = ({recipe}) => {
             </div>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={handleLike}
+          className={`absolute top-6 right-6 z-10 w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all duration-300 cursor-pointer select-none hover:scale-110 active:scale-95 ${
+            isLiked
+              ? 'bg-red-500/90 text-white shadow-lg shadow-red-500/30'
+              : 'bg-white/20 text-red-500 hover:bg-white/30'
+          }`}
+        >
+          <svg
+            className="w-6 h-6"
+            fill={isLiked ? 'currentColor' : 'none'}
+            stroke="currentColor"
+            strokeWidth={2}
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+            />
+          </svg>
+        </button>
       </section>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
