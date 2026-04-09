@@ -1,6 +1,5 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
-@tailwind utilities;
 
 
 :root {
@@ -415,6 +414,8 @@ body {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
+  background: #ffffff;
+  border-radius: 100px;
   box-shadow: 0 8px 40px rgba(0, 0, 0, 0.7);
 }
 

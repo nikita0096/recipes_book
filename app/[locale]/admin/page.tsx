@@ -89,6 +89,16 @@ const Page = () => {
 
   const router = useRouter();
 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (user === null && mounted) {
+      router.push('/');
+    }
+  }, [user, router]);
+
   const handleIngredientsForm = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     const ingredientUa = getValues('ingredientUa')?.trim();
@@ -333,16 +343,6 @@ const Page = () => {
       return () => timerId && clearTimeout(timerId);
     }
   };
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (user === null && mounted) {
-      router.push('/');
-    }
-  }, [user, router]);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

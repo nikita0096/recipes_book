@@ -1,7 +1,6 @@
 'use client';
 
 import React, {useState} from 'react';
-import {IoClose} from "react-icons/io5";
 import {FaGoogle} from "react-icons/fa";
 import {handleEmailLogin, handleGoogleLogin, handleSignUp, getUserProfile} from "@/lib/supabase/authClient";
 import {SubmitHandler, useForm} from "react-hook-form";
@@ -21,15 +20,11 @@ export interface ISignUpValues {
   passwordSignUp: string;
 }
 
-const AuthPage: React.FC = () => {
+export default function LoginFullPage() {
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const {setUserData} = useUserStore();
   const t = useTranslations('common');
   const router = useRouter();
-
-  const closeModal = () => {
-    router.back();
-  };
 
   const loginFrom = useForm<ILoginValues>({
     defaultValues: {
@@ -57,16 +52,15 @@ const AuthPage: React.FC = () => {
     reset: resetSignUp
   } = signUpForm;
 
-
   const handleLoginWithEmail: SubmitHandler<ILoginValues> = async (formData) => {
     try {
       const data = await handleEmailLogin(formData.emailLogin, formData.passwordLogin);
-      console.log(data);
+
       if (data?.user) {
         const profile = await getUserProfile(data.user.id);
 
         setUserData({
-          id:  data.user.id,
+          id: data.user.id,
           name: data.user.user_metadata?.name || 'User',
           avatar_url: data.user.user_metadata?.avatar_url || null,
           role: profile?.role || 'user',
@@ -79,7 +73,7 @@ const AuthPage: React.FC = () => {
     } finally {
       resetSignUp();
       resetLogin();
-      closeModal();
+      router.push('/');
     }
   }
 
@@ -90,10 +84,8 @@ const AuthPage: React.FC = () => {
       const data = await handleEmailLogin(formData.emailSignUp, formData.passwordSignUp);
 
       if (data?.user) {
-        // const profile = await getUserProfile(data.user.id);
-
         setUserData({
-          id:  data.user.id,
+          id: data.user.id,
           name: data.user.user_metadata?.name || 'User',
           avatar_url: data.user.user_metadata?.avatar_url || null,
           role: 'user',
@@ -106,7 +98,7 @@ const AuthPage: React.FC = () => {
     } finally {
       resetSignUp();
       resetLogin();
-      closeModal();
+      router.push('/');
     }
   }
 
@@ -129,16 +121,8 @@ const AuthPage: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-black/30 backdrop-blur-sm z-50">
-      <div className='relative w-11/12 max-w-md bg-white dark:bg-gray-800 flex flex-col items-center p-8 rounded-2xl shadow-2xl border border-amber-100 dark:border-gray-700'>
-        {/* Close button */}
-        <button
-          className='absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-amber-100 dark:bg-gray-700 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-gray-600 transition-colors'
-          onClick={closeModal}
-        >
-          <IoClose className='text-xl' />
-        </button>
-
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 to-orange-100 dark:from-gray-900 dark:to-gray-800 py-12 px-4">
+      <div className='relative w-full max-w-md bg-white dark:bg-gray-800 flex flex-col items-center p-8 rounded-2xl shadow-2xl border border-amber-100 dark:border-gray-700'>
         {/* Header */}
         <h2 className='text-2xl font-bold text-gray-900 dark:text-white mb-6'>
           {t('auth.welcome')}
@@ -195,6 +179,4 @@ const AuthPage: React.FC = () => {
       </div>
     </div>
   );
-};
-
-export default AuthPage;
+}

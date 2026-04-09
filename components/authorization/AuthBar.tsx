@@ -1,7 +1,7 @@
 'use client';
 
 import './auth.module.css'
-import React, {Dispatch, SetStateAction, useState} from 'react';
+import React, {useState} from 'react';
 import Image from "next/image";
 import {IUserState} from "@/store/useUserStore";
 import { GiCook } from "react-icons/gi";
@@ -12,10 +12,9 @@ import {useTranslations} from "next-intl";
 interface AuthBarProps {
   user: IUserState | null;
   handleLogout: () => void;
-  setIsOpenAuthPage: Dispatch<SetStateAction<boolean>>;
 }
 
-const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout, setIsOpenAuthPage}) => {
+const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout}) => {
   const [isOpenUserMenu, setIsOpenUserMenu] = useState(false);
   const t = useTranslations('common');
 
@@ -63,12 +62,12 @@ const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout, setIsOpenAuthPage}
           )}
         </div>
       ) : (
-        <button
-          onClick={() => setIsOpenAuthPage(true)}
+        <Link
+          href={PAGES.LOGIN}
           className='px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium rounded-full transition-all shadow-md hover:shadow-lg'
         >
-          {t('auth.login')}
-        </button>
+          {t('auth.logIn')}
+        </Link>
       )}
     </div>
   );

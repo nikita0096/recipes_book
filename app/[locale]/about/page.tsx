@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import {useTranslations} from "next-intl";
 import Image from "next/image";
-import authorImage from "@/public/images/home-author.png";
+import authorImage from "@/public/images/about/home-author.png";
 import {Footer} from "@/components/footer";
 
 const socialLinks = [

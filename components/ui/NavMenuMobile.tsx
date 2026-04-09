@@ -1,4 +1,4 @@
-import React, {Dispatch, SetStateAction} from 'react';
+import React from 'react';
 import {Link} from "@/i18n/navigation";
 import {PAGES} from "@/config/page.config";
 import {IUserState} from "@/store/useUserStore";
@@ -13,15 +13,13 @@ interface NavMenuMobileProps {
   isShowNav: boolean;
   setIsShowNav: (value: boolean) => void;
   handleLogout: () => void;
-  setIsOpenAuthPage: Dispatch<SetStateAction<boolean>>;
 }
 
 const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
                                                        user,
                                                        isShowNav,
                                                        setIsShowNav,
-                                                       handleLogout,
-                                                       setIsOpenAuthPage
+                                                       handleLogout
                                                      }) => {
   const t = useTranslations('common');
 
@@ -98,12 +96,13 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
                       </div>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => setIsOpenAuthPage(true)}
+                    <Link
+                      href={PAGES.LOGIN}
+                      onClick={() => setIsShowNav(false)}
                       className='px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium rounded-full transition-all shadow-md hover:shadow-lg'
                     >
-                      {t('auth.login')}
-                    </button>
+                      {t('auth.logIn')}
+                    </Link>
                   )}
                 </div>
 
