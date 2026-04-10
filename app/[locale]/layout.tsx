@@ -6,6 +6,8 @@ import {routing} from "@/i18n/routing";
 import Header from "@/components/header/Header";
 import Providers from "@/components/providers/Providers";
 import "../globals.css";
+import {createClient} from "@/lib/supabase/ServerComponentClient";
+import {UserRole} from "@/store/useUserStore";
 
 const quicksand = Quicksand({
   subsets: ["latin", "latin-ext"],
@@ -28,6 +30,29 @@ export default async function LocaleLayout({children, params, modal}: LocaleLayo
   if (!routing.locales.includes(locale as "en" | "ua")) {
     notFound();
   }
+
+  const supabase = await createClient();
+
+  const {data: {user}} = await supabase.auth.getUser();
+
+  let initUser = null;
+  if (user) {
+    const {data: profile} = await supabase
+      .from("users")
+      .select("role")
+      .eq('id', user.id)
+      .single();
+
+    initUser = {
+      id: user.id,
+      name: user.user_metadata.name,
+      avatar_url: user.user_metadata.avatar_url,
+      role: profile?.role || 'user',
+      email: user.user_metadata.email,
+    }
+  }
+
+  console.log(initUser);
 
   setRequestLocale(locale);
   const messages = await getMessages();
@@ -55,7 +80,7 @@ export default async function LocaleLayout({children, params, modal}: LocaleLayo
       <body className={`${quicksand.className} antialiased`}>
         <NextIntlClientProvider messages={messages}>
           <Providers>
-            <Header />
+            <Header/>
             <main>
               {children}
               {modal}

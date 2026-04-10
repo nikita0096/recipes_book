@@ -15,12 +15,14 @@ import {deleteLike} from "@/services/db/recipe-likes/deleteLike";
 
 interface RecipePageProps {
   recipeId: string;
+  isLikedRecipe: boolean;
 }
 
-const RecipePage: React.FC<RecipePageProps> = ({recipeId}) => {
+const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
   const [recipe, setRecipe] = useState<IRecipe | null>(null);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(isLikedRecipe);
   const [likes, setLikes] = useState(0);
+  const [error, setError] = useState<Error | null>(null);
 
   const locale = useTypedLocale();
   const t = useTranslations('recipes');
@@ -28,23 +30,37 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId}) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await fetchRecipe(recipeId);
-      setRecipe(data);
-      setLikes(data.likes);
+      const {data, error} = await fetchRecipe(recipeId);
 
-      if(user?.id && data) {
-        const liked = await isRecipeLiked(data.id, user.id);
+      if(error) setError(error);
 
-        setIsLiked(liked);
-
-        console.log(liked);
+      if(data) {
+        setRecipe(data);
+        setLikes(data.likes);
       }
     }
 
     fetchData();
-  }, [recipeId, user?.id]);
+  }, [recipeId]);
 
-  if(!recipe) return null;
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="rounded-2xl border border-red-200 dark:border-red-900 p-6 bg-red-50 dark:bg-red-900/20 text-center">
+          <p className="text-red-600 dark:text-red-400 font-medium">Not found</p>
+          <button
+            className="mt-4 px-4 py-2 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900 transition-colors"
+          >
+            Try again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if(!recipe) {
+    return null;
+  };
 
   const title = parseJson(recipe.title);
   const categoryParsed =parseJson(recipe.category);

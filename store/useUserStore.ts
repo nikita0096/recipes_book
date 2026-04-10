@@ -11,12 +11,12 @@ export interface IUserState {
 }
 
 interface IAdminStore {
-  user: null | IUserState;
+  user: undefined | null | IUserState;
   setUserData: (data: IUserState | null) => void;
 }
 
 export const useUserStore = create<IAdminStore>((set) => ({
-  user: null,
+  user: undefined,
   setUserData: (data) => {
     set({
       user: data
