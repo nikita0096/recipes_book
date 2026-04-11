@@ -13,9 +13,11 @@
   "recipes": {
     "count": "{count} рецептів",
     "purchased": "Куплено",
-    "purchasedAt": "Дата покупки",
+    "purchasedAt": "Придбано",
     "view": "Переглянути",
-    "viewAll": "Переглянути всі"
+    "viewAll": "Переглянути всі",
+    "showMore": "Показати більше",
+    "showLess": "Згорнути"
   },
   "empty": {
     "purchasedTitle": "Ще немає куплених рецептів",

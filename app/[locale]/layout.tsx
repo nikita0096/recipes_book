@@ -52,8 +52,6 @@ export default async function LocaleLayout({children, params, modal}: LocaleLayo
     }
   }
 
-  console.log(initUser);
-
   setRequestLocale(locale);
   const messages = await getMessages();
 

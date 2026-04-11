@@ -8,15 +8,16 @@ export interface IUserState {
   avatar_url: string | null;
   role: UserRole;
   email: string;
+  createdAt: string;
 }
 
 interface IAdminStore {
-  user: undefined | null | IUserState;
+  user: null | IUserState;
   setUserData: (data: IUserState | null) => void;
 }
 
 export const useUserStore = create<IAdminStore>((set) => ({
-  user: undefined,
+  user: null,
   setUserData: (data) => {
     set({
       user: data

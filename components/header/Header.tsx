@@ -3,7 +3,7 @@
 import React, {useEffect, useState} from 'react';
 import {Link} from "@/i18n/navigation";
 import {PAGES} from '@/config/page.config'
-import {logout, getUser, getUserProfile} from '@/lib/supabase/authClient'
+import {logout, getUser, getUserProfile, upsertUserProfile} from '@/lib/supabase/authClient'
 import {supabase} from '@/lib/supabase/ClientComponentClient'
 import {useUserStore} from "@/store/useUserStore";
 import ToggleTheme from "@/components/ui/ToggleTheme";
@@ -27,30 +27,38 @@ const Header: React.FC = () => {
   }
 
   useEffect(() => {
-    const updateUserData = async () => {
-      const data = await getUser();
+    const updateUserData = async (isNewLogin = false) => {
+      const authUser = await getUser();
 
-      if (data) {
-        const {name, avatar_url} = data?.user_metadata;
-        const profile = await getUserProfile(data.id);
+      if (authUser) {
+        // При новой авторизации сохраняем данные из Google в profiles
+        if (isNewLogin) {
+          const { name, avatar_url } = authUser.user_metadata;
+          await upsertUserProfile(authUser.id, {
+            name: name || authUser.email?.split('@')[0] || '',
+            avatar_url: avatar_url || null
+          });
+        }
+
+        // Всегда читаем данные из profiles
+        const profile = await getUserProfile(authUser.id);
 
         setUserData({
-          id: data.id,
-          name: name || '',
-          avatar_url: avatar_url || '',
+          id: authUser.id,
+          name: profile?.name || 'Chef',
+          avatar_url: profile?.avatar_url || '',
           role: profile?.role || 'user',
-          email: data?.email || '',
+          email: authUser.email || '',
+          createdAt: profile?.created_at || new Date().getDate().toString(),
         });
       }
     }
 
     updateUserData();
 
-
     const {data: {subscription}} = supabase.auth.onAuthStateChange((event) => {
-
       if (event === 'SIGNED_IN') {
-        updateUserData();
+        updateUserData(true);
       } else if (event === 'SIGNED_OUT') {
         setUserData(null);
       }

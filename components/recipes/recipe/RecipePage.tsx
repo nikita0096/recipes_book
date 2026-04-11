@@ -10,7 +10,6 @@ import {useTypedLocale} from "@/hooks/useTypedLocale";
 import {useUserStore} from "@/store/useUserStore";
 import {addNewLike} from "@/services/db/recipe-likes/addNewLike";
 import {fetchRecipe} from "@/services/db/fetchRecipe";
-import {isRecipeLiked} from "@/services/db/recipe-likes/isRecipeLiked";
 import {deleteLike} from "@/services/db/recipe-likes/deleteLike";
 
 interface RecipePageProps {
@@ -38,6 +37,8 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
         setRecipe(data);
         setLikes(data.likes);
       }
+
+
     }
 
     fetchData();

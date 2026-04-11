@@ -1,5 +1,12 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 
+interface UserProfile {
+  name: string | null;
+  avatar_url: string | null;
+  role: 'admin' | 'user';
+  created_at: string;
+}
+
 export const handleGoogleLogin = async () => {
   const {data, error} = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -44,12 +51,26 @@ export const getUser = async () => {
   return user;
 }
 
-export const getUserProfile = async (userId: string) => {
+export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('name, avatar_url, role, created_at')
     .eq('id', userId)
     .single();
 
-  return profile;
+  return profile as UserProfile | null;
+}
+
+export const upsertUserProfile = async (
+  userId: string,
+  data: { name?: string; avatar_url?: string }
+) => {
+  const { error } = await supabase
+    .from('profiles')
+    .upsert({
+      id: userId,
+      ...data
+    }, { onConflict: 'id' });
+
+  if (error) console.error('Error upserting profile:', error);
 }

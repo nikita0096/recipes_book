@@ -1,4 +1,4 @@
-export const toCamelCase = (obj: Record<string, any>) => {
+export const toCamelCase = <T>(obj: Record<string, any>): T => {
   const newObj: Record<string, any> = {};
 
   for (const key in obj) {
@@ -6,5 +6,5 @@ export const toCamelCase = (obj: Record<string, any>) => {
     newObj[camelKey] = obj[key];
   }
 
-  return newObj;
+  return newObj as T;
 };

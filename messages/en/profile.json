@@ -13,9 +13,11 @@
   "recipes": {
     "count": "{count} recipes",
     "purchased": "Purchased",
-    "purchasedAt": "Purchase date",
+    "purchasedAt": "Purchased",
     "view": "View",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "showMore": "Show more",
+    "showLess": "Show less"
   },
   "empty": {
     "purchasedTitle": "No purchased recipes yet",
