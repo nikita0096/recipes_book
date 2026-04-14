@@ -2,7 +2,7 @@ import {create} from "zustand/react";
 
 export type UserRole = 'admin' | 'user';
 
-export interface IUserState {
+export interface UserState {
   id: string;
   name: string;
   avatar_url: string | null;
@@ -11,16 +11,23 @@ export interface IUserState {
   createdAt: string;
 }
 
-interface IAdminStore {
-  user: null | IUserState;
-  setUserData: (data: IUserState | null) => void;
+interface IUserStore {
+  user: null | UserState;
+  isHydrated: boolean;
+  setUserData: (data: UserState | null) => void;
+  initUser: (data: UserState | null) => void;
 }
 
-export const useUserStore = create<IAdminStore>((set) => ({
+export const useUserStore = create<IUserStore>((set, get) => ({
   user: null,
+  isHydrated: false,
   setUserData: (data) => {
-    set({
-      user: data
-    });
+    set({ user: data });
+  },
+  initUser: (data) => {
+    // Инициализируем только один раз
+    if (!get().isHydrated) {
+      set({ user: data, isHydrated: true });
+    }
   }
 }))

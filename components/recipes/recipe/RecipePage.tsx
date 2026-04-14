@@ -239,7 +239,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
             <video src={recipe.videoUrl}
                    controls
                    poster={recipe.heroImg}
-                   className='w-full'></video>
+                   className='w-full object-contain rotate-90'></video>
           </div>
         </section>
 

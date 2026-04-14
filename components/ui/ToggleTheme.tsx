@@ -9,11 +9,16 @@ const ToggleTheme = () => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted( true);
-  },[]);
+    setMounted(true);
+  }, []);
 
-  if(!mounted) {
-    return null;
+  // Placeholder с такой же структурой чтобы избежать hydration mismatch
+  if (!mounted) {
+    return (
+      <button className='w-9 h-9 rounded-full flex items-center justify-center bg-amber-100 dark:bg-gray-700 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-gray-600 transition-colors shadow-sm'>
+        <span className="w-4 h-4" />
+      </button>
+    );
   }
 
   let icon;

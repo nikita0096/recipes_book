@@ -3,9 +3,9 @@
 import React, {useEffect, useState} from 'react';
 import {Link} from "@/i18n/navigation";
 import {PAGES} from '@/config/page.config'
-import {logout, getUser, getUserProfile, upsertUserProfile} from '@/lib/supabase/authClient'
+import {logout} from '@/lib/supabase/authClient'
 import {supabase} from '@/lib/supabase/ClientComponentClient'
-import {useUserStore} from "@/store/useUserStore";
+import {UserState, useUserStore} from "@/store/useUserStore";
 import ToggleTheme from "@/components/ui/ToggleTheme";
 import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import NavMenuMobile from "@/components/ui/NavMenuMobile";
@@ -14,10 +14,30 @@ import {useTranslations} from "next-intl";
 import logoImage from "@/public/images/logo/logo.jpg"
 import Image from "next/image";
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  initUser: UserState | null;
+}
+
+const Header: React.FC<HeaderProps> = ({initUser}) => {
   const [isShowNav, setIsShowNav] = useState<boolean>(false);
-  const {user, setUserData} = useUserStore();
+  const {user, setUserData, initUser: initUserStore} = useUserStore();
   const t = useTranslations('common');
+
+  // Инициализация store синхронно при первом рендере
+  initUserStore(initUser);
+
+  // Используем initUser как fallback пока store пустой
+  const displayUser = user ?? initUser;
+
+  useEffect(() => {
+    const {data: {subscription}} = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        setUserData(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [setUserData]);
 
   const handleLogout = async () => {
     await logout();
@@ -25,47 +45,6 @@ const Header: React.FC = () => {
     setUserData(null);
     setIsShowNav(false);
   }
-
-  useEffect(() => {
-    const updateUserData = async (isNewLogin = false) => {
-      const authUser = await getUser();
-
-      if (authUser) {
-        // При новой авторизации сохраняем данные из Google в profiles
-        if (isNewLogin) {
-          const { name, avatar_url } = authUser.user_metadata;
-          await upsertUserProfile(authUser.id, {
-            name: name || authUser.email?.split('@')[0] || '',
-            avatar_url: avatar_url || null
-          });
-        }
-
-        // Всегда читаем данные из profiles
-        const profile = await getUserProfile(authUser.id);
-
-        setUserData({
-          id: authUser.id,
-          name: profile?.name || 'Chef',
-          avatar_url: profile?.avatar_url || '',
-          role: profile?.role || 'user',
-          email: authUser.email || '',
-          createdAt: profile?.created_at || new Date().getDate().toString(),
-        });
-      }
-    }
-
-    updateUserData();
-
-    const {data: {subscription}} = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_IN') {
-        updateUserData(true);
-      } else if (event === 'SIGNED_OUT') {
-        setUserData(null);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [setUserData]);
 
   return (
     <section className='sticky top-2 z-50'>
@@ -109,7 +88,7 @@ const Header: React.FC = () => {
                 className='text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-400 font-medium transition-colors'>
             {t('nav.about')}
           </Link>
-          {user?.role === 'admin' && (
+          {displayUser?.role === 'admin' && (
             <Link href={PAGES.ADMIN_PANEL}
                   className='text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium transition-colors'>
               {t('nav.adminPanel')}
@@ -118,7 +97,7 @@ const Header: React.FC = () => {
         </nav>
         <div className='flex flex-row items-center justify-end gap-4 w-1/3'>
           <div className='hidden lg:block'>
-            <AuthBar user={user}
+            <AuthBar user={displayUser}
                      handleLogout={handleLogout}/>
           </div>
           <div className='hidden lg:block'>
@@ -128,7 +107,7 @@ const Header: React.FC = () => {
         </div>
 
       </menu>
-      <NavMenuMobile user={user}
+      <NavMenuMobile user={displayUser}
                      isShowNav={isShowNav}
                      setIsShowNav={setIsShowNav}
                      handleLogout={handleLogout}/>

@@ -3,14 +3,14 @@
 import './auth.module.css'
 import React, {useState} from 'react';
 import Image from "next/image";
-import {IUserState} from "@/store/useUserStore";
+import {UserState} from "@/store/useUserStore";
 import { GiCook } from "react-icons/gi";
 import {Link} from "@/i18n/navigation";
 import {PAGES} from "@/config/page.config";
 import {useTranslations} from "next-intl";
 
 interface AuthBarProps {
-  user: IUserState | null;
+  user: UserState | null;
   handleLogout: () => void;
 }
 

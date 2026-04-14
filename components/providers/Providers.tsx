@@ -1,8 +1,8 @@
 'use client';
 
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
-import {ThemeProvider} from "next-themes";
+import {ThemeProvider, useTheme} from "next-themes";
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -15,7 +15,7 @@ const Providers: React.FC<ProvidersProps> = ({children}) => {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class"
                      enableSystem
-                     defaultTheme='system'
+                     defaultTheme={'system'}
                      disableTransitionOnChange>
         {children}
       </ThemeProvider>

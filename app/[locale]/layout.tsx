@@ -7,7 +7,7 @@ import Header from "@/components/header/Header";
 import Providers from "@/components/providers/Providers";
 import "../globals.css";
 import {createClient} from "@/lib/supabase/ServerComponentClient";
-import {UserRole} from "@/store/useUserStore";
+import {cookies} from "next/headers";
 
 const quicksand = Quicksand({
   subsets: ["latin", "latin-ext"],
@@ -38,17 +38,18 @@ export default async function LocaleLayout({children, params, modal}: LocaleLayo
   let initUser = null;
   if (user) {
     const {data: profile} = await supabase
-      .from("users")
-      .select("role")
+      .from("profiles")
+      .select("role, name")
       .eq('id', user.id)
       .single();
 
     initUser = {
       id: user.id,
-      name: user.user_metadata.name,
+      name: user.user_metadata.name === profile?.name ? user.user_metadata.name : profile?.name,
       avatar_url: user.user_metadata.avatar_url,
       role: profile?.role || 'user',
       email: user.user_metadata.email,
+      createdAt: user.created_at,
     }
   }
 
@@ -63,7 +64,7 @@ export default async function LocaleLayout({children, params, modal}: LocaleLayo
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('theme');
+                  var theme = localStorage.getItem("theme");
                   if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
                     document.documentElement.classList.add('dark');
                   } else {
@@ -78,7 +79,7 @@ export default async function LocaleLayout({children, params, modal}: LocaleLayo
       <body className={`${quicksand.className} antialiased`}>
         <NextIntlClientProvider messages={messages}>
           <Providers>
-            <Header/>
+            <Header initUser={initUser}/>
             <main>
               {children}
               {modal}

@@ -1,7 +1,6 @@
 'use client';
 
 import React, {useEffect, useState} from 'react';
-import {useParams} from "next/navigation";
 import {useUserStore} from "@/store/useUserStore";
 import Image from "next/image";
 import {Link} from "@/i18n/navigation";
@@ -11,6 +10,7 @@ import {useTypedLocale} from "@/hooks/useTypedLocale";
 import {LocalizedText} from "@/types";
 import {deleteLike} from "@/services/db/recipe-likes/deleteLike";
 import {supabase} from "@/lib/supabase/ClientComponentClient";
+import {logout} from "@/lib/supabase/authClient";
 
 interface PreviewRecipe {
   id: string;
@@ -47,10 +47,11 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
 
   const purchasedRecipes = purchasedRecipesData;
 
-  const {user, setUserData} = useUserStore();
+  const {user, setUserData, isHydrated} = useUserStore();
 
   const t = useTranslations('profile');
   const locale = useTypedLocale();
+
 
   const formatDate = (date: string) => {
     const newDate = new Date(date);
@@ -67,22 +68,28 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
   const displayedPurchasedRecipes = isPurchasedExpanded ? purchasedRecipes : purchasedRecipes.slice(0, 3);
   const displayedLikedRecipes = isLikedExpanded ? likedRecipes : likedRecipes.slice(0, 3);
 
-  if (!user) return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="flex flex-col items-center rounded-2xl border border-red-200 dark:border-red-900 p-6 bg-red-50 dark:bg-red-900/20 text-center">
-        <p className="text-red-600 dark:text-red-400 font-medium">User not found</p>
-        <div className="w-50 mt-4 px-4 py-2 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900 transition-colors">
-          <Link
-            href={PAGES.LOGIN}
+  if (!user) {
+    // Store ещё не гидратирован - показываем loading
+    if (!isHydrated) {
+      return null;
+    }
 
-          >
-            Log in to your profile
-          </Link>
+    // Store гидратирован, но user null - показываем "User not found"
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="flex flex-col items-center rounded-2xl border border-red-200 dark:border-red-900 p-6 bg-red-50 dark:bg-red-900/20 text-center">
+          <p className="text-red-600 dark:text-red-400 font-medium">User not found</p>
+          <div className="w-50 mt-4 px-4 py-2 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900 transition-colors">
+            <Link
+              href={PAGES.LOGIN}
+            >
+              Log in to your profile
+            </Link>
+          </div>
         </div>
-
       </div>
-    </div>
-  );
+    );
+  }
 
   const handleUnlikeRecipe = async (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
     e.preventDefault();
@@ -111,11 +118,12 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
 
     setIsSaving(true);
 
-    const {error} = await supabase.auth.updateUser({
-      data: {
-        name: newName
-      }
-    });
+    const {error} = await supabase
+      .from('profiles')
+      .update({
+        name: newName,
+      })
+      .eq('id', user.id)
 
     if (!error) {
       setUserData({ ...user, name: newName.trim() });
@@ -132,6 +140,12 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
       handleCancelEditName();
     }
   };
+
+  const handleLogout = async () => {
+    await logout();
+
+    setUserData(null);
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50/50 to-white dark:from-gray-900 dark:to-gray-800">
@@ -513,7 +527,8 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
 
             {/* Sign out */}
             <button className="group bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-lg border border-red-100 dark:border-gray-700 hover:border-red-300 dark:hover:border-red-600 transition-all hover:-translate-y-1 text-left">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4"
+              onClick={handleLogout}>
                 <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
                   🚪
                 </div>
