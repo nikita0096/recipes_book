@@ -7,6 +7,6 @@ export async function translateToEnglish(text: string): Promise<string> {
     return '';
   }
 
-  const result = await translator.translateText(text, 'ua', 'en-US');
+  const result = await translator.translateText(text, 'uk', 'en-US');
   return result.text;
 }

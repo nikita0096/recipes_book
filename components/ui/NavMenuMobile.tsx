@@ -1,7 +1,7 @@
 import React from 'react';
 import {Link} from "@/i18n/navigation";
 import {PAGES} from "@/config/page.config";
-import {IUserState} from "@/store/useUserStore";
+import {UserState} from "@/store/useUserStore";
 import {IoClose} from "react-icons/io5";
 import Image from "next/image";
 import {GiCook} from "react-icons/gi";
@@ -9,7 +9,7 @@ import {useTranslations} from "next-intl";
 import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 
 interface NavMenuMobileProps {
-  user: IUserState | null;
+  user: UserState | null;
   isShowNav: boolean;
   setIsShowNav: (value: boolean) => void;
   handleLogout: () => void;
@@ -80,15 +80,15 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
 
                         <span className='text-lg text-gray-700 dark:text-gray-200 font-medium lg:block'>{user.name !== '' ? user.name : user.email}</span>
                       </div>
-                      <div className='text-xl mt-3'>
+                      <div className='flex flex-col gap-4 text-xl mt-3 w-full'>
                         <Link
                           href={PAGES.PROFILE(user.name)}
-                          className=' pt-2 text-gray-700 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors'
+                          className='w-full py-2 text-gray-700 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors border-b border-amber-100 dark:border-gray-700'
                         >
                           {t('auth.profile')}
                         </Link>
                         <button
-                          className='w-full text-left pt-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors'
+                          className='w-full text-left py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors border-b border-amber-100 dark:border-gray-700'
                           onClick={handleLogout}
                         >
                           {t('auth.logout')}

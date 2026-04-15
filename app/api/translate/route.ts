@@ -3,7 +3,7 @@ import { translateToEnglish } from '@/lib/translate';
 
 export async function POST(req: Request) {
   try {
-    const { text, targetLang } = await req.json();
+    const { text } = await req.json();
 
     if (!text || typeof text !== 'string') {
       return NextResponse.json(

@@ -3,7 +3,14 @@ import createNextIntlPlugin from 'next-intl/plugin';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  turbopack: false,
+  async rewrites() {
+    return [
+      {
+        source: '/:locale/api/:path*',
+        destination: '/api/:path*',
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {

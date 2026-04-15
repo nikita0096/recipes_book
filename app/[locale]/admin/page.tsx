@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {ChangeEvent, useEffect, useState} from 'react';
 import Image from 'next/image';
 import {useUserStore} from "@/store/useUserStore";
 import {useRouter} from "@/i18n/navigation";
@@ -22,6 +22,8 @@ import {
   IRecipePremiumUpload,
   RecipeStep,
 } from "@/types/recipe";
+import {translateToEnglish} from "@/lib/translate";
+import {debounce} from "@/utils/debounce";
 
 const Page = () => {
   const [mounted, setMounted] = useState<boolean>(false);
@@ -148,6 +150,43 @@ const Page = () => {
       setValue('videoFile', file);
     }
   };
+
+  type TranslateInputs = 'title.ua' | 'ingredientUa' | `recipeSteps.${number}.desc.ua`;
+
+  const handleTranslateText = async (e: React.MouseEvent<HTMLButtonElement>, flag: string, index?: number) => {
+    e.preventDefault();
+    const inputFields: Record<string, TranslateInputs> = {
+      title: 'title.ua',
+      ingredient: 'ingredientUa',
+      ...(index !== undefined && {stepDescription: `recipeSteps.${index}.desc.ua`})
+    }
+
+    const textUa = getValues(inputFields[flag]);
+
+    if (!textUa) return;
+
+    const res = await fetch('/api/translate', {
+      method: 'POST',
+      body: JSON.stringify({text: textUa})
+    });
+
+    const {translated} = await res.json();
+
+    switch (flag) {
+      case 'title':
+        setValue('title.en', translated);
+        break;
+      case 'ingredient':
+        setValue('ingredientEn', translated);
+        break;
+      case 'stepDescription':
+        if (index !== undefined) {
+          setValue(`recipeSteps.${index}.desc.en`, translated);
+        }
+        break;
+    }
+
+  }
 
   const deleteStepsImg = (index: number) => {
     const newSteps = stepImageUrls.map((step, i) => i === index ? '' : step);
@@ -367,14 +406,21 @@ const Page = () => {
           </h2>
 
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                {t('form.fields.title')}
-              </label>
-              <input {...register('title.ua', {required: true})}
-                     className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
-                     type="text"
-                     placeholder={t('form.fields.titlePlaceholderUa')}/>
+            <div className="flex flex-col items-center gap-1">
+              <div className='w-full'>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {t('form.fields.title')}
+                </label>
+                <input {...register('title.ua', {required: true})}
+                       className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors"
+                       type="text"
+                       placeholder={t('form.fields.titlePlaceholderUa')}
+                />
+              </div>
+              <button className="px-6 py-3 mt-2 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors"
+                      onClick={(e) => handleTranslateText(e, 'title')}>
+                Translate to English
+              </button>
               <input {...register('title.en', {required: true})}
                      className="w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-amber-200 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors mt-2"
                      type="text"
@@ -453,6 +499,10 @@ const Page = () => {
                            }
                            type="text"
                            placeholder={t('form.fields.ingredientPlaceholder')}/>
+                    <button className="px-6 py-3 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors"
+                            onClick={(e) => handleTranslateText(e, 'ingredient')}>
+                      Translate to English
+                    </button>
                     <input {...register('ingredientEn')}
                            className={error !== null && getValues('ingredients').length === 0 ?
                              "w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 border-red-400 rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors" :
@@ -627,8 +677,8 @@ const Page = () => {
                 )}
 
                 {/* Step description with language tabs */}
-                <div className="space-y-3">
-                  <div>
+                <div className="space-y-3 flex flex-col items-center">
+                  <div className='w-full'>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
                       {t('form.fields.stepDescLabel')}
                     </label>
@@ -639,7 +689,11 @@ const Page = () => {
                       className={`w-full px-4 py-3 bg-white dark:bg-gray-700 border-2 ${errors.recipeSteps?.[index]?.desc?.ua ? 'border-red-400' : 'border-amber-200 dark:border-gray-600'} rounded-xl text-gray-700 dark:text-gray-200 placeholder:text-gray-400 focus:outline-none focus:border-amber-500 dark:focus:border-amber-400 transition-colors resize-none`}
                     />
                   </div>
-                  <div>
+                  <button className="px-6 py-3 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 font-medium rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors"
+                          onClick={(e) => handleTranslateText(e, 'stepDescription', index)}>
+                    Translate to English
+                  </button>
+                  <div className='w-full'>
                     <label className="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
                       {t('form.fields.stepDescLabelEn')}
                     </label>
