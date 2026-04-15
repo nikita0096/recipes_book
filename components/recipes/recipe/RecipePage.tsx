@@ -230,16 +230,24 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
                 <path strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                <path strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t('singlePage.preparationSteps')}</h2>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t('singlePage.videoSection')}</h2>
           </div>
           <div className='flex items-center justify-center p-2 w-full'>
-            <video src={recipe.videoUrl}
-                   controls
-                   poster={recipe.heroImg}
-                   className='w-full object-contain rotate-90'></video>
+            <div className='w-full bg-black rounded-2xl overflow-hidden shadow-lg'>
+              <video
+                src={recipe.videoUrl}
+                controls
+                poster={recipe.heroImg}
+                className='w-full max-h-[500px] object-contain'
+              />
+            </div>
           </div>
         </section>
 

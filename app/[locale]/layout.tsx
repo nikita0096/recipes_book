@@ -1,7 +1,7 @@
 import {NextIntlClientProvider} from "next-intl";
 import {getMessages, setRequestLocale} from "next-intl/server";
 import {notFound} from "next/navigation";
-import {Quicksand} from "next/font/google";
+import {Montserrat} from "next/font/google";
 import {routing} from "@/i18n/routing";
 import Header from "@/components/header/Header";
 import Providers from "@/components/providers/Providers";
@@ -9,9 +9,9 @@ import "../globals.css";
 import {createClient} from "@/lib/supabase/ServerComponentClient";
 import {cookies} from "next/headers";
 
-const quicksand = Quicksand({
-  subsets: ["latin", "latin-ext"],
-  weight: ['500'],
+const montserrat = Montserrat({
+  subsets: ["latin", "cyrillic"],
+  weight: ['400', '500', '600', '700'],
 });
 
 interface LocaleLayoutProps {
@@ -58,25 +58,7 @@ export default async function LocaleLayout({children, params, modal}: LocaleLayo
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  var theme = localStorage.getItem("theme");
-                  if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                    document.documentElement.classList.add('dark');
-                  } else {
-                    document.documentElement.classList.remove('dark');
-                  }
-                } catch (e) {}
-              })();
-            `,
-          }}
-        />
-      </head>
-      <body className={`${quicksand.className} antialiased`}>
+      <body className={`${montserrat.className} antialiased`}>
         <NextIntlClientProvider messages={messages}>
           <Providers>
             <Header initUser={initUser}/>

@@ -18,7 +18,8 @@
     "minutes": "min",
     "keyIngredients": "Key Ingredients",
     "preparationSteps": "Preparation Steps",
-    "step": "Step"
+    "step": "Step",
+    "videoSection": "Video Tutorial"
   },
   "card": {
     "hot": "Hot"
