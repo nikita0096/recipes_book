@@ -96,7 +96,7 @@ describe('prepareUpdateData - Public recipes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUploadImage.mockResolvedValue({imageUrl: 'https://example.com/new-image.jpg', error: ''});
-    mockUploadVideo.mockResolvedValue({videoUrl: 'https://example.com/new-video.mp4', error: ''});
+    mockUploadVideo.mockResolvedValue({publicUrl: 'https://example.com/new-video.mp4', error: ''});
   });
 
   // Test 1: Nothing changed - save with same data
@@ -339,7 +339,7 @@ describe('prepareUpdateData - Premium recipes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUploadImage.mockResolvedValue({imageUrl: 'https://example.com/new-image.jpg', error: ''});
-    mockUploadVideo.mockResolvedValue({videoUrl: 'https://example.com/new-video.mp4', error: ''});
+    mockUploadVideo.mockResolvedValue({publicUrl: 'https://example.com/new-video.mp4', error: ''});
   });
 
   test('should return premium structure for premium recipe', async () => {

@@ -1,7 +1,7 @@
 import {v4 as uuidv4} from "uuid";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {uploadVideoToStorage} from "@/services/storage/uploadVideoToStorage";
-import {deleteImage, deleteVideo} from "@/services/storage/deleteFromStorage";
+import {deleteImage} from "@/services/storage/deleteImageFromStorage";
 import {EditingValues} from "../page";
 import {
   IRecipe,
@@ -117,6 +117,16 @@ export const prepareUpdateData = async ({
     }
 
     // Process video if there's a new file
+    const deleteVideo = async (videoKey: string): Promise<void> => {
+      await fetch('/api/video/delete', {
+        method: 'POST',
+        headers: {'content-type': 'application/json'},
+        body: JSON.stringify({
+          videoKey: videoKey
+        })
+      });
+    }
+
     let videoUrl = recipe.videoUrl;
     if (formData.videoFile) {
       // Delete old video before uploading new one
@@ -124,11 +134,9 @@ export const prepareUpdateData = async ({
         await deleteVideo(recipe.videoUrl);
       }
 
-      const filePath = `${folder}/${uuidv4()}`;
       const {videoUrl: newVideoUrl, error: videoError} = await uploadVideoToStorage({
         videoFile: formData.videoFile,
-        bucket: 'videos',
-        filePath: filePath
+        folder: folder,
       });
 
       if (videoError) {

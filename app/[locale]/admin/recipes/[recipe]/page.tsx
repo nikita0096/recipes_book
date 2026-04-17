@@ -4,8 +4,7 @@ import Image from "next/image";
 import {Link} from "@/i18n/navigation";
 import React, {useEffect, useMemo, useState} from "react";
 import {useParams} from "next/navigation";
-import {IRecipe, parseJson} from "@/types/recipe";
-import {fetchRecipe} from "@/services/db/fetchRecipe";
+import {IRecipe} from "@/types/recipe";
 import LoadingPage from "@/components/ui/LoadingPage";
 import {useTranslations} from "next-intl";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
@@ -44,6 +43,7 @@ import {
 } from "@/services/db/updateRecipe";
 import {prepareUpdateData} from "./utils/prepareUpdateData";
 import {fetchRecipeAdmin} from "@/services/db/fetchRecipeAdmin";
+import {SecureVideoPlayer} from "@/components/video/SecureVideoPlayer";
 
 type StepFields = { desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string }
 
@@ -153,11 +153,9 @@ const Page = () => {
         setIsLoading(true);
         setError(null);
         const data = await fetchRecipeAdmin(params.recipe);
-        const parsedTitle = parseJson(data?.title);
 
         setRecipe({
-          ...data,
-          title: parsedTitle
+          ...data
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Recipe not found');
@@ -168,9 +166,6 @@ const Page = () => {
 
     loadRecipe();
   }, [params.recipe]);
-
-  const titleParsed: LocalizedText = recipe ? parseJson(recipe.title) : {ua: '', en: ''};
-  const categoryParsed: LocalizedText = recipe ? parseJson(recipe.category) : {ua: '', en: ''};
 
   const router = useRouter();
 
@@ -186,9 +181,9 @@ const Page = () => {
 
   const toggleEditButton = () => {
     if (recipe) {
-      setValue('title', titleParsed);
+      setValue('title', recipe.title);
       setValue('heroImg', recipe.heroImg);
-      setValue('category', categoryParsed);
+      setValue('category', recipe.category);
       setValue('ingredients', recipe.ingredients);
       setValue('recipeSteps', recipe.recipeSteps.map(step => ({...step, imgFile: null})));
       setValue('likes', recipe.likes);
@@ -334,7 +329,7 @@ const Page = () => {
     const newId = uuidv4();
     const newStep = {desc: {en: '', ua: ''}, imgUrl: null, imgFile: null, id: newId};
     appendStep(newStep);
-    // setTimeout(() => startEditingStep(newStep), 0);
+    startEditingStep(newStep.id);
   };
 
   const handleCloseStepEditing = (id: string) => {
@@ -347,22 +342,6 @@ const Page = () => {
 
   const cancelStepEditing = (id: string) => {
     handleCloseStepEditing(id);
-
-    // const index = stepFields.findIndex(item => item.id === id);
-    // if (index === -1 || !recipe?.recipeSteps[index]) return;
-    //
-    // if(!prevStepChanges[index]) {
-    //   const originalStep = recipe.recipeSteps[index];
-    //   setValue(`recipeSteps.${index}.desc`, originalStep.desc);
-    //   setValue(`recipeSteps.${index}.imgUrl`, originalStep.imgUrl);
-    //   setValue(`recipeSteps.${index}.imgFile`, null);
-    // } else if(prevStepChanges[index].length >= 1) {
-    //   const prevStepChangesArray = prevStepChanges[index];
-    //   const prevState = prevStepChangesArray.pop();
-    //   setValue(`recipeSteps.${index}.desc`, prevState.desc);
-    //   setValue(`recipeSteps.${index}.imgUrl`, prevState.imgUrl);
-    //   setValue(`recipeSteps.${index}.imgFile`, null);
-    // }
   };
 
   const handleStepChange = (id: string, field: 'ua' | 'en', value: string) => {
@@ -557,7 +536,7 @@ const Page = () => {
       <section className="relative h-[70vh] w-full overflow-hidden">
         <Image
           src={mainImage === '' ? recipe.heroImg : mainImage}
-          alt={titleParsed ? titleParsed[locale] : ''}
+          alt={recipe.title[locale]}
           fill
           className="object-cover"
           priority
@@ -603,7 +582,7 @@ const Page = () => {
               ) : (
                 <div className="flex items-start justify-start gap-2">
                   <span className="inline-block px-4 py-1 mb-4 text-sm font-medium text-amber-900 bg-amber-100 rounded-full">
-                    {categoryParsed && categoryParsed[locale]}
+                    {recipe.category[locale]}
                   </span>
                 </div>
               )}
@@ -632,7 +611,7 @@ const Page = () => {
               ) : (
                 <>
                   <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
-                    {titleParsed && titleParsed[locale]}
+                    {recipe.title[locale]}
                   </h1>
                   {isEditing && (
                     <button
@@ -1122,11 +1101,10 @@ const Page = () => {
               </div>
             ) : (
               recipe?.videoUrl ? (
-                <div className="relative aspect-video rounded-xl overflow-hidden">
-                  <video
-                    className="w-full h-full object-cover"
-                    src={recipe.videoUrl}
-                    controls
+                <div className="relative rounded-xl overflow-hidden">
+                  <SecureVideoPlayer recipeId={recipe.id}
+                                     videoKey={recipe.videoUrl}
+                                     className={'w-full max-h-[500px] object-contain'}
                   />
                 </div>
               ) : (

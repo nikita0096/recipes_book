@@ -1,5 +1,5 @@
 import React from 'react';
-import {IRecipe, parseJson} from "@/types/recipe";
+import {IRecipe} from "@/types/recipe";
 import Image from 'next/image';
 import {PAGES} from "@/config/page.config";
 import {Link} from "@/i18n/navigation";
@@ -14,20 +14,17 @@ interface RecipeItemProps {
 const RecipeItem: React.FC<RecipeItemProps> = ({recipe}) => {
   const locale = useTypedLocale();
 
-  const title = parseJson(recipe.title);
-  const categoryParsed =parseJson(recipe.category);
-
   const tCommon = useTranslations('common');
   const tRecipes = useTranslations('recipes');
 
   return (
-    <div className="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl overflow-hidden transition-all duration-300 hover:scale-[1.02]">
+    <div className="relative group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl overflow-hidden transition-all duration-300 hover:scale-[1.02]">
       <Link href={PAGES.RECIPE(recipe.id)} className="block relative h-48 overflow-hidden">
         <Image
           fill
           className="object-cover transition-transform duration-300 group-hover:scale-110"
           src={recipe.heroImg || RECIPE_PLACEHOLDER_IMAGE}
-          alt={title[locale]}
+          alt={recipe.title[locale]}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
@@ -43,11 +40,11 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe}) => {
 
       <div className="p-5">
         <span className="inline-block px-3 py-1 mb-3 text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/30 rounded-full">
-          {categoryParsed && categoryParsed[locale]}
+          {recipe.category[locale]}
         </span>
 
         <h5 className="text-xl font-bold text-gray-900 dark:text-white mb-3 line-clamp-2">
-          {title[locale]}
+          {recipe.title[locale]}
         </h5>
 
         <div className="flex items-center justify-between">
@@ -69,6 +66,12 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe}) => {
           </Link>
         </div>
       </div>
+
+      {!recipe.isPremium && (
+        <span className='absolute top-5 right-7 bg-green-100/70 text-green-800 px-4 rounded-full'>
+          {tRecipes('card.free')}
+        </span>
+      )}
     </div>
   );
 };

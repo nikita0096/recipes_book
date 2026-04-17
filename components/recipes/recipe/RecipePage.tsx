@@ -11,6 +11,7 @@ import {useUserStore} from "@/store/useUserStore";
 import {addNewLike} from "@/services/db/recipe-likes/addNewLike";
 import {fetchRecipe} from "@/services/db/fetchRecipe";
 import {deleteLike} from "@/services/db/recipe-likes/deleteLike";
+import {SecureVideoPlayer} from "@/components/video/SecureVideoPlayer";
 
 interface RecipePageProps {
   recipeId: string;
@@ -174,82 +175,84 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
         </section>
 
         {/* Steps Section */}
-        <section>
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
-              <svg className="w-5 h-5 text-amber-600 dark:text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-              </svg>
+        {(recipe.isPremium || !recipe.recipeSteps?.length) && (
+          <section>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
+                <svg className="w-5 h-5 text-amber-600 dark:text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t('singlePage.preparationSteps')}</h2>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t('singlePage.preparationSteps')}</h2>
-          </div>
 
-          <div className="space-y-8">
-            {recipe.recipeSteps?.map((step, i) => (
-              <div
-                key={i}
-                className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden"
-              >
-                {step.imgUrl && (
-                  <div className="relative h-64 md:h-80 w-full">
-                    <Image
-                      src={step.imgUrl}
-                      alt={`${t('singlePage.step')} ${i + 1}`}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                )}
-                <div className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md">
-                      <span className="text-white font-bold">{i + 1}</span>
+            <div className="space-y-8">
+              {recipe.recipeSteps?.map((step, i) => (
+                <div
+                  key={i}
+                  className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden"
+                >
+                  {step.imgUrl && (
+                    <div className="relative h-64 md:h-80 w-full">
+                      <Image
+                        src={step.imgUrl}
+                        alt={`${t('singlePage.step')} ${i + 1}`}
+                        fill
+                        className="object-cover"
+                      />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                        {t('singlePage.step')} {i + 1}
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                        {step.desc[locale]}
-                      </p>
+                  )}
+                  <div className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md">
+                        <span className="text-white font-bold">{i + 1}</span>
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                          {t('singlePage.step')} {i + 1}
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                          {step.desc[locale]}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
+        )}
 
-        <section>
-          <div className="flex items-center gap-3 my-8">
-            <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
-              <svg className="w-5 h-5 text-amber-600 dark:text-amber-300"
-                   fill="none"
-                   stroke="currentColor"
-                   viewBox="0 0 24 24">
-                <path strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                <path strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
+        {recipe.videoUrl !== null && (
+          <section>
+            <div className="flex items-center gap-3 my-8">
+              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
+                <svg className="w-5 h-5 text-amber-600 dark:text-amber-300"
+                     fill="none"
+                     stroke="currentColor"
+                     viewBox="0 0 24 24">
+                  <path strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                  <path strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t('singlePage.videoSection')}</h2>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t('singlePage.videoSection')}</h2>
-          </div>
-          <div className='flex items-center justify-center p-2 w-full'>
-            <div className='w-full bg-black rounded-2xl overflow-hidden shadow-lg'>
-              <video
-                src={recipe.videoUrl}
-                controls
-                poster={recipe.heroImg}
-                className='w-full max-h-[500px] object-contain'
-              />
+            <div className='flex items-center justify-center p-2 w-full'>
+              <div className='w-full bg-black rounded-2xl overflow-hidden shadow-lg'>
+                <SecureVideoPlayer recipeId={recipeId}
+                                   videoKey={recipe.videoUrl}
+                                   className={'w-full max-h-[500px] object-contain'}
+                />
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Back Button */}
         <div className="mt-12 text-center">

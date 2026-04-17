@@ -22,6 +22,7 @@
     "videoSection": "Video Tutorial"
   },
   "card": {
-    "hot": "Hot"
+    "hot": "Hot",
+    "free": "Free"
   }
 }

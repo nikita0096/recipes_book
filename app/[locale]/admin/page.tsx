@@ -22,8 +22,6 @@ import {
   IRecipePremiumUpload,
   RecipeStep,
 } from "@/types/recipe";
-import {translateToEnglish} from "@/lib/translate";
-import {debounce} from "@/utils/debounce";
 
 const Page = () => {
   const [mounted, setMounted] = useState<boolean>(false);
@@ -32,6 +30,8 @@ const Page = () => {
   const [heroImg, setHeroImg] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoError, setVideoError] = useState<string | null>(null);
+  const [videoUploadProgress, setVideoUploadProgress] = useState<number>(0);
+  const [isVideoUploading, setIsVideoUploading] = useState<boolean>(false);
 
   const [isSuccess, setIsSuccess] = useState(false);
   const [isPending, setIsPending] = useState<boolean>(false);
@@ -129,7 +129,6 @@ const Page = () => {
   const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0] ?? null;
     const type = e.target.files?.[0]?.type.split('/')[0];
-    console.log(type);
 
     if (!file) return;
 
@@ -248,6 +247,27 @@ const Page = () => {
       return null;
     }
 
+    let videoUrl;
+
+    try {
+      setIsVideoUploading(true);
+      const {videoUrl: videoKey, error} = await uploadVideoToStorage({
+        videoFile: data.videoFile,
+        folder: folder,
+        onProgress: (percentage) => setVideoUploadProgress(percentage)
+      });
+
+      if(error) throw new Error(error);
+
+      videoUrl = videoKey;
+
+      setIsVideoUploading(false);
+    } catch(error) {
+      setVideoError(t('form.validation.videoUploadingError'));
+      console.log(error)
+      return null;
+    }
+
     for (const step of data.recipeSteps) {
       const {desc, image} = step;
       let imgUrl = null;
@@ -289,17 +309,6 @@ const Page = () => {
       return null;
     }
 
-    const filePath = `${folder}/${uuidv4()}`;
-    const {videoUrl, error} = await uploadVideoToStorage({
-      videoFile: data.videoFile, bucket: 'videos',
-      filePath: filePath
-    });
-
-    if (error) {
-      setVideoError(t('form.validation.videoUploadingError'));
-      return null;
-    }
-
     return {
       title: data.title,
       category: category,
@@ -308,7 +317,7 @@ const Page = () => {
       ingredients: data.ingredients,
       heroImg: heroImgResult.imageUrl,
       preparingTime: data.preparingTime,
-      videoUrl: videoUrl,
+      videoUrl: videoUrl,  // R2 key stored as videoUrl
     };
   };
 
@@ -739,10 +748,24 @@ const Page = () => {
           <div
             className="w-full min-h-30 flex items-center justify-center border-2 border-dashed border-amber-200 dark:border-gray-500 rounded-xl mb-3 bg-white dark:bg-gray-800 relative">
             {videoUrl ? (
-              <div className='p-1 relative flex flex-col items-center gap-2'>
+              <div className='p-1 relative flex flex-col items-center gap-2 w-full'>
                 <video className='rounded-lg'
                        src={videoUrl}
                        controls></video>
+                {isVideoUploading && (
+                  <div className='w-full px-4'>
+                    <div className='flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-1'>
+                      <span>Uploading video...</span>
+                      <span>{videoUploadProgress}%</span>
+                    </div>
+                    <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2'>
+                      <div
+                        className='bg-amber-500 h-2 rounded-full transition-all duration-300'
+                        style={{ width: `${videoUploadProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
                 {videoError && (
                   <p className='text-amber-600 dark:text-amber-400 text-sm'>
                     {videoError} (using original file)
