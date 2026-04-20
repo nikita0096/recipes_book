@@ -11,8 +11,6 @@ import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 import NavMenuMobile from "@/components/ui/NavMenuMobile";
 import AuthBar from "@/components/authorization/AuthBar";
 import {useTranslations} from "next-intl";
-import logoImage from "@/public/images/logo/logo.jpg"
-import Image from "next/image";
 
 interface HeaderProps {
   initUser: UserState | null;
@@ -47,71 +45,65 @@ const Header: React.FC<HeaderProps> = ({initUser}) => {
   }
 
   return (
-    <section className='sticky top-2 z-50'>
-      <menu className='max-w-[calc(100%-2rem)] sm:max-w-[calc(100%-3rem)] md:max-w-3xl lg:max-w-5xl xl:max-w-6xl mx-auto rounded-2xl bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg mt-2 px-4 sm:px-6 py-3 md:py-2 flex items-center justify-between shadow-lg border border-amber-100 dark:border-gray-700'>
-
-        <div className='flex items-center justify-between w-full lg:hidden'>
-          <div className='flex flex-col items-center justify-between gap-1.5 cursor-pointer p-2'
-               onClick={() => setIsShowNav(!isShowNav)}>
-            <span className='w-7 h-0.5 bg-amber-600 dark:bg-amber-400 rounded-full transition-all'></span>
-            <span className='w-7 h-0.5 bg-amber-600 dark:bg-amber-400 rounded-full transition-all'></span>
-            <span className='w-7 h-0.5 bg-amber-600 dark:bg-amber-400 rounded-full transition-all'></span>
-          </div>
-        </div>
-        <Link href={PAGES.HOME}
-              className='absolute left-1/2 -translate-x-1/2 lg:hidden'>
-          <Image
-            src={logoImage}
-            alt="Sweet Recipes"
-            width={90}
-          />
+    <header className='sticky top-0 z-50 h-12 md:h-14 bg-bg border-b border-border flex items-center justify-between px-4 sm:px-6 lg:px-10 shrink-0'>
+      {/* Left side: Logo + Desktop Navigation */}
+      <div className='flex items-center gap-10'>
+        {/* Logo */}
+        <Link href={PAGES.HOME} className='font-serif text-lg text-text'>
+          Sweet Recipes
         </Link>
 
-        <nav className='hidden items-center justify-start gap-6 w-2/3 lg:flex text-sm lg:text-base'>
-          <Link href={PAGES.HOME}
-                className='relative group'>
-            <Image
-              src={logoImage}
-              alt="Sweet Recipes"
-              width={90}
-            />
-          </Link>
-          <Link href={PAGES.HOME}
-                className='text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-400 font-medium transition-colors'>
+        {/* Desktop Navigation */}
+        <nav className='hidden lg:flex items-center gap-6'>
+          <Link href={PAGES.HOME} className='text-sm text-muted hover:text-text transition-colors'>
             {t('nav.home')}
           </Link>
-          <Link href={PAGES.RECIPES}
-                className='text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-400 font-medium transition-colors'>
+          <Link href={PAGES.RECIPES} className='text-sm text-muted hover:text-text transition-colors'>
             {t('nav.recipes')}
           </Link>
-          <Link href={PAGES.ABOUT}
-                className='text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-400 font-medium transition-colors'>
+          <Link href={PAGES.ABOUT} className='text-sm text-muted hover:text-text transition-colors'>
             {t('nav.about')}
           </Link>
           {displayUser?.role === 'admin' && (
-            <Link href={PAGES.ADMIN_PANEL}
-                  className='text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium transition-colors'>
+            <Link href={PAGES.ADMIN_PANEL} className='text-sm text-accent hover:opacity-80 transition-opacity'>
               {t('nav.adminPanel')}
             </Link>
           )}
         </nav>
-        <div className='flex flex-row items-center justify-end gap-4 w-1/3'>
-          <div className='hidden lg:block'>
-            <AuthBar user={displayUser}
-                     handleLogout={handleLogout}/>
-          </div>
-          <div className='hidden lg:block'>
-            <LanguageSwitcher/>
-          </div>
-          <ToggleTheme/>
+      </div>
+
+      {/* Right side controls */}
+      <div className='flex items-center gap-3'>
+        {/* Auth bar - desktop only */}
+        <div className='hidden lg:block'>
+          <AuthBar user={displayUser} handleLogout={handleLogout}/>
         </div>
 
-      </menu>
-      <NavMenuMobile user={displayUser}
-                     isShowNav={isShowNav}
-                     setIsShowNav={setIsShowNav}
-                     handleLogout={handleLogout}/>
-    </section>
+        {/* Language switcher - hidden on mobile */}
+        <div className='hidden sm:block'>
+          <LanguageSwitcher/>
+        </div>
+
+        {/* Theme toggle */}
+        <ToggleTheme/>
+
+        {/* Mobile menu button */}
+        <button
+          className='lg:hidden w-9 h-9 flex items-center justify-center text-xl text-muted hover:text-text transition-colors'
+          onClick={() => setIsShowNav(!isShowNav)}
+          aria-label="Toggle menu"
+        >
+          ☰
+        </button>
+      </div>
+
+      <NavMenuMobile
+        user={displayUser}
+        isShowNav={isShowNav}
+        setIsShowNav={setIsShowNav}
+        handleLogout={handleLogout}
+      />
+    </header>
   );
 };
 

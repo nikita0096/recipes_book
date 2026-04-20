@@ -1,5 +1,11 @@
 import React from 'react';
-import Header from "@/components/header/Header";
+import type {Metadata} from "next";
+
+export const metadata: Metadata = {
+  title: "Recipes",
+  description: "Recipes list",
+};
+
 
 interface HomeLayoutProps {
   children: React.ReactNode;

@@ -8,10 +8,12 @@ import FeaturedRecipeCard from "@/components/home/FeaturedRecipeCard";
 import Footer from "@/components/footer/Footer";
 import { useFeaturedRecipes } from "@/hooks/useFeaturedRecipes";
 import CakeHero from "@/components/home/CakeHero";
+import {useUserStore} from "@/store/useUserStore";
 
 export default function Home() {
   const t = useTranslations('home');
   const { data: featuredRecipes, isLoading } = useFeaturedRecipes();
+  const {user} = useUserStore();
 
   const words = t.raw('title.words') as string[];
 
@@ -79,7 +81,7 @@ export default function Home() {
 
 
       {/* Footer */}
-      <Footer />
+      <Footer user={user}/>
     </div>
   );
 }

@@ -1,18 +1,28 @@
 import {NextIntlClientProvider} from "next-intl";
 import {getMessages, setRequestLocale} from "next-intl/server";
 import {notFound} from "next/navigation";
-import {Montserrat} from "next/font/google";
+import {DM_Sans, DM_Serif_Display} from "next/font/google";
 import {routing} from "@/i18n/routing";
 import Header from "@/components/header/Header";
 import Providers from "@/components/providers/Providers";
 import "../globals.css";
 import {createClient} from "@/lib/supabase/ServerComponentClient";
 import {cookies} from "next/headers";
+import type {Metadata} from "next";
 
-const montserrat = Montserrat({
-  subsets: ["latin", "cyrillic"],
+const dmSans = DM_Sans({
+  subsets: ["latin"],
   weight: ['400', '500', '600', '700'],
+  variable: '--font-dm-sans',
 });
+
+const dmSerifDisplay = DM_Serif_Display({
+  subsets: ["latin"],
+  weight: ['400'],
+  style: ['normal', 'italic'],
+  variable: '--font-dm-serif',
+});
+
 
 interface LocaleLayoutProps {
   children: React.ReactNode;
@@ -58,7 +68,7 @@ export default async function LocaleLayout({children, params, modal}: LocaleLayo
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${montserrat.className} antialiased`}>
+      <body className={`${dmSans.variable} ${dmSerifDisplay.variable} font-sans antialiased`}>
         <NextIntlClientProvider messages={messages}>
           <Providers>
             <Header initUser={initUser}/>

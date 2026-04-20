@@ -2,6 +2,12 @@ import {PropsWithChildren} from "react";
 import AdminNavBar from "@/components/admin/AdminNavBar";
 import {createClient} from "@/lib/supabase/ServerComponentClient";
 import {redirect} from "next/navigation";
+import type {Metadata} from "next";
+
+export const metadata: Metadata = {
+  title: "Recipes admin",
+  description: "Recipes list",
+};
 
 export default async function AdminLayout({children}: PropsWithChildren<unknown>) {
   const supabase = await createClient();

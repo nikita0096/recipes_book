@@ -1,6 +1,9 @@
-import React from 'react';
-import {createClient} from "@/lib/supabase/ServerComponentClient";
-import {supabase} from "@/lib/supabase/ClientComponentClient";
+import type {Metadata} from "next";
+
+export const metadata: Metadata = {
+  title: "Profile",
+  description: "Account page",
+};
 
 interface HomeLayoutProps {
   children: React.ReactNode;

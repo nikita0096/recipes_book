@@ -1,7 +1,7 @@
 import {redirect} from 'next/navigation';
 import {createClient} from "@/lib/supabase/ServerComponentClient";
 import ProfileContent, {LikedRecipe, PurchasedRecipe} from '@/components/profile/ProfileContent'
-import {IRecipe, LocalizedText} from "@/types";
+import {LocalizedText} from "@/types";
 
 interface PreviewLikedRecipeData {
   id: string;

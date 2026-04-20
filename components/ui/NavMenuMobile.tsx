@@ -1,10 +1,11 @@
+'use client';
+
 import React from 'react';
 import {Link} from "@/i18n/navigation";
 import {PAGES} from "@/config/page.config";
 import {UserState} from "@/store/useUserStore";
-import {IoClose} from "react-icons/io5";
 import Image from "next/image";
-import {GiCook} from "react-icons/gi";
+import {FiUser} from "react-icons/fi";
 import {useTranslations} from "next-intl";
 import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
 
@@ -23,105 +24,203 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
                                                      }) => {
   const t = useTranslations('common');
 
+  // Get user initial for avatar
+  const getInitial = () => {
+    if (user?.name) return user.name.charAt(0).toUpperCase();
+    if (user?.email) return user.email.charAt(0).toUpperCase();
+    return 'U';
+  };
+
   return (
-      <>
-        {isShowNav && (
-          <div className='fixed inset-0 w-full h-screen bg-amber-50/50 dark:bg-black/50  overflow-hidden' onClick={() => setIsShowNav(false)}>
-            <div className={isShowNav ? 'absolute top-2 left-0 right-0 mx-4 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-amber-100 dark:border-gray-700 z-50 overflow-hidden duration-300 transition-all' : 'absolute -top-50 -left-50 right-0 mx-4 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-amber-100 dark:border-gray-700 z-50 overflow-hidden duration-1000 transition-all'}>
-              <nav className='flex flex-col p-6 gap-4'>
-                <Link
-                  onClick={() => setIsShowNav(false)}
-                  href={PAGES.HOME}
-                  className='text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-400 font-medium text-lg transition-colors py-2 border-b border-amber-100 dark:border-gray-700'
-                >
-                  {t('nav.home')}
-                </Link>
-                <Link
-                  onClick={() => setIsShowNav(false)}
-                  href={PAGES.RECIPES}
-                  className='text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-400 font-medium text-lg transition-colors py-2 border-b border-amber-100 dark:border-gray-700'
-                >
-                  {t('nav.recipes')}
-                </Link>
-                <Link
-                  onClick={() => setIsShowNav(false)}
-                  href={PAGES.ABOUT}
-                  className='text-gray-700 dark:text-gray-200 hover:text-amber-600 dark:hover:text-amber-400 font-medium text-lg transition-colors py-2 border-b border-amber-100 dark:border-gray-700'
-                >
-                  {t('nav.about')}
-                </Link>
-                {user?.role === 'admin' && (
-                  <Link
-                    href={PAGES.ADMIN_PANEL}
-                    onClick={() => setIsShowNav(false)}
-                    className='text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 font-medium text-lg transition-colors py-2 border-b border-amber-100 dark:border-gray-700'
-                  >
-                    {t('nav.adminPanel')}
-                  </Link>
-                )}
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={() => setIsShowNav(false)}
+        className={`fixed inset-0 transition-opacity duration-300 ${
+          isShowNav ? 'opacity-100 pointer-events-auto z-100 ' : 'opacity-0 pointer-events-none'
+        }`}
+        style={{
+          backgroundColor: 'rgba(0, 0, 0, 0.4)',
+          WebkitBackdropFilter: 'blur(2px)',
+          backdropFilter: 'blur(2px)'
+        }}
+      />
 
-                <div className='pt-2'>
-                  {user ? (
-                    <div className='flex flex-col items-start'>
-                      <div className='flex flex-row items-center gap-2'>
-                        {user.avatar_url ? (
-                          <Image
-                            src={user.avatar_url}
-                            alt={user ? user.name : 'unknown'}
-                            width={36}
-                            height={36}
-                            className='rounded-full ring-2 ring-amber-200 dark:ring-amber-600'
-                          />
-                        ) : (
-                          <div className='flex items-center justify-center w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400'>
-                            <GiCook className='text-lg'/>
-                          </div>
-                        )}
-
-                        <span className='text-lg text-gray-700 dark:text-gray-200 font-medium lg:block'>{user.name !== '' ? user.name : user.email}</span>
-                      </div>
-                      <div className='flex flex-col gap-4 text-xl mt-3 w-full'>
-                        <Link
-                          href={PAGES.PROFILE(user.name)}
-                          className='w-full py-2 text-gray-700 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-gray-700 transition-colors border-b border-amber-100 dark:border-gray-700'
-                        >
-                          {t('auth.profile')}
-                        </Link>
-                        <button
-                          className='w-full text-left py-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors border-b border-amber-100 dark:border-gray-700'
-                          onClick={handleLogout}
-                        >
-                          {t('auth.logout')}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <Link
-                      href={PAGES.LOGIN}
-                      onClick={() => setIsShowNav(false)}
-                      className='px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-medium rounded-full transition-all shadow-md hover:shadow-lg'
-                    >
-                      {t('auth.logIn')}
-                    </Link>
-                  )}
+      {/* Slide-in Panel */}
+      <div
+        className={`fixed top-0 right-0 bottom-0 w-[72%] max-w-[300px] flex flex-col transition-transform duration-300 ease-out ${
+          isShowNav ? 'translate-x-0 z-200' : 'translate-x-full'
+        }`}
+        style={{
+          backgroundColor: 'var(--bg)',
+          borderLeft: '1px solid var(--border)'
+        }}
+      >
+        {/* User block */}
+        <div className="p-6 pb-5 border-b border-border">
+          <div className="flex justify-between items-start mb-4">
+            {/* Avatar */}
+            {user ? (
+              user.avatar_url ? (
+                <Image
+                  src={user.avatar_url}
+                  alt={user.name || 'User'}
+                  width={40}
+                  height={40}
+                  className="rounded-full"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-sm font-semibold text-text">
+                  {getInitial()}
                 </div>
+              )
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-surface border border-border flex items-center justify-center">
+                <FiUser className="text-base text-muted"/>
+              </div>
+            )}
 
-                <div className='flex items-center justify-center w-full mt-2'>
-                  <LanguageSwitcher/>
-                </div>
-              </nav>
+            {/* Close button */}
+            <button
+              onClick={() => setIsShowNav(false)}
+              className="w-7 h-7 flex items-center justify-center border border-border text-muted hover:text-text text-sm transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* User info */}
+          {user ? (
+            <Link
+              href={PAGES.PROFILE(user.id)}
+              onClick={() => setIsShowNav(false)}
+            >
+              <div className="text-[15px] text-text font-medium">
+                {user.name || 'User'}
+              </div>
+              <div className="text-[11px] text-muted mt-1 tracking-wide">
+                {user.email}
+              </div>
+            </Link>
+          ) : (
+            <>
+              <div className="text-[15px] text-text font-medium">
+                {t('auth.welcomeGuest')}
+              </div>
+              <div className="text-[11px] text-muted mt-1 tracking-wide">
+                {t('auth.guestDescription')}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Navigation links */}
+        <div className="flex-1 py-3 overflow-y-auto">
+          <Link
+            href={PAGES.HOME}
+            onClick={() => setIsShowNav(false)}
+            className="flex items-center justify-between px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
+          >
+            <span className="text-[15px] text-text font-light tracking-tight">
+              {t('nav.home')}
+            </span>
+            <span className="text-xs text-muted">→</span>
+          </Link>
+
+          <Link
+            href={PAGES.RECIPES}
+            onClick={() => setIsShowNav(false)}
+            className="flex items-center justify-between px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
+          >
+            <span className="text-[15px] text-text font-light tracking-tight">
+              {t('nav.recipes')}
+            </span>
+            <span className="text-xs text-muted">→</span>
+          </Link>
+
+          <Link
+            href={PAGES.ABOUT}
+            onClick={() => setIsShowNav(false)}
+            className="flex items-center justify-between px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
+          >
+            <span className="text-[15px] text-text font-light tracking-tight">
+              {t('nav.about')}
+            </span>
+            <span className="text-xs text-muted">→</span>
+          </Link>
+
+          {user?.role === 'admin' && (
+            <Link
+              href={PAGES.ADMIN_PANEL}
+              onClick={() => setIsShowNav(false)}
+              className="flex items-center justify-between px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
+            >
+              <span className="text-[15px] text-accent font-light tracking-tight">
+                {t('nav.adminPanel')}
+              </span>
+              <span className="text-xs text-muted">→</span>
+            </Link>
+          )}
+
+          {/* Divider */}
+          <div className="mx-6 my-2 border-t border-border"/>
+
+          {/* Profile & Sign out / Sign in */}
+          {user ? (
+            <>
+              <Link
+                href={PAGES.PROFILE(user.name || user.id)}
+                onClick={() => setIsShowNav(false)}
+                className="block px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
+              >
+                <span className="text-[15px] text-text font-light">
+                  {t('auth.profile')}
+                </span>
+              </Link>
 
               <button
-                className='absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-amber-100 dark:bg-gray-700 text-amber-600 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-gray-600 transition-colors'
-                onClick={() => setIsShowNav(false)}
+                onClick={() => {
+                  handleLogout();
+                  setIsShowNav(false);
+                }}
+                className="w-full text-left px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
               >
-                <IoClose className='text-xl'/>
+                <span className="text-[15px] font-light text-red-500 dark:text-red-400">
+                  {t('auth.logout')}
+                </span>
               </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href={PAGES.LOGIN}
+                onClick={() => setIsShowNav(false)}
+                className="block px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
+              >
+                <span className="text-[15px] text-accent font-light">
+                  {t('auth.signIn')}
+                </span>
+              </Link>
 
-            </div>
-          </div>
-        )}
-      </>
+              <Link
+                href={PAGES.LOGIN}
+                onClick={() => setIsShowNav(false)}
+                className="block px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
+              >
+                <span className="text-[15px] text-text font-light">
+                  {t('auth.createAccount')}
+                </span>
+              </Link>
+            </>
+          )}
+        </div>
+
+        {/* Bottom bar: Language + Version */}
+        <div className="px-6 py-4 pb-7 border-t border-border flex items-center justify-between">
+          <LanguageSwitcher/>
+        </div>
+      </div>
+    </>
   );
 };
 

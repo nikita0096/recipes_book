@@ -12,6 +12,7 @@ import {addNewLike} from "@/services/db/recipe-likes/addNewLike";
 import {fetchRecipe} from "@/services/db/fetchRecipe";
 import {deleteLike} from "@/services/db/recipe-likes/deleteLike";
 import {SecureVideoPlayer} from "@/components/video/SecureVideoPlayer";
+import Footer from "@/components/footer/Footer";
 
 interface RecipePageProps {
   recipeId: string;
@@ -26,20 +27,18 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
 
   const locale = useTypedLocale();
   const t = useTranslations('recipes');
-  const {user}  = useUserStore();
+  const {user} = useUserStore();
 
   useEffect(() => {
     const fetchData = async () => {
       const {data, error} = await fetchRecipe(recipeId);
 
-      if(error) setError(error);
+      if (error) setError(error);
 
-      if(data) {
+      if (data) {
         setRecipe(data);
         setLikes(data.likes);
       }
-
-
     }
 
     fetchData();
@@ -47,37 +46,34 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="rounded-2xl border border-red-200 dark:border-red-900 p-6 bg-red-50 dark:bg-red-900/20 text-center">
-          <p className="text-red-600 dark:text-red-400 font-medium">Not found</p>
-          <button
-            className="mt-4 px-4 py-2 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-900 transition-colors"
-          >
-            Try again
-          </button>
+      <div className="min-h-screen bg-bg flex items-center justify-center px-4">
+        <div className="text-center">
+          <p className="text-red-500 text-base mb-4">Not found</p>
+          <Link href="/recipes" className="text-sm text-muted hover:text-text">
+            ← {t('singlePage.backButton')}
+          </Link>
         </div>
       </div>
     );
   }
 
-  if(!recipe) {
+  if (!recipe) {
     return null;
-  };
+  }
 
   const title = parseJson(recipe.title);
-  const categoryParsed =parseJson(recipe.category);
+  const categoryParsed = parseJson(recipe.category);
 
   const handleLike = async () => {
-    if(!user) return;
+    if (!user) return;
 
     const isNewLiked = !isLiked;
     setIsLiked(isNewLiked);
     setLikes(prevState => isNewLiked ? prevState + 1 : prevState - 1);
 
     try {
-      if(isNewLiked) {
+      if (isNewLiked) {
         await addNewLike(recipe.id, user.id);
-
       } else {
         await deleteLike(recipe.id, user.id);
       }
@@ -88,9 +84,9 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-bg">
       {/* Hero Section */}
-      <section className="relative h-[70vh] w-full overflow-hidden">
+      <section className="relative h-[280px] sm:h-[360px] lg:h-[480px] w-full">
         <Image
           src={recipe.heroImg}
           alt={title[locale]}
@@ -98,102 +94,86 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
           className="object-cover"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none" />
-        <div className="absolute bottom-0 left-0 right-0 p-8 md:p-16">
-          <div className="max-w-4xl mx-auto">
-            <span className="inline-block px-4 py-1 mb-4 text-sm font-medium text-amber-900 bg-amber-100 rounded-full">
-              {categoryParsed && categoryParsed[locale]}
-            </span>
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
-              {title[locale]}
-            </h1>
-            <div className="flex items-center gap-4 text-white/90">
-              <span className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" />
-                </svg>
-                {likes} {t('singlePage.likes')}
-              </span>
-              <span className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                {recipe.recipeSteps?.length ?? 0} {t('singlePage.steps')}
-              </span>
-              <span className="flex items-center gap-2">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {recipe.preparingTime} {t('singlePage.minutes')}
-              </span>
-            </div>
-          </div>
-        </div>
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-linear-to-t from-black/[0.88] via-black/[0.1] to-transparent pointer-events-none"/>
+
+        {/* Back link */}
+        <Link
+          href="/recipes"
+          className="absolute top-4 left-4 sm:left-6 lg:left-10 text-sm text-text/70 tracking-wide hover:text-white/90 transition-colors z-10"
+        >
+          ← {t('singlePage.backButton')}
+        </Link>
+
+        {/* Like button */}
         <button
           type="button"
           onClick={handleLike}
-          className={`absolute top-6 right-6 z-10 w-12 h-12 rounded-full flex items-center justify-center backdrop-blur-sm transition-all duration-300 cursor-pointer select-none hover:scale-110 active:scale-95 ${
+          className={`absolute top-4 right-4 sm:right-6 lg:right-10 z-10 w-12 h-12 lg:w-14 lg:h-14 rounded-full flex flex-col items-center justify-center gap-0.5 border transition-all cursor-pointer select-none hover:scale-105 active:scale-95 ${
             isLiked
-              ? 'bg-red-500/90 text-white shadow-lg shadow-red-500/30'
-              : 'bg-white/20 text-red-500 hover:bg-white/30'
+              ? 'bg-red-500/80 border-red-400 text-white'
+              : 'bg-white/20 border-white/40 text-white'
           }`}
+          style={{ WebkitBackdropFilter: 'blur(4px)', backdropFilter: 'blur(4px)' }}
         >
-          <svg
-            className="w-6 h-6"
-            fill={isLiked ? 'currentColor' : 'none'}
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-            />
-          </svg>
+          <span className="text-lg lg:text-xl leading-none">
+            {isLiked ? '♥' : '♡'}
+          </span>
+          <span className="text-xs text-white/70">{likes}</span>
         </button>
+
+        {/* Hero content */}
+        <div className="absolute bottom-6 left-4 sm:left-6 lg:left-10 right-16 sm:right-20 lg:right-24">
+          {/* Category */}
+          <span className="inline-block text-xs tracking-widest uppercase text-accent border border-accent px-3 py-1 mb-3 bg-bg/40">
+            {categoryParsed && categoryParsed[locale]}
+          </span>
+
+          {/* Title */}
+          <h1 className="font-serif text-2xl sm:text-3xl lg:text-5xl italic font-normal text-white leading-tight mb-3">
+            {title[locale]}
+          </h1>
+
+          {/* Stats */}
+          <div className="flex gap-5">
+            <span className="text-sm text-white/60">
+              ◷ {recipe.preparingTime} {t('singlePage.minutes')}
+            </span>
+            <span className="text-sm text-white/60">
+              ☰ {recipe.recipeSteps?.length ?? 0} {t('singlePage.steps')}
+            </span>
+          </div>
+        </div>
       </section>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* Key Ingredients Section */}
-        <section className="mb-16">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
-              <svg className="w-5 h-5 text-amber-600 dark:text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-              </svg>
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t('singlePage.keyIngredients')}</h2>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {recipe.ingredients.map((item) => (
-                <RecipeIngredient key={item.id} ingredient={item} />
-              ))}
-            </div>
-          </div>
-        </section>
+      {/* Key Ingredients Section */}
+      <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-6 sm:py-7 lg:py-8">
+        <h2 className="text-sm tracking-widest uppercase text-accent mb-4 sm:mb-5 lg:mb-6">
+          {t('singlePage.keyIngredients')}
+        </h2>
+        <div
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px "
+        >
+          {recipe.ingredients.map((item, index) => (
+            <RecipeIngredient key={item.id} ingredient={item}/>
+          ))}
+        </div>
+      </section>
 
-        {/* Steps Section */}
-        {(recipe.isPremium || !recipe.recipeSteps?.length) && (
-          <section>
-            <div className="flex items-center gap-3 mb-8">
-              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
-                <svg className="w-5 h-5 text-amber-600 dark:text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
-              </div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t('singlePage.preparationSteps')}</h2>
-            </div>
+      {/* Preparation Steps Section */}
+      {(!recipe.isPremium && recipe.recipeSteps?.length > 0) && (
+        <section className="px-4 sm:px-6 lg:px-10 pt-6 sm:pt-7 lg:pt-8">
+          <h2 className="text-sm tracking-widest uppercase text-accent mb-4 sm:mb-5 lg:mb-6">
+            {t('singlePage.preparationSteps')}
+          </h2>
 
-            <div className="space-y-8">
-              {recipe.recipeSteps?.map((step, i) => (
-                <div
-                  key={i}
-                  className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden"
-                >
-                  {step.imgUrl && (
-                    <div className="relative h-64 md:h-80 w-full">
+          <div className="flex flex-col gap-px bg-border">
+            {recipe.recipeSteps?.map((step, i) => (
+              <div key={step.id} className="bg-bg">
+                {/* Mobile/Tablet: Image on top */}
+                {step.imgUrl && (
+                  <div className="lg:hidden">
+                    <div className="relative w-full aspect-video">
                       <Image
                         src={step.imgUrl}
                         alt={`${t('singlePage.step')} ${i + 1}`}
@@ -201,72 +181,86 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
                         className="object-cover"
                       />
                     </div>
-                  )}
-                  <div className="p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md">
-                        <span className="text-white font-bold">{i + 1}</span>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                          {t('singlePage.step')} {i + 1}
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
-                          {step.desc[locale]}
-                        </p>
-                      </div>
+                  </div>
+                )}
+
+                {/* Desktop: Grid layout with image on right */}
+                <div className="lg:grid lg:grid-cols-[60px_1fr_1fr] lg:items-stretch">
+                  {/* Step number */}
+                  <div className="hidden lg:flex items-center pl-5 border-r border-border">
+                    <span className="text-base text-accent font-semibold">
+                      {String(i + 1).padStart(2, '0')}
+                    </span>
+                  </div>
+
+                  {/* Mobile/Tablet: Number + Description */}
+                  <div className="lg:hidden grid grid-cols-[44px_1fr] sm:grid-cols-[52px_1fr] items-center">
+                    <div className="pl-4 sm:pl-5 self-stretch flex items-center border-r border-border">
+                      <span className="text-sm sm:text-base text-accent font-semibold">
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                    </div>
+                    <div className="p-4 sm:p-5">
+                      <p className="text-sm sm:text-base text-text leading-relaxed">
+                        {step.desc[locale]}
+                      </p>
                     </div>
                   </div>
+
+                  {/* Desktop: Description */}
+                  <div className="hidden lg:flex items-center p-5 lg:px-7 overflow-hidden">
+                    <p className="text-base text-text leading-relaxed">
+                      {step.desc[locale]}
+                    </p>
+                  </div>
+
+                  {/* Desktop: Image */}
+                  {step.imgUrl && (
+                    <div className="hidden lg:block border-l border-border">
+                      <div className="relative w-full h-full min-h-[220px] aspect-video">
+                        <Image
+                          src={step.imgUrl}
+                          alt={`${t('singlePage.step')} ${i + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {recipe.videoUrl !== null && (
-          <section>
-            <div className="flex items-center gap-3 my-8">
-              <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
-                <svg className="w-5 h-5 text-amber-600 dark:text-amber-300"
-                     fill="none"
-                     stroke="currentColor"
-                     viewBox="0 0 24 24">
-                  <path strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                  <path strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
               </div>
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t('singlePage.videoSection')}</h2>
-            </div>
-            <div className='flex items-center justify-center p-2 w-full'>
-              <div className='w-full bg-black rounded-2xl overflow-hidden shadow-lg'>
-                <SecureVideoPlayer recipeId={recipeId}
-                                   videoKey={recipe.videoUrl}
-                                   className={'w-full max-h-[500px] object-contain'}
-                />
-              </div>
-            </div>
-          </section>
-        )}
+            ))}
+          </div>
+        </section>
+      )}
 
-        {/* Back Button */}
-        <div className="mt-12 text-center">
-          <Link
-            href="/recipes"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-full transition-colors shadow-lg hover:shadow-xl"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            {t('singlePage.backButton')}
-          </Link>
-        </div>
+      {/* Video Tutorial Section */}
+      {recipe.videoUrl !== null && (
+        <section className="border-t border-border mt-6 sm:mt-7 lg:mt-8 px-4 sm:px-6 lg:px-10 pt-6 sm:pt-7 lg:pt-8 pb-10 sm:pb-12 lg:pb-14">
+          <h2 className="text-sm tracking-widest uppercase text-accent mb-4 sm:mb-5 lg:mb-6">
+            {t('singlePage.videoSection')}
+          </h2>
+
+          <div className="relative aspect-video bg-[#0d0d0a] overflow-hidden">
+            <SecureVideoPlayer
+              recipeId={recipeId}
+              videoKey={recipe.videoUrl}
+              className="w-full h-full object-contain"
+            />
+          </div>
+        </section>
+      )}
+
+      {/* Back link */}
+      <div className='flex items-center justify-center mb-15'>
+        <Link
+          href="/recipes"
+          className="relative sm:left-6 lg:left-10 text-sm text-text/70 tracking-wide hover:text-white/90 transition-colors z-10"
+        >
+          ← {t('singlePage.backButton')}
+        </Link>
       </div>
+      <Footer user={user} />
     </div>
   );
 };

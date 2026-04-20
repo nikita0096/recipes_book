@@ -1,40 +1,95 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
-
+/* Design System Colors */
 :root {
-  --background: #fffbeb;
-  --background-end: #ffffff;
-  --foreground: #171717;
-  --border-color: black;
-}
+  /* Light theme */
+  --bg: #faf9f6;
+  --surface: #f2f0ea;
+  --border: rgba(30, 20, 5, 0.09);
+  --muted: rgba(30, 20, 5, 0.4);
+  --text: #1a1408;
+  /* Fallback for Safari + oklch for modern browsers */
+  --accent: #a67c52;
+  --accent: oklch(50% 0.12 75);
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* Legacy support */
+  --background: #faf9f6;
+  --background-end: #f2f0ea;
+  --foreground: #1a1408;
+  --border-color: rgba(30, 20, 5, 0.09);
 }
 
 .dark {
-  --background: #111827;
-  --background-end: #1f2937;
-  background: linear-gradient(to bottom, #111827, #1f2937);
-  color: #f5f3ff;
+  /* Dark theme */
+  --bg: #0a0a08;
+  --surface: #131310;
+  --border: rgba(255, 245, 230, 0.09);
+  --muted: rgba(255, 245, 230, 0.38);
+  --text: #fffaf3;
+  /* Fallback for Safari + oklch for modern browsers */
+  --accent: #d4a574;
+  --accent: oklch(78% 0.12 75);
+
+  /* Legacy support */
+  --background: #0a0a08;
+  --background-end: #131310;
+  --foreground: #fffaf3;
+  --border-color: rgba(255, 245, 230, 0.09);
 }
 
+@theme inline {
+  /* Design system colors */
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-text: var(--text);
+  --color-accent: var(--accent);
+
+  /* Legacy */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Fonts */
+  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
+  --font-serif: var(--font-dm-serif), Georgia, serif;
+}
 
 .light {
-  background: linear-gradient(to bottom, #fffbeb, #ffffff);
-  color: #222222;
+  background: var(--bg);
+  color: var(--text);
 }
 
-
 body {
-  font-family: "Quicksand", sans-serif;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
   font-optical-sizing: auto;
   font-weight: 400;
   font-style: normal;
   min-height: 100vh;
-  background: linear-gradient(to bottom, var(--background), var(--background-end));
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* Utility classes for design system */
+.font-serif {
+  font-family: var(--font-dm-serif), Georgia, serif;
+}
+
+.text-accent {
+  color: var(--accent);
+}
+
+.bg-surface {
+  background-color: var(--surface);
+}
+
+.border-design {
+  border-color: var(--border);
+}
+
+.text-muted {
+  color: var(--muted);
 }
 
 
@@ -777,5 +832,14 @@ body {
     font-size: 8px;
     letter-spacing: 0.15em;
   }
+}
+
+@keyframes cardFadeInSlideOut {
+  from {opacity: 0; transform: translateY(15px);}
+  to {opacity: 1; transform: translateY(0)}
+}
+
+.animate-card-fade-in {
+  animation: cardFadeInSlideOut 0.4s ease-out backwards;
 }
 

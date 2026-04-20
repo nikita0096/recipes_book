@@ -8,14 +8,14 @@ const LanguageSwitcher = () => {
   const pathname = usePathname();
 
   return (
-    <div className="flex items-center gap-1 bg-amber-100 dark:bg-gray-700 rounded-full p-1">
+    <div className="flex border border-border overflow-hidden">
       <Link
         href={pathname}
         locale="en"
-        className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+        className={`text-xs font-medium px-2.5 py-1.5 tracking-wide transition-all ${
           locale === 'en'
-            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
-            : 'text-gray-600 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400'
+            ? 'bg-accent text-white'
+            : 'text-muted hover:text-text hover:bg-surface'
         }`}
       >
         EN
@@ -23,10 +23,10 @@ const LanguageSwitcher = () => {
       <Link
         href={pathname}
         locale="ua"
-        className={`px-3 py-1 rounded-full text-sm font-medium transition-all ${
+        className={`text-xs font-medium px-2.5 py-1.5 tracking-wide border-l border-border transition-all ${
           locale === 'ua'
-            ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
-            : 'text-gray-600 dark:text-gray-300 hover:text-amber-600 dark:hover:text-amber-400'
+            ? 'bg-accent text-white'
+            : 'text-muted hover:text-text hover:bg-surface'
         }`}
       >
         UA

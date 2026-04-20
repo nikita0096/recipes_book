@@ -5,167 +5,151 @@ import Link from 'next/link';
 import {useTranslations} from "next-intl";
 import Image from "next/image";
 import authorImage from "@/public/images/about/home-author.png";
-import {Footer} from "@/components/footer";
+import {useUserStore} from "@/store/useUserStore";
+import Footer from "@/components/footer/Footer";
 
 const socialLinks = [
   {
     name: 'Instagram',
     href: '#',
+    color: '#E1306C',
     icon: (
-      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <rect x="2" y="2" width="20" height="20" rx="5"/>
+        <circle cx="12" cy="12" r="5"/>
+        <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
       </svg>
     ),
-    color: 'from-purple-500 to-pink-500',
   },
   {
     name: 'TikTok',
     href: '#',
+    color: '#000000',
     icon: (
-      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-5.2 1.74 2.89 2.89 0 012.31-4.64 2.93 2.93 0 01.88.13V9.4a6.84 6.84 0 00-1-.05A6.33 6.33 0 005 20.1a6.34 6.34 0 0010.86-4.43v-7a8.16 8.16 0 004.77 1.52v-3.4a4.85 4.85 0 01-1-.1z"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.26 8.26 0 004.84 1.55V6.79a4.85 4.85 0 01-1.07-.1z"/>
       </svg>
     ),
-    color: 'from-gray-900 to-gray-700 dark:from-white dark:to-gray-300',
-    darkText: true,
   },
   {
     name: 'YouTube',
     href: '#',
+    color: '#FF0000',
     icon: (
-      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <path d="M22.54 6.42a2.78 2.78 0 00-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46a2.78 2.78 0 00-1.95 1.96A29 29 0 001 12a29 29 0 00.46 5.58A2.78 2.78 0 003.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 001.95-1.95A29 29 0 0023 12a29 29 0 00-.46-5.58z"/>
+        <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02" fill="currentColor" stroke="none"/>
       </svg>
     ),
-    color: 'from-red-600 to-red-500',
   },
   {
     name: 'Facebook',
     href: '#',
+    color: '#1877F2',
     icon: (
-      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
       </svg>
     ),
-    color: 'from-blue-600 to-blue-500',
   },
   {
     name: 'Telegram',
     href: '#',
+    color: '#2CA5E0',
     icon: (
-      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M11.944 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0a12 12 0 00-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 01.171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <path d="M21 5L2 12.5l7 1M21 5l-4 15-8-5.5M21 5L9 13.5m0 0V19l3-2.5"/>
       </svg>
     ),
-    color: 'from-sky-500 to-sky-400',
   },
 ];
 
 const About = () => {
   const t = useTranslations('about');
+  const {user} = useUserStore();
 
   return (
     <section className="min-h-screen">
-      {/* About/Author Section */}
-      <div className="relative py-24 px-4 bg-white dark:bg-gray-900 overflow-hidden">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-5 dark:opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f59e0b' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          }} />
+      {/* Hero split */}
+      <div className="grid grid-cols-1 md:grid-cols-3 border-b border-border">
+        {/* Left — photo */}
+        <div className="relative bg-surface border-b lg:border-b-0 lg:border-r border-border min-h-[350px] sm:min-h-[450px] lg:min-h-[480px]">
+          <Image
+            src={authorImage}
+            alt="Author photo"
+            fill
+            className="object-cover"
+            priority
+          />
+          {/* Subtle overlay for dark theme */}
+          <div className="absolute inset-0 bg-linear-to-r from-bg/10 to-transparent dark:from-bg/20 pointer-events-none" />
         </div>
 
-        <div className="relative max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="relative">
-              <div className="relative aspect-square max-w-md mx-auto">
-                {/* Decorative circles */}
-                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-amber-200 to-orange-200 dark:from-amber-500/20 dark:to-orange-500/20 animate-pulse-slow" />
-                <div className="absolute inset-4 rounded-full bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-400/20 dark:to-orange-400/20" />
+        {/* Right — bio */}
+        <div className="col-span-2 p-8 w-full sm:p-12 lg:p-14 flex flex-col justify-center">
+          <span className="text-[10px] tracking-[0.15em] uppercase text-accent block mb-5">
+            {t('about.badge')}
+          </span>
+          <h1 className="font-serif text-4xl sm:text-5xl italic font-normal text-text leading-tight tracking-tight mb-6">
+            {t('about.title')}
+          </h1>
+          <p className="text-sm text-muted leading-relaxed mb-4 max-w-md">
+            {t('about.description')}
+          </p>
+          <p className="text-sm text-muted leading-relaxed mb-10 max-w-md">
+            {t('about.description2')}
+          </p>
 
-
-                <div className="absolute inset-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-2xl shadow-amber-500/30">
-                  <Image
-                    fill
-                    className="object-cover rounded-full"
-                    src={authorImage}
-                    alt='Author photo'
-                  />
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-px bg-border">
+            {[
+              {num: '1000+', label: t('about.stats.recipes')},
+              {num: '1.1M+', label: t('about.stats.subscribers')},
+              {num: '1M+', label: t('about.stats.views')}
+            ].map(({num, label}) => (
+              <div key={label} className="bg-bg py-5">
+                <div className="font-serif text-center text-2xl sm:text-3xl text-accent tracking-tight mb-1">
+                  {num}
                 </div>
-
-                {/* Floating badges */}
-                <div className="absolute -top-4 -right-4 w-20 h-20 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center animate-float">
-                  <span className="text-3xl">🍰</span>
-                </div>
-                <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center animate-float" style={{ animationDelay: '1s' }}>
-                  <span className="text-2xl">🎂</span>
-                </div>
-                <div className="absolute top-1/2 -right-8 w-14 h-14 bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex items-center justify-center animate-float" style={{ animationDelay: '2s' }}>
-                  <span className="text-xl">🧁</span>
+                <div className="text-center text-[11px] text-muted tracking-[0.06em] uppercase">
+                  {label}
                 </div>
               </div>
-            </div>
-
-            {/* Text content */}
-            <div>
-              <span className="inline-block px-4 py-2 bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 text-sm font-medium rounded-full mb-4">
-                {t('about.badge')}
-              </span>
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
-                {t('about.title')}
-              </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
-                {t('about.description')}
-              </p>
-              <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
-                {t('about.description2')}
-              </p>
-
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-6">
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                  <div className="text-3xl font-bold text-amber-500 mb-1"></div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">{t('about.stats.recipes')}</div>
-                </div>
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                  <div className="text-3xl font-bold text-orange-500 mb-1">450K+</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">{t('about.stats.years')}</div>
-                </div>
-                <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl">
-                  <div className="text-3xl font-bold text-red-500 mb-1">1K+</div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">{t('about.stats.followers')}</div>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="max-w-2xl mx-auto my-10">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-            {t('page.title')}
-          </h1>
-          <p className="text-lg text-gray-600 dark:text-gray-300">
-            {t('page.subtitle')}
-          </p>
+      {/* Social section */}
+      <div className="py-16 px-8 sm:px-14 border-b border-border text-center">
+        <div className="text-[10px] tracking-[0.15em] uppercase text-accent mb-4">
+          {t('page.followLabel')}
         </div>
-
-        <div className="flex flex-row gap-5 items-start justify-center space-y-4">
+        <h2 className="font-serif text-3xl sm:text-4xl italic font-normal text-text mb-3 tracking-tight">
+          {t('page.title')}
+        </h2>
+        <p className="text-sm text-muted mb-10 max-w-sm mx-auto">
+          {t('page.subtitle')}
+        </p>
+        <div className="flex justify-center gap-4">
           {socialLinks.map((social) => (
             <Link
               key={social.name}
               href={social.href}
-              className={`flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r ${social.color} text-white ${social.darkText ? 'dark:text-gray-900' : ''} shadow-lg hover:shadow-xl transform hover:scale-[1.06] transition-all duration-300`}
+              title={social.name}
+              className="w-12 h-12 border border-border flex items-center justify-center text-muted
+                         hover:border-current hover:text-[var(--hover-color)] hover:bg-[var(--hover-color)]/10
+                         transition-all duration-200"
+              style={{'--hover-color': social.color} as React.CSSProperties}
             >
-              <div>
-                {social.icon}
-              </div>
+              {social.icon}
             </Link>
           ))}
         </div>
+
       </div>
-      <Footer />
+
+      <Footer isSocialShown={false} user={user}/>
     </section>
   );
 };

@@ -221,12 +221,11 @@ const CakeHero = ({
 
         {/* Cake */}
         <div className="cake-stage">
-          <div className="cake-plate cake-intro-plate" ref={plateRef} />
-
+          <div className="cake-plate " ref={plateRef} />
           {layers.map((layer) => (
             <div
               key={layer.id}
-              className="cake-layer cake-layer-img cake-intro-layer"
+              className="cake-layer cake-layer-img"
               style={{ zIndex: layer.zIndex }}
               ref={(el) => { layerRefs.current[layer.id] = el; }}
             >
