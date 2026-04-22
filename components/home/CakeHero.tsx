@@ -31,11 +31,11 @@ const CakeHero = ({
 
   const layers = [
     { id: 'layer1', src: '/images/cake-layer/layer_1.jpg', dy: 0, lblId: 'lbl1', label: 'Sponge base', threshold: 0.18, delay: 0, zIndex: 1 },
-    { id: 'layer2', src: '/images/cake-layer/layer_2.jpg', dy: -70, lblId: 'lbl2', label: 'Strawberry jam', threshold: 0.26, delay: 150, zIndex: 2 },
-    { id: 'layer3', src: '/images/cake-layer/layer_3.jpg', dy: -140, lblId: 'lbl3', label: 'Pistachio cheesecake', threshold: 0.34, delay: 300, zIndex: 3 },
-    { id: 'layer4', src: '/images/cake-layer/layer_4.jpg', dy: -210, lblId: 'lbl4', label: 'Strawberry jam', threshold: 0.42, delay: 450, zIndex: 4 },
-    { id: 'layer5', src: '/images/cake-layer/layer_5.jpg', dy: -280, lblId: 'lbl5', label: 'Top sponge', threshold: 0.50, delay: 600, zIndex: 5 },
-    { id: 'layer6', src: '/images/cake-layer/layer_6.jpg', dy: -350, lblId: 'lbl6', label: 'Decoration', threshold: 0.58, delay: 750, zIndex: 6 },
+    { id: 'layer2', src: '/images/cake-layer/layer_2.jpg', dy: -55, lblId: 'lbl2', label: 'Strawberry jam', threshold: 0.26, delay: 150, zIndex: 2 },
+    { id: 'layer3', src: '/images/cake-layer/layer_3.jpg', dy: -110, lblId: 'lbl3', label: 'Pistachio cheesecake', threshold: 0.34, delay: 300, zIndex: 3 },
+    { id: 'layer4', src: '/images/cake-layer/layer_4.jpg', dy: -165, lblId: 'lbl4', label: 'Strawberry jam', threshold: 0.42, delay: 450, zIndex: 4 },
+    { id: 'layer5', src: '/images/cake-layer/layer_5.jpg', dy: -220, lblId: 'lbl5', label: 'Top sponge', threshold: 0.50, delay: 600, zIndex: 5 },
+    { id: 'layer6', src: '/images/cake-layer/layer_6.jpg', dy: -275, lblId: 'lbl6', label: 'Decoration', threshold: 0.58, delay: 750, zIndex: 6 },
   ];
 
   // Intro animation - layers falling down
@@ -256,7 +256,7 @@ const CakeHero = ({
           <div className="cake-progress-fill" ref={progressFillRef} />
         </div>
 
-        <div className="cake-final-text" ref={finalTextRef}>
+        <div className="cake-final-text sm:hidden" ref={finalTextRef}>
           <p>Every layer, crafted with intention</p>
         </div>
       </div>
