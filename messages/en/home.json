@@ -13,11 +13,12 @@
     "viewFeatured": "View Featured"
   },
   "featured": {
-    "badge": "Top Picks",
-    "title": "Featured Recipes",
+    "badge": "Featured",
+    "title": "Recipes you'll\n<highlight>love</highlight> to make",
     "subtitle": "Discover our most loved desserts crafted with passion and expertise",
     "viewAll": "View All Recipes",
-    "minutes": "min"
+    "minutes": "min",
+    "preview": "Preview"
   },
   "about": {
     "badge": "About the Author",

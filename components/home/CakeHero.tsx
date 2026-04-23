@@ -197,8 +197,8 @@ const CakeHero = ({
       <div className="cake-sticky-scene">
         {/* Background layers */}
         <div className="cake-bg-image" />
-        <div className="cake-bg-overlay-1" />
-        <div className="cake-bg-overlay-2" />
+        {/*<div className="cake-bg-overlay-1" />*/}
+        {/*<div className="cake-bg-overlay-2" />*/}
         <div className="cake-bg-glow" />
 
         {/* Particles */}
