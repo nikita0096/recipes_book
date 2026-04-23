@@ -17,6 +17,7 @@ export const updateRecipePublic = async (
     .from("recipes")
     .update({
       title: formData.title,
+      description: formData.description,
       category: formData.category,
       likes: formData.likes,
       recipe_steps: formData.recipeSteps,
@@ -42,6 +43,7 @@ export const updateRecipePublic = async (
     data: {
       id: data.id,
       title: data.title,
+      description: data.description,
       likes: data.likes,
       category: data.category,
       ingredients: data.ingredients,
@@ -67,6 +69,7 @@ export const updateRecipePremium = async (
     .from("recipes")
     .update({
       title: mainData.title,
+      description: mainData.description,
       category: mainData.category,
       likes: mainData.likes,
       ingredients: mainData.ingredients,
@@ -105,6 +108,7 @@ export const updateRecipePremium = async (
     data: {
       id: data.id,
       title: data.title,
+      description: data.description,
       likes: data.likes,
       category: data.category,
       ingredients: data.ingredients,
@@ -130,6 +134,7 @@ export const convertPublicToPremium = async (
     .from("recipes")
     .update({
       title: mainData.title,
+      description: mainData.description,
       category: mainData.category,
       likes: mainData.likes,
       ingredients: mainData.ingredients,
@@ -168,6 +173,7 @@ export const convertPublicToPremium = async (
     data: {
       id: data.id,
       title: data.title,
+      description: data.description,
       likes: data.likes,
       category: data.category,
       ingredients: data.ingredients,
@@ -192,6 +198,7 @@ export const convertPremiumToPublic = async (
     .from("recipes")
     .update({
       title: formData.title,
+      description: formData.description,
       category: formData.category,
       likes: formData.likes,
       recipe_steps: formData.recipeSteps,
@@ -228,6 +235,7 @@ export const convertPremiumToPublic = async (
     data: {
       id: data.id,
       title: data.title,
+      description: data.description,
       likes: data.likes,
       category: data.category,
       ingredients: data.ingredients,

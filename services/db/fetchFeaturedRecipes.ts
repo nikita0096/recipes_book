@@ -15,6 +15,7 @@ export const fetchFeaturedRecipes = async (): Promise<IRecipe[]> => {
       return {
         id: item.id,
         title: item.title,
+        description: item.description,
         likes: item.likes,
         category: item.category,
         ingredients: item.ingredients,
@@ -29,6 +30,7 @@ export const fetchFeaturedRecipes = async (): Promise<IRecipe[]> => {
     return {
       id: item.id,
       title: item.title,
+      description: item.description,
       likes: item.likes,
       category: item.category,
       ingredients: item.ingredients,

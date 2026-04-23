@@ -19,7 +19,8 @@
     "keyIngredients": "Key Ingredients",
     "preparationSteps": "Preparation Steps",
     "step": "Step",
-    "videoSection": "Video Tutorial"
+    "videoSection": "Video Tutorial",
+    "description": "Description"
   },
   "card": {
     "hot": "Hot",

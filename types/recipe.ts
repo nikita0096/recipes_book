@@ -12,6 +12,7 @@ export type RecipeStep = {
 interface IRecipeBase {
   id: string;
   title: LocalizedText;
+  description: LocalizedText;
   likes: number;
   category: LocalizedText;
   ingredients: Ingredient[];
@@ -86,6 +87,7 @@ export type IRecipeUpload = IRecipeUploadPublic | IRecipeUploadPremiumMain;
 // Общие поля для update
 interface UpdateRecipeBase {
   title: LocalizedText;
+  description: LocalizedText;
   category: LocalizedText;
   likes: number;
   ingredients: Ingredient[];

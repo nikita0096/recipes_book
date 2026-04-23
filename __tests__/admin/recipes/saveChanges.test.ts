@@ -25,6 +25,7 @@ const mockUploadVideo = uploadVideoToStorage as jest.MockedFunction<typeof uploa
 const createMockRecipePublic = (): IRecipePublic => ({
   id: '1',
   title: {ua: 'Тестовий рецепт', en: 'Test Recipe'},
+  description: {ua: 'Тестовий опис', en: 'Test Description'},
   likes: 10,
   category: {ua: 'Десерти', en: 'Desserts'},
   recipeSteps: [
@@ -44,6 +45,7 @@ const createMockRecipePublic = (): IRecipePublic => ({
 const createMockRecipePremium = (): IRecipePremiumFull => ({
   id: '2',
   title: {ua: 'Преміум рецепт', en: 'Premium Recipe'},
+  description: {ua: 'Преміум опис', en: 'Premium Description'},
   likes: 50,
   category: {ua: 'Супи', en: 'Soups'},
   recipeSteps: [
@@ -63,6 +65,7 @@ const createMockFormData = (overrides?: Partial<EditingValues>): EditingValues =
   heroImgFile: null,
   category: {ua: 'Десерти', en: 'Desserts'},
   title: {ua: 'Тестовий рецепт', en: 'Test Recipe'},
+  description: {ua: 'Тестовий опис', en: 'Test Description'},
   ingredients: [
     {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '100', unit: 'g'},
     {id: 'ing-2', value: {ua: 'Борошно', en: 'Flour'}, quantity: '200', unit: 'g'},

@@ -55,6 +55,7 @@ const Page = () => {
     defaultValues: {
       recipeSteps: [],
       title: {en: '', ua: ''},
+      description: {en: '', ua: ''},
       likes: 0,
       category: categories.find(cat => cat.en === 'Desserts')?.en,
       ingredientEn: '',
@@ -150,12 +151,13 @@ const Page = () => {
     }
   };
 
-  type TranslateInputs = 'title.ua' | 'ingredientUa' | `recipeSteps.${number}.desc.ua`;
+  type TranslateInputs = 'title.ua' | 'description.ua' | 'ingredientUa' | `recipeSteps.${number}.desc.ua`;
 
   const handleTranslateText = async (e: React.MouseEvent<HTMLButtonElement>, flag: string, index?: number) => {
     e.preventDefault();
     const inputFields: Record<string, TranslateInputs> = {
       title: 'title.ua',
+      description: 'description.ua',
       ingredient: 'ingredientUa',
       ...(index !== undefined && {stepDescription: `recipeSteps.${index}.desc.ua`})
     }
@@ -174,6 +176,9 @@ const Page = () => {
     switch (flag) {
       case 'title':
         setValue('title.en', translated);
+        break;
+      case 'description':
+        setValue('description.en', translated);
         break;
       case 'ingredient':
         setValue('ingredientEn', translated);
@@ -224,6 +229,11 @@ const Page = () => {
 
     if (!data.title.en || !data.title.ua) {
       setError(t('form.validation.enterTitleBothLanguages'));
+      return null;
+    }
+
+    if (!data.description.en || !data.description.ua) {
+      setError(t('form.validation.enterDescriptionBothLanguages'));
       return null;
     }
 
@@ -311,6 +321,7 @@ const Page = () => {
 
     return {
       title: data.title,
+      description: data.description,
       category: category,
       likes: data.likes,
       recipeSteps: steps as RecipeStep[],
@@ -341,6 +352,7 @@ const Page = () => {
         const premiumMainData: IRecipeUploadPremiumMain = {
           id: recipeId,
           title: recipeData.title,
+          description: recipeData.description,
           likes: recipeData.likes,
           category: recipeData.category,
           ingredients: recipeData.ingredients,
@@ -363,6 +375,7 @@ const Page = () => {
         const publicData: IRecipeUploadPublic = {
           id: recipeId,
           title: recipeData.title,
+          description: recipeData.description,
           likes: recipeData.likes,
           category: recipeData.category,
           ingredients: recipeData.ingredients,
@@ -436,6 +449,27 @@ const Page = () => {
                      className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                      type="text"
                      placeholder={t('form.fields.titlePlaceholderEn')}/>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                  {t('form.fields.description')}
+                </label>
+                <input {...register('description.ua', {required: true})}
+                       className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                       type="text"
+                       placeholder={t('form.fields.descriptionPlaceholderUa')}
+                />
+              </div>
+              <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
+                      onClick={(e) => handleTranslateText(e, 'description')}>
+                Translate to English →
+              </button>
+              <input {...register('description.en', {required: true})}
+                     className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                     type="text"
+                     placeholder={t('form.fields.descriptionPlaceholderEn')}/>
             </div>
 
             {/* Paid content toggle */}

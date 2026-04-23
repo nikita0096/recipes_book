@@ -19,6 +19,7 @@ const mockSupabase = supabase as jest.Mocked<typeof supabase>;
 const createMockPublicRecipe = (): IRecipeUploadPublic => ({
   id: 'recipe-123',
   title: { ua: 'Тестовий рецепт', en: 'Test Recipe' },
+  description: { ua: 'Тестовий опис', en: 'Test Description' },
   category: { ua: 'Десерти', en: 'Desserts' },
   likes: 0,
   ingredients: [
@@ -36,6 +37,7 @@ const createMockPublicRecipe = (): IRecipeUploadPublic => ({
 const createMockPremiumRecipe = (): IRecipeUploadPremiumMain => ({
   id: 'recipe-456',
   title: { ua: 'Преміум рецепт', en: 'Premium Recipe' },
+  description: { ua: 'Преміум опис', en: 'Premium Description' },
   category: { ua: 'Торти', en: 'Cakes' },
   likes: 0,
   ingredients: [
@@ -72,6 +74,7 @@ describe('insertRecipePublic', () => {
     expect(mockInsert).toHaveBeenCalledWith({
       id: mockRecipe.id,
       title: mockRecipe.title,
+      description: mockRecipe.description,
       category: mockRecipe.category,
       likes: mockRecipe.likes,
       ingredients: mockRecipe.ingredients,
@@ -158,6 +161,7 @@ describe('insertRecipePremiumMain', () => {
     expect(mockInsert).toHaveBeenCalledWith({
       id: mockRecipe.id,
       title: mockRecipe.title,
+      description: mockRecipe.description,
       category: mockRecipe.category,
       likes: mockRecipe.likes,
       ingredients: mockRecipe.ingredients,

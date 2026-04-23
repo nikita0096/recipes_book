@@ -15,6 +15,7 @@ export const fetchRecipe = async (id: string): Promise<{data: IRecipe | null, er
       data: {
         id: data.id,
         title: data.title,
+        description: data.description,
         likes: data.likes,
         category: data.category,
         ingredients: data.ingredients,
@@ -41,6 +42,7 @@ export const fetchRecipe = async (id: string): Promise<{data: IRecipe | null, er
     data: {
       id: data.id,
       title: data.title,
+      description: data.description,
       likes: data.likes,
       category: data.category,
       ingredients: data.ingredients,

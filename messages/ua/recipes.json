@@ -19,7 +19,8 @@
     "keyIngredients": "Основні інгредієнти",
     "preparationSteps": "Кроки приготування",
     "step": "Крок",
-    "videoSection": "Відео рецепт"
+    "videoSection": "Відео рецепт",
+    "description": "Опис"
   },
   "card": {
     "hot": "Гаряче",

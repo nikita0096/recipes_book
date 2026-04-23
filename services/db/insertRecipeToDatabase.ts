@@ -17,6 +17,7 @@ export const insertRecipePublic = async (recipeData: IRecipeUploadPublic) => {
     .insert({
       id: recipeData.id,
       title: recipeData.title,
+      description: recipeData.description,
       category: recipeData.category,
       likes: recipeData.likes,
       ingredients: recipeData.ingredients,
@@ -43,6 +44,7 @@ export const insertRecipePremiumMain = async (recipeData: IRecipeUploadPremiumMa
     .insert({
       id: recipeData.id,
       title: recipeData.title,
+      description: recipeData.description,
       category: recipeData.category,
       likes: recipeData.likes,
       ingredients: recipeData.ingredients,

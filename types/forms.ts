@@ -15,6 +15,7 @@ export interface Ingredient {
 
 export interface IFormValues {
   title: { en: string; ua: string };
+  description: { en: string; ua: string };
   likes: number;
   category: string;
   recipeSteps: { desc: { en: string; ua: string }; image: File | null }[];

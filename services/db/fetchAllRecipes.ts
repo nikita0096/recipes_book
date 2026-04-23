@@ -18,6 +18,7 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
       return {
         id: item.id,
         title: item.title,
+        description: item.description,
         likes: item.likes,
         category: item.category,
         ingredients: item.ingredients,
@@ -32,6 +33,7 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
     return {
       id: item.id,
       title: item.title,
+      description: item.description,
       likes: item.likes,
       category: item.category,
       ingredients: item.ingredients,

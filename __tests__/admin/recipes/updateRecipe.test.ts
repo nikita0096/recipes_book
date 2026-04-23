@@ -23,6 +23,7 @@ const mockSupabase = supabase as jest.Mocked<typeof supabase>;
 // Mock data factories
 const createMockPublicUpdateData = (): UpdateRecipeDataPublic => ({
   title: { ua: 'Оновлений рецепт', en: 'Updated Recipe' },
+  description: { ua: 'Оновлений опис', en: 'Updated Description' },
   category: { ua: 'Десерти', en: 'Desserts' },
   likes: 25,
   ingredients: [
@@ -39,6 +40,7 @@ const createMockPublicUpdateData = (): UpdateRecipeDataPublic => ({
 
 const createMockPremiumMainData = (): UpdateRecipeDataPremiumMain => ({
   title: { ua: 'Преміум рецепт', en: 'Premium Recipe' },
+  description: { ua: 'Преміум опис', en: 'Premium Description' },
   category: { ua: 'Торти', en: 'Cakes' },
   likes: 50,
   ingredients: [

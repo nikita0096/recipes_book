@@ -3,7 +3,7 @@
 import React, {useEffect, useState} from 'react';
 import Image from "next/image";
 import {Link} from "@/i18n/navigation";
-import {IRecipe, parseJson} from "@/types/recipe";
+import {IRecipe} from "@/types/recipe";
 import {useTranslations} from "next-intl";
 import RecipeIngredient from "@/components/recipes/recipe/RecipeIngredient";
 import {useTypedLocale} from "@/hooks/useTypedLocale";
@@ -61,9 +61,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
     return null;
   }
 
-  const title = parseJson(recipe.title);
-  const categoryParsed = parseJson(recipe.category);
-
+  
   const handleLike = async () => {
     if (!user) return;
 
@@ -89,7 +87,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
       <section className="relative h-[280px] sm:h-[360px] lg:h-[480px] w-full">
         <Image
           src={recipe.heroImg}
-          alt={title[locale]}
+          alt={recipe.title[locale]}
           fill
           className="object-cover"
           priority
@@ -126,12 +124,12 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
         <div className="absolute bottom-6 left-4 sm:left-6 lg:left-10 right-16 sm:right-20 lg:right-24">
           {/* Category */}
           <span className="inline-block text-xs tracking-widest uppercase text-accent border border-accent px-3 py-1 mb-3 bg-bg/40">
-            {categoryParsed && categoryParsed[locale]}
+            {recipe.category && recipe.category[locale]}
           </span>
 
           {/* Title */}
           <h1 className="font-serif text-2xl sm:text-3xl lg:text-5xl italic font-normal text-white leading-tight mb-3">
-            {title[locale]}
+            {recipe.title[locale]}
           </h1>
 
           {/* Stats */}
@@ -145,6 +143,18 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
           </div>
         </div>
       </section>
+
+      {/* Description Section */}
+      {recipe.description && recipe.description[locale] && (
+        <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-6 sm:py-7 lg:py-8">
+          <h2 className="text-sm tracking-widest uppercase text-accent mb-4 sm:mb-5 lg:mb-6">
+            {t('singlePage.description')}
+          </h2>
+          <p className="text-base text-text leading-relaxed">
+            {recipe.description[locale]}
+          </p>
+        </section>
+      )}
 
       {/* Key Ingredients Section */}
       <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-6 sm:py-7 lg:py-8">

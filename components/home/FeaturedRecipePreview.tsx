@@ -42,7 +42,7 @@ const FeaturedRecipePreview: React.FC<IFeaturedRecipePreviewProps> = ({recipe}) 
           <h3 className='text-3xl font-serif'>
             {recipe.title[locale]}
           </h3>
-          <p className='text-muted font-serif text-xs lg:text-lg'>{recipe.title[locale]}</p>
+          <p className='text-muted text-xs lg:text-lg'>{recipe.description[locale]}</p>
           <Link
             href={PAGES.RECIPE(recipe.id)}
             className="text-sm border border-border text-text px-4 py-2 mt-5 hover:bg-surface transition-colors w-30 text-center"

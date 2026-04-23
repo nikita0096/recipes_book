@@ -159,6 +159,7 @@ export const prepareUpdateData = async ({
       // Target: Premium
       const mainData: UpdateRecipeDataPremiumMain = {
         title: formData.title,
+        description: formData.description,
         category: formData.category,
         likes: Number(formData.likes),
         ingredients,
@@ -185,6 +186,7 @@ export const prepareUpdateData = async ({
     // Target: Public
     const data: UpdateRecipeDataPublic = {
       title: formData.title,
+      description: formData.description,
       category: formData.category,
       likes: Number(formData.likes),
       recipeSteps: processedSteps,
@@ -213,6 +215,11 @@ export const prepareUpdateData = async ({
 export const hasDataChanged = (formData: EditingValues, recipe: IRecipe): boolean => {
   // Check title
   if (formData.title.ua !== recipe.title.ua || formData.title.en !== recipe.title.en) {
+    return true;
+  }
+
+  // Check description
+  if (formData.description.ua !== recipe.description.ua || formData.description.en !== recipe.description.en) {
     return true;
   }
 

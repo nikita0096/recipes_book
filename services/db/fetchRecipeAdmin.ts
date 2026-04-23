@@ -15,6 +15,7 @@ export const fetchRecipeAdmin = async (id: string): Promise<IRecipe> => {
     return {
       id: data.id,
       title: data.title,
+      description: data.description,
       likes: data.likes,
       category: data.category,
       ingredients: data.ingredients,
@@ -40,6 +41,7 @@ export const fetchRecipeAdmin = async (id: string): Promise<IRecipe> => {
   return {
     id: data.id,
     title: data.title,
+    description: data.description,
     likes: data.likes,
     category: data.category,
     ingredients: data.ingredients,

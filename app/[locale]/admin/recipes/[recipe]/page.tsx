@@ -52,6 +52,7 @@ export interface EditingValues {
   heroImgFile: File | null;
   category: { ua: string; en: string };
   title: { ua: string; en: string };
+  description: { ua: string; en: string };
   ingredients: Ingredient[];
   recipeSteps: StepFields[];
   likes: number;
@@ -106,6 +107,7 @@ const Page = () => {
       heroImgFile: null,
       category: {ua: '', en: ''},
       title: {ua: '', en: ''},
+      description: {ua: '', en: ''},
       ingredients: [],
       recipeSteps: [],
       likes: 0,
@@ -182,6 +184,7 @@ const Page = () => {
   const toggleEditButton = () => {
     if (recipe) {
       setValue('title', recipe.title);
+      setValue('description', recipe.description);
       setValue('heroImg', recipe.heroImg);
       setValue('category', recipe.category);
       setValue('ingredients', recipe.ingredients);
@@ -589,30 +592,54 @@ const Page = () => {
             </div>
             <div className="flex items-start gap-2">
               {isEditing ? (
-                <div className="flex flex-col gap-2 mb-4 w-full max-w-xl">
-                  <div className="flex items-center gap-2">
-                    <span className="text-white text-sm font-medium w-8">UK:</span>
-                    <input
-                      type="text"
-                      {...register('title.ua')}
-                      className="flex-1 px-3 py-2 text-lg font-bold text-gray-900 bg-white rounded-lg border-2 border-amber-300 focus:outline-none focus:border-amber-500"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-white text-sm font-medium w-8">EN:</span>
-                    <input
-                      type="text"
-                      {...register('title.en')}
-                      className="flex-1 px-3 py-2 text-lg font-bold text-gray-900 bg-white rounded-lg border-2 border-amber-300 focus:outline-none focus:border-amber-500"
-                    />
+                <>
+                  <div className="flex flex-col gap-2 mb-4 w-full max-w-xl">
+                    <div className="flex items-center gap-2">
+                      <span className="text-white text-sm font-medium w-8">UK:</span>
+                      <input
+                        type="text"
+                        {...register('title.ua')}
+                        className="flex-1 px-3 py-2 text-lg font-bold text-gray-900 bg-white rounded-lg border-2 border-amber-300 focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white text-sm font-medium w-8">EN:</span>
+                      <input
+                        type="text"
+                        {...register('title.en')}
+                        className="flex-1 px-3 py-2 text-lg font-bold text-gray-900 bg-white rounded-lg border-2 border-amber-300 focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
                   </div>
 
-                </div>
+                  <div className="flex flex-col gap-2 mb-4 w-full max-w-xl">
+                    <label className="text-white text-sm font-medium">{tAdmin('form.fields.description')}</label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white text-sm font-medium w-8">UK:</span>
+                      <input
+                        type="text"
+                        {...register('description.ua')}
+                        placeholder={tAdmin('form.fields.descriptionPlaceholderUa')}
+                        className="flex-1 px-3 py-2 text-gray-900 bg-white rounded-lg border-2 border-amber-300 focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white text-sm font-medium w-8">EN:</span>
+                      <input
+                        type="text"
+                        {...register('description.en')}
+                        placeholder={tAdmin('form.fields.descriptionPlaceholderEn')}
+                        className="flex-1 px-3 py-2 text-gray-900 bg-white rounded-lg border-2 border-amber-300 focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                  </div>
+                </>
               ) : (
                 <>
                   <h1 className="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
                     {recipe.title[locale]}
                   </h1>
+                  <p className="text-white/90 text-lg mb-2">{recipe.description[locale]}</p>
                   {isEditing && (
                     <button
 
