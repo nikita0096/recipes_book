@@ -14,6 +14,8 @@
     "logout": "Sign out",
     "profile": "Profile",
     "welcome": "Welcome",
+    "loginSubtitle": "Sign in to your account",
+    "signupSubtitle": "Create a new account",
     "logIn": "Log in",
     "signIn": "Sign in",
     "signUp": "Sign up",
@@ -27,6 +29,9 @@
     "createPassword": "Create a password",
     "continueWithGoogle": "Continue with Google",
     "or": "or"
+  },
+  "navigation": {
+    "backToHome": "Back to home"
   },
   "buttons": {
     "add": "Add",

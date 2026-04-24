@@ -14,6 +14,8 @@
     "logout": "Вийти",
     "profile": "Профіль",
     "welcome": "Ласкаво просимо",
+    "loginSubtitle": "Увійдіть до свого облікового запису",
+    "signupSubtitle": "Створіть новий обліковий запис",
     "logIn": "Вхід",
     "signIn": "Увійти",
     "signUp": "Реєстрація",
@@ -27,6 +29,9 @@
     "createPassword": "Створіть пароль",
     "continueWithGoogle": "Продовжити з Google",
     "or": "або"
+  },
+  "navigation": {
+    "backToHome": "На головну"
   },
   "buttons": {
     "add": "Додати",

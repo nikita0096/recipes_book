@@ -10,6 +10,7 @@ import {
   UpdateRecipeDataPremiumMain,
   UpdateRecipeDataPremiumPart,
 } from "@/types/recipe";
+import {deleteVideo} from "@/services/storage/deleteVideoR2Bucket";
 
 export interface PrepareUpdateDataParams {
   formData: EditingValues;
@@ -117,15 +118,7 @@ export const prepareUpdateData = async ({
     }
 
     // Process video if there's a new file
-    const deleteVideo = async (videoKey: string): Promise<void> => {
-      await fetch('/api/video/delete', {
-        method: 'POST',
-        headers: {'content-type': 'application/json'},
-        body: JSON.stringify({
-          videoKey: videoKey
-        })
-      });
-    }
+
 
     let videoUrl = recipe.videoUrl;
     if (formData.videoFile) {

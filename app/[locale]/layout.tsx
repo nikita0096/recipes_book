@@ -65,6 +65,7 @@ export default async function LocaleLayout({children, params, modal}: LocaleLayo
 
   setRequestLocale(locale);
   const messages = await getMessages();
+  console.log(user);
 
   return (
     <html lang={locale} suppressHydrationWarning>

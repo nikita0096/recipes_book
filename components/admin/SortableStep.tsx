@@ -35,59 +35,120 @@ const SortableStep = ({step, stepId, index, isEditing, onEdit, onRemove}: Sortab
     <div
       ref={setNodeRef}
       style={style}
-      className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden`}
-
+      className="bg-bg"
     >
+      {/* Mobile/Tablet: Image on top */}
       {step.imgUrl && (
-        <div className="relative h-64 md:h-80 w-full">
-          <Image
-            src={step.imgUrl}
-            alt={`${tRecipes('singlePage.step')} ${index + 1}`}
-            fill
-            className="object-cover"
-            unoptimized={step.imgUrl.startsWith('blob:')}
-          />
+        <div className="lg:hidden">
+          <div className="relative w-full aspect-video">
+            <Image
+              src={step.imgUrl}
+              alt={`${tRecipes('singlePage.step')} ${index + 1}`}
+              fill
+              className="object-cover"
+              unoptimized={step.imgUrl.startsWith('blob:')}
+            />
+          </div>
         </div>
       )}
-      <div className="flex flex-row items-center justify-between gap-2 p-6">
-        <div className="flex flex-row items-center justify-center gap-4">
-          <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md">
-            <span className="text-white font-bold">{index + 1}</span>
+
+      {/* Desktop: Grid layout with image on right */}
+      <div className="lg:grid lg:grid-cols-[60px_1fr_1fr] lg:items-stretch">
+        {/* Step number */}
+        <div className="hidden lg:flex items-center pl-5 border-r border-border">
+          <span className="text-base text-accent font-semibold">
+            {String(index + 1).padStart(2, '0')}
+          </span>
+        </div>
+
+        {/* Mobile/Tablet: Number + Description */}
+        <div className="lg:hidden grid grid-cols-[44px_1fr] sm:grid-cols-[52px_1fr] items-center">
+          <div className="pl-4 sm:pl-5 self-stretch flex items-center border-r border-border">
+            <span className="text-sm sm:text-base text-accent font-semibold">
+              {String(index + 1).padStart(2, '0')}
+            </span>
           </div>
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              {tRecipes('singlePage.step')} <span>{index + 1}</span>
-            </h3>
-            <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+          <div className="p-4 sm:p-5 flex items-center justify-between gap-3">
+            <p className="text-sm sm:text-base text-text leading-relaxed flex-1">
               {step.desc[locale]}
             </p>
+            {isEditing && (
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={onEdit}
+                  className="p-1.5 text-muted hover:text-text transition-colors"
+                >
+                  <CiEdit className="text-lg"/>
+                </button>
+                <button
+                  onPointerDown={(e) => e.stopPropagation()}
+                  onClick={onRemove}
+                  className="p-1.5 text-muted hover:text-red-500 transition-colors"
+                >
+                  <MdDelete className="text-lg"/>
+                </button>
+                <div
+                  className='touch-none select-none p-1 text-muted'
+                  {...attributes}
+                  {...listeners}
+                >
+                  <MdDragIndicator className={`text-xl ${isEditing ? "cursor-grab active:cursor-grabbing" : ""}`}/>
+                </div>
+              </div>
+            )}
           </div>
-
         </div>
-        {isEditing && (
-          <div className=" flex items-center gap-5 z-10">
-            <button
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={onEdit}
-              className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-xl hover:bg-amber-200 dark:hover:bg-amber-900 transition-colors shadow-md p-2"
-            >
-              <CiEdit className="text-3xl"/>
-            </button>
-            <button
-              onPointerDown={(e) => e.stopPropagation()}
-              onClick={onRemove}
-              className="bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded-xl hover:bg-red-200 dark:hover:bg-red-900 transition-colors shadow-md p-2"
-            >
-              <MdDelete className="text-3xl"/>
-            </button>
-            <div
-              className='touch-none select-none'
-              {...attributes}
-              {...listeners}>
-              <MdDragIndicator className={`text-5xl ${isEditing ? "cursor-grabbing" : ""}`}/>
+
+        {/* Desktop: Description */}
+        <div className="hidden lg:flex items-center p-5 lg:px-7 overflow-hidden justify-between gap-4">
+          <p className="text-base text-text leading-relaxed flex-1">
+            {step.desc[locale]}
+          </p>
+        </div>
+
+        {/* Desktop: Image */}
+        <div className='relative'>
+          {step.imgUrl && (
+            <div className="hidden lg:block border-l border-border">
+              <div className="relative w-full h-full min-h-[220px] aspect-video">
+                <Image
+                  src={step.imgUrl}
+                  alt={`${tRecipes('singlePage.step')} ${index + 1}`}
+                  fill
+                  className="object-cover"
+                  unoptimized={step.imgUrl.startsWith('blob:')}
+                />
+
+              </div>
             </div>
-          </div>
-        )}
+          )}
+          {isEditing && (
+            <div className="absolute top-3 right-3 flex items-center gap-2 shrink-0">
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={onEdit}
+                className="p-1.5 text-accent hover:text-text transition-colors bg-surface"
+              >
+                <CiEdit className="text-2xl"/>
+              </button>
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={onRemove}
+                className="p-1.5 text-red-500 hover:text-red-400 transition-colors bg-surface "
+              >
+                <MdDelete className="text-2xl"/>
+              </button>
+              <div
+                className='touch-none select-none p-1 text-accent bg-surface'
+                {...attributes}
+                {...listeners}
+              >
+                <MdDragIndicator className={`text-2xl ${isEditing ? "cursor-grab active:cursor-grabbing" : ""}`}/>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import type {Metadata} from "next";
 import {createClient} from "@/lib/supabase/ServerComponentClient";
 
 type Props = {
-  params: { recipe: string, locale: string };
+  params: Promise<{ recipe: string, locale: string }>;
 }
 
 export async function generateMetadata({params}: Props): Promise<Metadata> {
@@ -25,7 +25,7 @@ export async function generateMetadata({params}: Props): Promise<Metadata> {
 
 interface RecipeLayoutProps {
   children: React.ReactNode;
-  params: { recipe: string, locale: string };
+  params: Promise<{ recipe: string, locale: string }>;
 }
 
 export default async function RecipeLayout({children, params}: RecipeLayoutProps) {

@@ -456,9 +456,8 @@ const Page = () => {
                 <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
                   {t('form.fields.description')}
                 </label>
-                <input {...register('description.ua', {required: true})}
-                       className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
-                       type="text"
+                <textarea {...register('description.ua', {required: true})}
+                       className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
                        placeholder={t('form.fields.descriptionPlaceholderUa')}
                 />
               </div>
@@ -466,9 +465,8 @@ const Page = () => {
                       onClick={(e) => handleTranslateText(e, 'description')}>
                 Translate to English →
               </button>
-              <input {...register('description.en', {required: true})}
-                     className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
-                     type="text"
+              <textarea {...register('description.en', {required: true})}
+                     className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
                      placeholder={t('form.fields.descriptionPlaceholderEn')}/>
             </div>
 

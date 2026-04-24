@@ -37,13 +37,6 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe, index = 0}) => {
           />
         </div>
 
-        {/* Hot badge */}
-        {recipe.likes >= 10 && (
-          <span className="absolute top-3 right-3 inline-flex items-center gap-1 px-2.5 py-1 bg-accent text-white text-xs tracking-wider uppercase">
-            {tRecipes('card.hot')}
-          </span>
-        )}
-
         {/* Free badge */}
         {!recipe.isPremium && (
           <span className="absolute top-3 left-3 px-2.5 py-1 bg-green-600/80 text-white text-xs tracking-wider uppercase">
