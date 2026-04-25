@@ -1,21 +1,15 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
+import {UserState} from "@/store/useUserStore";
 
-interface UserProfile {
-  name: string | null;
-  avatar_url: string | null;
-  role: 'admin' | 'user';
-  created_at: string;
-}
-
-export const handleGoogleLogin = async () => {
+export const handleGoogleLogin = async (redirectUrl: string) => {
   const {data, error} = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/callback` // куда вернуться после входа
+      redirectTo: redirectUrl
     }
   });
 
-  if (error) console.error(error);
+  if (error) throw error;
 
   return data;
 };
@@ -28,7 +22,27 @@ export const handleEmailLogin = async (email: string, password: string) => {
 
   if (error) throw error;
 
-  return data;
+  const {user} = data;
+
+  const {data: profile} = await supabase
+    .from('profiles')
+    .select('created_at')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  const exists = !!profile;
+
+  if(!exists) {
+    await upsertUserProfile(user.id, {
+      name: user.user_metadata.name,
+      avatar_url: user.user_metadata.avatar_url,
+      role: 'user',
+      created_at: new Date().toISOString(),
+      email: user.user_metadata.email,
+    })
+  }
+
+  return user;
 }
 
 export const handleSignUp = async (email: string, password: string) => {
@@ -37,8 +51,21 @@ export const handleSignUp = async (email: string, password: string) => {
     password: password
   });
 
-  if (error) console.error(error);
-  return data;
+  if (error) throw error;
+
+  const {data: profile} = await supabase.auth.getUser();
+
+  const {user} = profile;
+
+  if (user) {
+    await upsertUserProfile(user.id, {
+      name: 'Chef',
+      avatar_url: '',
+      role: 'user',
+      created_at: new Date().toISOString(),
+      email: email,
+    })
+  }
 }
 
 export const logout = async () => {
@@ -51,19 +78,28 @@ export const getUser = async () => {
   return user;
 }
 
-export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
+export const getUserProfile = async (userId: string): Promise<UserState | null> => {
   const { data: profile } = await supabase
     .from('profiles')
-    .select('name, avatar_url, role, created_at')
+    .select('id, name, avatar_url, role, created_at, email')
     .eq('id', userId)
     .single();
 
-  return profile as UserProfile | null;
+  if (!profile) return null;
+
+  return {
+    id: profile.id,
+    name: profile.name,
+    avatar_url: profile.avatar_url,
+    role: profile.role,
+    email: profile.email,
+    createdAt: profile.created_at,
+  };
 }
 
 export const upsertUserProfile = async (
   userId: string,
-  data: { name?: string; avatar_url?: string }
+  data: { name?: string; avatar_url?: string; role: 'user'; created_at: string; email: string }
 ) => {
   const { error } = await supabase
     .from('profiles')

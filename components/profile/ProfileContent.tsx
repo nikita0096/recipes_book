@@ -1,9 +1,10 @@
 'use client';
 
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useUserStore} from "@/store/useUserStore";
 import Image from "next/image";
 import {Link} from "@/i18n/navigation";
+import {usePathname} from "next/navigation";
 import {PAGES} from "@/config/page.config";
 import {useTranslations} from "next-intl";
 import {useTypedLocale} from "@/hooks/useTypedLocale";
@@ -11,6 +12,7 @@ import {LocalizedText} from "@/types";
 import {deleteLike} from "@/services/db/recipe-likes/deleteLike";
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {logout} from "@/lib/supabase/authClient";
+import {useRouter} from "@/i18n/navigation";
 
 interface PreviewRecipe {
   id: string;
@@ -44,14 +46,22 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
   const [isEditingName, setIsEditingName] = useState(false);
   const [newName, setNewName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  const pathname = usePathname();
+  const router = useRouter();
 
   const purchasedRecipes = purchasedRecipesData;
 
-  const {user, setUserData, isHydrated} = useUserStore();
+  const {user, setUserData} = useUserStore();
 
   const t = useTranslations('profile');
   const locale = useTypedLocale();
 
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const formatDate = (date: string) => {
     const newDate = new Date(date);
@@ -68,19 +78,18 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
   const displayedPurchasedRecipes = isPurchasedExpanded ? purchasedRecipes : purchasedRecipes.slice(0, 3);
   const displayedLikedRecipes = isLikedExpanded ? likedRecipes : likedRecipes.slice(0, 3);
 
-  if (!user) {
-    // Store ещё не гидратирован - показываем loading
-    if (!isHydrated) {
-      return null;
-    }
+  if(!user) {
+    return null;
+  }
 
-    // Store гидратирован, но user null - показываем "User not found"
+  if (!user && isMounted) {
+    //"User not found"
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col items-center border border-red-200 dark:border-red-900 p-6 bg-red-50 dark:bg-red-900/20 text-center">
           <p className="text-red-600 dark:text-red-400 font-medium">User not found</p>
           <div className="mt-4 px-4 py-2 border border-border text-text hover:bg-surface transition-colors">
-            <Link href={PAGES.LOGIN}>
+            <Link href={PAGES.SIGNIN(pathname)}>
               Log in to your profile
             </Link>
           </div>
@@ -88,6 +97,8 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
       </div>
     );
   }
+
+  console.log(formatDate(user?.createdAt));
 
   const handleUnlikeRecipe = async (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
     e.preventDefault();
@@ -143,6 +154,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
     await logout();
 
     setUserData(null);
+    router.push('/');
   }
 
   return (

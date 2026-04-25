@@ -1,19 +1,14 @@
 'use client';
 
-import React, {useState} from 'react';
-import {IoClose} from "react-icons/io5";
-import {handleEmailLogin, handleGoogleLogin, handleSignUp, getUserProfile} from "@/lib/supabase/authClient";
 import {SubmitHandler, useForm} from "react-hook-form";
+import {handleEmailLogin, handleGoogleLogin, handleSignUp} from "@/lib/supabase/authClient";
 import {useUserStore} from "@/store/useUserStore";
-import LoginPage from "@/components/authorization/LoginPage";
-import SignUpPage from "@/components/authorization/SignUpPage";
 import {useTranslations} from "next-intl";
 import {useRouter} from "@/i18n/navigation";
-
-interface ILoginValues {
-  emailLogin: string;
-  passwordLogin: string;
-}
+import {IoClose} from "react-icons/io5";
+import React from "react";
+import {PAGES} from "@/config/page.config";
+import {useSearchParams} from "next/navigation";
 
 export interface ISignUpValues {
   emailSignUp: string;
@@ -30,8 +25,8 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const AuthPage: React.FC = () => {
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+export default function SignUpPage() {
+
   const {setUserData} = useUserStore();
   const t = useTranslations('common');
   const router = useRouter();
@@ -40,57 +35,18 @@ const AuthPage: React.FC = () => {
     router.back();
   };
 
-  const loginFrom = useForm<ILoginValues>({
-    defaultValues: {
-      emailLogin: '',
-      passwordLogin: ''
-    }
-  });
-
   const signUpForm = useForm<ISignUpValues>({
     defaultValues: {
       emailSignUp: '',
       passwordSignUp: ''
     }
-  })
-
-  const {
-    register: registerLogin,
-    handleSubmit: handleSubmitLogin,
-    reset: resetLogin
-  } = loginFrom;
+  });
 
   const {
     register: registerSignUp,
     handleSubmit: handleSubmitSignUp,
     reset: resetSignUp
   } = signUpForm;
-
-
-  const handleLoginWithEmail: SubmitHandler<ILoginValues> = async (formData) => {
-    try {
-      const data = await handleEmailLogin(formData.emailLogin, formData.passwordLogin);
-      console.log(data);
-      if (data?.user) {
-        const profile = await getUserProfile(data.user.id);
-
-        setUserData({
-          id:  data.user.id,
-          name: data.user.user_metadata?.name || 'User',
-          avatar_url: data.user.user_metadata?.avatar_url || null,
-          role: profile?.role || 'user',
-          email: data.user.email || '',
-        })
-      }
-
-    } catch (err) {
-      console.error(err);
-    } finally {
-      resetSignUp();
-      resetLogin();
-      closeModal();
-    }
-  }
 
   const handleSignUpWithEmail: SubmitHandler<ISignUpValues> = async (formData) => {
     try {
@@ -101,10 +57,11 @@ const AuthPage: React.FC = () => {
       if (data?.user) {
         setUserData({
           id:  data.user.id,
-          name: data.user.user_metadata?.name || 'User',
+          name: data.user.user_metadata?.name,
           avatar_url: data.user.user_metadata?.avatar_url || null,
           role: 'user',
           email: data.user.email || '',
+          createdAt: data.user.created_at,
         });
       }
 
@@ -112,14 +69,18 @@ const AuthPage: React.FC = () => {
       console.error(error);
     } finally {
       resetSignUp();
-      resetLogin();
       closeModal();
     }
   }
 
+  const origin = window.location.origin;
+  const searchParams = useSearchParams();
+  const pathname = searchParams.get('from') || '/';
+  const redirectUrl = origin + pathname;
+
   const handleLoginWithGoogle = async () => {
     try {
-      await handleGoogleLogin();
+      await handleGoogleLogin(redirectUrl);
     } catch (error) {
       console.error(error);
     }
@@ -142,42 +103,59 @@ const AuthPage: React.FC = () => {
             {t('auth.welcome')}
           </h1>
           <p className="text-sm text-muted">
-            {authMode === 'login' ? t('auth.loginSubtitle') : t('auth.signupSubtitle')}
+            {t('auth.loginSubtitle')}
           </p>
         </div>
 
         {/* Tabs */}
         <div className='flex items-center w-full border border-border mb-8'>
           <button
-            onClick={() => { setAuthMode('login'); resetSignUp(); }}
-            className={`flex-1 py-3 text-sm tracking-wide transition-colors ${
-              authMode === 'login'
-                ? 'bg-text text-bg'
-                : 'bg-transparent text-muted hover:text-text'
-            }`}
+            onClick={() => router.replace(PAGES.SIGNIN(pathname))}
+            className={`flex-1 py-3 text-sm tracking-wide transition-colors bg-transparent text-muted hover:text-text cursor-pointer`}
           >
-            {t('auth.logIn')}
+            {t('auth.signIn')}
           </button>
           <button
-            onClick={() => { setAuthMode('signup'); resetLogin(); }}
-            className={`flex-1 py-3 text-sm tracking-wide transition-colors ${
-              authMode === 'signup'
-                ? 'bg-text text-bg'
-                : 'bg-transparent text-muted hover:text-text'
-            }`}
+            className={`flex-1 py-3 text-sm tracking-wide transition-colors bg-text text-bg cursor-pointer`}
           >
             {t('auth.signUp')}
           </button>
         </div>
 
-        {/* Form */}
-        {authMode === 'login'
-          ? <LoginPage registerLogin={registerLogin}
-                       handleSubmitLogin={handleSubmitLogin}
-                       handleLoginWithEmail={handleLoginWithEmail}/>
-          : <SignUpPage registerSignUp={registerSignUp}
-                        handleSubmitSignUp={handleSubmitSignUp}
-                        handleSignUpWithEmail={handleSignUpWithEmail}/>}
+
+        <div className='w-full'>
+          <form className='flex flex-col w-full'
+                onSubmit={handleSubmitSignUp(handleSignUpWithEmail)}>
+            <label className='w-full mb-5'>
+          <span className='block text-[11px] tracking-[0.08em] uppercase text-muted mb-2'>
+            {t('auth.email')}
+          </span>
+              <input
+                {...registerSignUp('emailSignUp')}
+                className='w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors'
+                type="email"
+                placeholder={t('auth.emailPlaceholder')}
+              />
+            </label>
+            <label className='w-full mb-6'>
+          <span className='block text-[11px] tracking-[0.08em] uppercase text-muted mb-2'>
+            {t('auth.password')}
+          </span>
+              <input
+                {...registerSignUp('passwordSignUp')}
+                className='w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors'
+                type="password"
+                placeholder={t('auth.createPassword')}
+              />
+            </label>
+            <button
+              type='submit'
+              className='w-full py-3.5 bg-text text-bg text-sm tracking-[0.08em] uppercase transition-opacity hover:opacity-90'
+            >
+              {t('auth.signUp')}
+            </button>
+          </form>
+        </div>
 
         {/* Divider */}
         <div className='flex items-center w-full my-8'>
@@ -196,7 +174,5 @@ const AuthPage: React.FC = () => {
         </button>
       </div>
     </div>
-  );
-};
-
-export default AuthPage;
+  )
+}

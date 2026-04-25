@@ -28,7 +28,15 @@
     "passwordPlaceholder": "Введіть пароль",
     "createPassword": "Створіть пароль",
     "continueWithGoogle": "Продовжити з Google",
-    "or": "або"
+    "or": "або",
+    "errors": {
+      "invalidCredentials": "Невірний email або пароль",
+      "emailNotConfirmed": "Будь ласка, підтвердіть вашу пошту",
+      "userNotFound": "Користувача не знайдено",
+      "emailAlreadyUsed": "Email вже зареєстрований",
+      "weakPassword": "Пароль має бути не менше 6 символів",
+      "default": "Помилка авторизації. Спробуйте ще раз"
+    }
   },
   "navigation": {
     "backToHome": "На головну"

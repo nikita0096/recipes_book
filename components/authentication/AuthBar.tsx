@@ -7,6 +7,7 @@ import {UserState} from "@/store/useUserStore";
 import {Link} from "@/i18n/navigation";
 import {PAGES} from "@/config/page.config";
 import {useTranslations} from "next-intl";
+import {usePathname} from "@/i18n/navigation";
 
 interface AuthBarProps {
   user: UserState | null;
@@ -16,6 +17,8 @@ interface AuthBarProps {
 const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout}) => {
   const [isOpenUserMenu, setIsOpenUserMenu] = useState(false);
   const t = useTranslations('common');
+
+  const pathname = usePathname();
 
   // Get user initial for avatar
   const getInitial = () => {
@@ -27,7 +30,6 @@ const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout}) => {
   return (
     <div>
       {user ? (
-        /* ═══ Logged in user ═══ */
         <div
           className='relative flex flex-row items-center gap-3 cursor-pointer'
           onClick={() => setIsOpenUserMenu(!isOpenUserMenu)}
@@ -89,7 +91,7 @@ const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout}) => {
       ) : (
         /* ═══ Guest - Sign in button ═══ */
         <Link
-          href={PAGES.LOGIN}
+          href={PAGES.SIGNIN(pathname)}
           className='px-5 py-2 bg-accent text-white text-sm font-medium hover:opacity-90 transition-opacity'
         >
           {t('auth.signIn')}

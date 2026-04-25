@@ -26,7 +26,9 @@ const RecipeIngredient: React.FC<IngredientProps> = ({ingredient}) => {
                     lg:nth-[6n]:after:hidden
 
                     before:content-[''] before:block before:absolute before:bottom-0 before:left-0 before:w-full before:h-px before:bg-border
-                    last:before:hidden
+                    nth-last-[-n+2]:before:hidden
+                    sm:nth-last-[-n+3]:before:hidden
+                    lg:nth-last-[-n+6]:before:hidden
                     ">
       <span className="text-sm sm:text-base text-text">
         {ingredient.value[locale]}

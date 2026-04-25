@@ -28,7 +28,15 @@
     "passwordPlaceholder": "Enter your password",
     "createPassword": "Create a password",
     "continueWithGoogle": "Continue with Google",
-    "or": "or"
+    "or": "or",
+    "errors": {
+      "invalidCredentials": "Invalid email or password",
+      "emailNotConfirmed": "Please confirm your email first",
+      "userNotFound": "User not found",
+      "emailAlreadyUsed": "Email is already registered",
+      "weakPassword": "Password must be at least 6 characters",
+      "default": "Authentication failed. Please try again"
+    }
   },
   "navigation": {
     "backToHome": "Back to home"

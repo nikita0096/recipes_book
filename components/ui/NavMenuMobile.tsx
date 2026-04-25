@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import {Link} from "@/i18n/navigation";
+import {Link, usePathname} from "@/i18n/navigation";
 import {PAGES} from "@/config/page.config";
 import {UserState} from "@/store/useUserStore";
 import Image from "next/image";
@@ -23,6 +23,7 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
                                                        handleLogout
                                                      }) => {
   const t = useTranslations('common');
+  const pathname = usePathname();
 
   // Get user initial for avatar
   const getInitial = () => {
@@ -193,7 +194,7 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
           ) : (
             <>
               <Link
-                href={PAGES.LOGIN}
+                href={PAGES.SIGNIN(pathname)}
                 onClick={() => setIsShowNav(false)}
                 className="block px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
               >
@@ -203,7 +204,7 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
               </Link>
 
               <Link
-                href={PAGES.LOGIN}
+                href={PAGES.SIGNUP(pathname)}
                 onClick={() => setIsShowNav(false)}
                 className="block px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
               >
