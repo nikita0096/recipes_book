@@ -26,7 +26,7 @@ const FeaturedRecipeCard: React.FC<FeaturedRecipeCardProps> = ({ recipe, index, 
   const animationDelay = 100;
 
   return (
-    <div className="bg-surface overflow-hidden animate-card-fade-in hover:scale-[1.02] transition-all duration-300 m-10 md:m-0"
+    <div className="bg-surface overflow-hidden animate-card-fade-in hover:scale-[1.02] transition-all duration-300"
          style={{
            animationDelay: `${animationDelay + (index * 50)}ms`,
          }}

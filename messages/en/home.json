@@ -1,12 +1,16 @@
 {
   "title": {
-    "words": ["Recipes", "Masterclasses", "Desserts", "Magic"],
+    "discover": "Discover",
+    "recipes": "Recipes",
+    "words": ["Delicious", "Inspiring", "Handcrafted", "Authentic", "Beautiful", "Timeless"],
     "byAuthor": "by Yuliia Stohantseva"
   },
   "hero": {
     "welcome": "Welcome to",
     "tagline": "Discover the art of creating exquisite desserts with unique author recipes",
-    "scroll": "Scroll to explore"
+    "scroll": "Scroll to explore",
+    "browse": "Browse recipes",
+    "about": "About the author"
   },
   "cta": {
     "exploreRecipes": "Explore Recipes",

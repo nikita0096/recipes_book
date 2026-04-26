@@ -14,6 +14,10 @@
 # folders
 .idea
 scripts
+.claude/
+
+# claude code
+CLAUDE.md
 
 # testing
 /coverage

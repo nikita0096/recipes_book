@@ -7,6 +7,7 @@ import {useTranslations} from "next-intl";
 import FeaturedRecipeCard from "@/components/home/FeaturedRecipeCard";
 import Footer from "@/components/footer/Footer";
 import CakeHero from "@/components/home/CakeHero";
+import AnimatedHero from "@/components/home/AnimatedHero";
 import {useUserStore} from "@/store/useUserStore";
 import FeaturedRecipePreview from "@/components/home/FeaturedRecipePreview";
 import {useFeaturedRecipes} from "@/hooks/useFeaturedRecipes";
@@ -23,12 +24,18 @@ export default function Home() {
 
   return (
     <div className="relative -mt-[65px]">
-      {/* Cake Hero Section */}
-      <CakeHero
+      {/* Animated Hero Section */}
+      <AnimatedHero
+        discoverText={t('title.discover')}
+        recipesText={t('title.recipes')}
         words={words}
         byAuthor={t('title.byAuthor')}
-        scrollText={t('hero.scroll')}
+        browseText={t('hero.browse')}
+        aboutText={t('hero.about')}
       />
+
+      {/* Cake Hero Section */}
+      <CakeHero scrollText={t('hero.scroll')} />
 
       <section id="featured"
                className="relative pt-5 pb-10 bg-bg overflow-hidden">
