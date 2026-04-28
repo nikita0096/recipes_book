@@ -5,6 +5,7 @@ import {Link} from "@/i18n/navigation";
 import {PAGES} from '@/config/page.config'
 import {getUser, getUserProfile, logout} from '@/lib/supabase/authClient'
 import {supabase} from '@/lib/supabase/ClientComponentClient'
+import type {AuthChangeEvent} from '@supabase/supabase-js'
 import {useUserStore} from "@/store/useUserStore";
 import ToggleTheme from "@/components/ui/ToggleTheme";
 import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
@@ -38,7 +39,7 @@ const Header: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const {data: {subscription}} = supabase.auth.onAuthStateChange((event) => {
+    const {data: {subscription}} = supabase.auth.onAuthStateChange((event: AuthChangeEvent) => {
       if (event === 'SIGNED_OUT') {
         setUserData(null);
       } else if(event === 'SIGNED_IN') {

@@ -73,12 +73,12 @@ export default function SignUpPage() {
     }
   }
 
-  const origin = window.location.origin;
   const searchParams = useSearchParams();
   const pathname = searchParams.get('from') || '/';
-  const redirectUrl = origin + pathname;
 
   const handleLoginWithGoogle = async () => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const redirectUrl = origin + pathname;
     try {
       await handleGoogleLogin(redirectUrl);
     } catch (error) {
