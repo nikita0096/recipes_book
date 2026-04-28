@@ -123,7 +123,7 @@ const CakeHero = ({
       }
 
       if (scrollHintRef.current) {
-        scrollHintRef.current.style.opacity = String(Math.max(0, 1 - p * 10));
+        scrollHintRef.current.style.opacity = String(Math.max(0, 1 - p * 100));
       }
 
       const sepStart = 0.05;

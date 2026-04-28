@@ -2,7 +2,7 @@
 
 import {SubmitHandler, useForm} from "react-hook-form";
 import {handleEmailLogin, handleGoogleLogin, handleSignUp} from "@/lib/supabase/authClient";
-import {useUserStore} from "@/store/useUserStore";
+import {UserState, useUserStore} from "@/store/useUserStore";
 import {useTranslations} from "next-intl";
 import {useRouter} from "@/i18n/navigation";
 import {IoClose} from "react-icons/io5";
@@ -54,14 +54,14 @@ export default function SignUpPage() {
 
       const data = await handleEmailLogin(formData.emailSignUp, formData.passwordSignUp);
 
-      if (data?.user) {
+      if (data) {
         setUserData({
-          id:  data.user.id,
-          name: data.user.user_metadata?.name,
-          avatar_url: data.user.user_metadata?.avatar_url || null,
+          id:  data.id,
+          name: data.user_metadata?.name,
+          avatar_url: data.user_metadata?.avatar_url || null,
           role: 'user',
-          email: data.user.email || '',
-          createdAt: data.user.created_at,
+          email: data.email || '',
+          createdAt: data.created_at,
         });
       }
 
