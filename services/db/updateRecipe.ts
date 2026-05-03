@@ -6,6 +6,8 @@ import {
   IRecipePublic,
   IRecipePremiumFull,
 } from "@/types/recipe";
+import {v4 as uuidv4} from 'uuid';
+
 
 // ===== PUBLIC → PUBLIC =====
 // Update public рецепта (все в main table)
@@ -129,6 +131,7 @@ export const convertPublicToPremium = async (
   premiumData: UpdateRecipeDataPremiumPart,
   id: string
 ): Promise<{data: IRecipePremiumFull | null; error: string | null}> => {
+  const premiumId = uuidv4();
   // Update main table - убираем steps/video, ставим is_premium = true
   const {data, error} = await supabase
     .from("recipes")
@@ -143,6 +146,7 @@ export const convertPublicToPremium = async (
       is_premium: true,
       recipe_steps: null,
       video_url: null,
+      premium_recipe: premiumId
     })
     .eq('id', id)
     .select()
@@ -160,6 +164,7 @@ export const convertPublicToPremium = async (
   const {error: premiumError} = await supabase
     .from("recipes_premium")
     .insert({
+      id: premiumId,
       recipe_id: id,
       recipe_steps: premiumData.recipeSteps,
       video_url: premiumData.videoUrl,
@@ -193,7 +198,7 @@ export const convertPremiumToPublic = async (
   formData: UpdateRecipeDataPublic,
   id: string
 ): Promise<{data: IRecipePublic | null; error: string | null}> => {
-  // Update main table - добавляем steps/video, ставим is_premium = false
+  // Update main table - добавляем steps/video, ставим is_premium = false, обнуляем premium_recipe
   const {data, error} = await supabase
     .from("recipes")
     .update({
@@ -207,6 +212,7 @@ export const convertPremiumToPublic = async (
       video_url: formData.videoUrl,
       preparing_time: formData.preparingTime,
       is_premium: false,
+      premium_recipe: null,
     })
     .eq('id', id)
     .select()

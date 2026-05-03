@@ -70,10 +70,12 @@ export interface IRecipeUploadPublic extends Omit<IRecipeBase, 'id'> {
 export interface IRecipeUploadPremiumMain extends Omit<IRecipeBase, 'id'> {
   id: string; // Generated on frontend before upload
   isPremium: true;
+  premiumId: string | null;
 }
 
 // Premium часть для загрузки в premium table
 export interface IRecipePremiumUpload {
+  id: string;
   recipeId: string;
   recipeSteps: RecipeStep[];
   videoUrl: string;

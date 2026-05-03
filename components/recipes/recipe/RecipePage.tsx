@@ -80,6 +80,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
       setLikes(prevState => isNewLiked ? prevState - 1 : prevState + 1);
     }
   }
+  console.log(recipe)
 
   return (
     <div className="min-h-screen bg-bg">
@@ -171,7 +172,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
       </section>
 
       {/* Preparation Steps Section */}
-      {(!recipe.isPremium && recipe.recipeSteps?.length > 0) && (
+      {recipe.recipeSteps?.length > 0 && (
         <section className="px-4 sm:px-6 lg:px-10 pt-6 sm:pt-7 lg:pt-8">
           <h2 className="text-sm tracking-widest uppercase text-accent mb-4 sm:mb-5 lg:mb-6">
             {t('singlePage.preparationSteps')}

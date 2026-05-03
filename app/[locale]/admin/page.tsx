@@ -339,6 +339,7 @@ const Page = () => {
     try {
       // Generate recipe ID before upload - used as folder name in storage
       const recipeId = uuidv4();
+      const premiumRecipeId = uuidv4();
 
       const recipeData = await handleFormData(formData, recipeId);
 
@@ -359,11 +360,13 @@ const Page = () => {
           heroImg: recipeData.heroImg,
           isPremium: true as const,
           preparingTime: recipeData.preparingTime,
+          premiumId: premiumRecipeId
         };
 
         await insertRecipePremiumMain(premiumMainData);
 
         const premiumPartData: IRecipePremiumUpload = {
+          id: premiumRecipeId,
           recipeId: recipeId,
           recipeSteps: recipeData.recipeSteps,
           videoUrl: recipeData.videoUrl,

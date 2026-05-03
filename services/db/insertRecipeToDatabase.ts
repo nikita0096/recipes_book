@@ -53,6 +53,7 @@ export const insertRecipePremiumMain = async (recipeData: IRecipeUploadPremiumMa
       preparing_time: recipeData.preparingTime,
       video_url: null,
       recipe_steps: null,
+      premium_recipe: recipeData.premiumId
     })
     .select('id')
     .single();

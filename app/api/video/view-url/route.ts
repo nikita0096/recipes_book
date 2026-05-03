@@ -16,20 +16,26 @@ export async function POST(request: NextRequest) {
 
     const { videoKey, recipeId } = await request.json();
 
-    if (!videoKey) {
-      return NextResponse.json(
-        { error: 'Missing video key' },
-        { status: 400 }
-      );
-    }
+    const {data: isPremium} = await supabase
+      .from('recipes')
+      .select('is_premium')
+      .eq('id', recipeId)
+      .single();
 
     // Check if user has purchased this recipe (if it's premium)
-    if (recipeId) {
+    if (recipeId && isPremium?.is_premium) {
+      const {data: recipeData} = await supabase
+        .from('recipes')
+        .select('premium_recipe')
+        .eq('id', recipeId)
+        .single();
+
+
       const { data: purchase } = await supabase
         .from('purchases')
         .select('id')
         .eq('user_id', user.id)
-        .eq('recipe_id', recipeId)
+        .eq('premium_recipe_id', recipeData?.premium_recipe)
         .single();
 
       // Also check if user is admin
@@ -47,6 +53,13 @@ export async function POST(request: NextRequest) {
           { status: 403 }
         );
       }
+    }
+
+    if (!videoKey) {
+      return NextResponse.json(
+        { error: 'Missing video key' },
+        { status: 400 }
+      );
     }
 
     const command = new GetObjectCommand({
