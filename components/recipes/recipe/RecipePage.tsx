@@ -31,7 +31,8 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const {data, error} = await fetchRecipe(recipeId);
+
+      const {data, error} = await fetchRecipe(recipeId, user?.id);
 
       if (error) setError(error);
 
@@ -80,7 +81,6 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
       setLikes(prevState => isNewLiked ? prevState - 1 : prevState + 1);
     }
   }
-  console.log(recipe)
 
   return (
     <div className="min-h-screen bg-bg">

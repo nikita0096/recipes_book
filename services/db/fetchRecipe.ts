@@ -1,35 +1,61 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
-import {IRecipe, IRecipePublic, IRecipePremiumFull} from "@/types/recipe";
+import {IRecipe, IRecipePublic, IRecipePremiumFull, RecipeStep} from "@/types/recipe";
+import {Ingredient, LocalizedText} from "@/types";
 
-export const fetchRecipe = async (id: string): Promise<{data: IRecipe | null, error: Error | null}> => {
+interface FetchRecipe {
+  id: string;
+  title: LocalizedText;
+  description: LocalizedText;
+  likes: number;
+  category: LocalizedText;
+  ingredients: Ingredient[];
+  hero_img: string;
+  is_premium: boolean;
+  preparing_time: number;
+  recipe_steps: RecipeStep[];
+  video_url: string;
+}
+
+export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, error: Error | null }> => {
   const {data, error} = await supabase.from('recipes')
     .select()
     .eq('id', id)
     .single();
 
-  if (error) return {data: null, error} ;
+  if (error) return {data: null, error};
 
-  // Public рецепт - все данные в main table
-  if (!data.is_premium) {
+  const {data: {user}} = await supabase.auth.getUser();
+
+  if (!user?.id || !data.is_premium) {
     return {
-      data: {
-        id: data.id,
-        title: data.title,
-        description: data.description,
-        likes: data.likes,
-        category: data.category,
-        ingredients: data.ingredients,
-        heroImg: data.hero_img,
-        isPremium: false as const,
-        preparingTime: data.preparing_time,
-        recipeSteps: data.recipe_steps,
-        videoUrl: data.video_url,
-      } satisfies IRecipePublic,
+      data: mapToPublic(data),
       error: null
     }
   }
 
-  // Premium рецепт - нужно fetch из premium table
+  const [{data: role}, {data: purchasedRecipeId}] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single<Record<string, 'admin' | 'user'>>(),
+    supabase
+      .from('purchases')
+      .select('premium_recipe_id')
+      .eq('user_id', user.id)
+      .eq('recipe_id', id)
+      .maybeSingle()
+  ]);
+
+  const isAdmin = role?.role === 'admin';
+  const premiumId = purchasedRecipeId?.premium_recipe_id;
+
+  const hasAccess = isAdmin || premiumId;
+
+  if (!hasAccess) {
+    return {data: mapToPublic(data), error: null};
+  }
+
   const {data: premiumData, error: premiumError} = await supabase
     .from('recipes_premium')
     .select('*')
@@ -55,3 +81,17 @@ export const fetchRecipe = async (id: string): Promise<{data: IRecipe | null, er
     error: null
   }
 }
+
+const mapToPublic = (data: FetchRecipe): IRecipePublic => ({
+      id: data.id,
+      title: data.title,
+      description: data.description,
+      likes: data.likes,
+      category: data.category,
+      ingredients: data.ingredients,
+      heroImg: data.hero_img,
+      isPremium: false as const,
+      preparingTime: data.preparing_time,
+      recipeSteps: data.recipe_steps,
+      videoUrl: data.video_url,
+    })
