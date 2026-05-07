@@ -32,7 +32,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
   useEffect(() => {
     const fetchData = async () => {
 
-      const {data, error} = await fetchRecipe(recipeId, user?.id);
+      const {data, error} = await fetchRecipe(recipeId);
 
       if (error) setError(error);
 
