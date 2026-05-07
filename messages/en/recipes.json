@@ -20,7 +20,14 @@
     "preparationSteps": "Preparation Steps",
     "step": "Step",
     "videoSection": "Video Tutorial",
-    "description": "Description"
+    "description": "Description",
+    "premiumLock": {
+      "eyebrow": "Premium recipe",
+      "title": "The full recipe is part of our premium collection",
+      "description": "Get step-by-step instructions, detailed guidance and the full video tutorial. Pay once, access forever.",
+      "buyButton": "Buy recipe",
+      "footer": "Secure checkout · instant access"
+    }
   },
   "card": {
     "hot": "Hot",

@@ -50,6 +50,7 @@ const Page = () => {
     setValue,
     resetField,
     getValues,
+    watch,
     formState: {errors}
   } = useForm<IFormValues>({
     defaultValues: {
@@ -58,6 +59,8 @@ const Page = () => {
       description: {en: '', ua: ''},
       likes: 0,
       category: categories.find(cat => cat.en === 'Desserts')?.en,
+      price: 0,
+      discount: 0,
       ingredientEn: '',
       ingredientUa: '',
       ingredientQuantity: '',
@@ -408,6 +411,8 @@ const Page = () => {
     }
   };
 
+  const isPremium = watch('isPremium');
+
   return (
     <div className="max-w-3xl mx-auto px-6 sm:px-10 py-8 pb-16">
       {/* Header */}
@@ -483,6 +488,37 @@ const Page = () => {
                                 peer-checked:after:left-[18px] relative peer-checked:after:bg-accent"/>
               </label>
             </div>
+
+            {isPremium && (
+              <div>
+                <div className="mt-3.5">
+                  <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                    {t('form.fields.price')}
+                  </label>
+                  <div className="relative">
+                    <input {...register('preparingTime', {required: true, min: 1, max: 1000})}
+                           name="preparingTime"
+                           aria-invalid={errors.preparingTime ? "true" : "false"}
+                           className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                           type="number"/>
+                    <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">$</span>
+                  </div>
+                </div>
+                <div className="mt-3.5">
+                  <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                    {t('form.fields.discount')}
+                  </label>
+                  <div className="relative">
+                    <input {...register('preparingTime', {required: true, min: 1, max: 1000})}
+                           name="preparingTime"
+                           aria-invalid={errors.preparingTime ? "true" : "false"}
+                           className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                           type="number"/>
+                    <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">%</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>

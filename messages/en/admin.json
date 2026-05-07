@@ -24,6 +24,8 @@
       "descriptionPlaceholderEn": "Enter brief description in English",
       "likes": "Likes",
       "category": "Category",
+      "price": "Recipe price",
+      "discount": "Discount",
       "ingredientPlaceholder": "Enter ingredient",
       "ingredientPlaceholderUa": "Ingredient (UA)",
       "ingredientPlaceholderEn": "Ingredient (EN)",

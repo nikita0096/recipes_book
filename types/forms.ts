@@ -18,6 +18,8 @@ export interface IFormValues {
   description: { en: string; ua: string };
   likes: number;
   category: string;
+  price: number;
+  discount: number;
   recipeSteps: { desc: { en: string; ua: string }; image: File | null }[];
   ingredientEn: string;
   ingredientUa: string;
