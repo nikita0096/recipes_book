@@ -1,0 +1,63 @@
+import {supabase} from "@/lib/supabase/ClientComponentClient";
+import {deleteVideo} from "@/services/storage/deleteVideoR2Bucket";
+
+export const deleteRecipe = async ({ id, videoKey }: { id: string; videoKey: string | null }) => {
+  // Если videoKey не передан, пробуем получить из premium таблицы (до удаления рецепта!)
+  let finalVideoKey = videoKey;
+
+  if (!finalVideoKey) {
+    const { data: premiumData } = await supabase
+      .from('recipes_premium')
+      .select('video_url')
+      .eq('recipe_id', id)
+      .maybeSingle();
+
+    if (premiumData?.video_url) {
+      finalVideoKey = premiumData.video_url;
+    }
+  }
+
+
+  const { error: deleteError } = await supabase
+    .from('recipes')
+    .delete()
+    .eq('id', id);
+
+  if (deleteError) {
+    return { error: deleteError };
+  }
+
+
+  const { data, error: listError } = await supabase
+    .storage
+    .from('images')
+    .list(id);
+
+  if (listError) {
+    return { error: listError };
+  }
+
+  const imagesList = data?.map((item) => `${id}/${item.name}`);
+
+  if (imagesList && imagesList.length > 0) {
+    const { error: removeError } = await supabase
+      .storage
+      .from('images')
+      .remove(imagesList);
+
+    if (removeError) {
+      return { error: removeError };
+    }
+  }
+
+
+  if (finalVideoKey) {
+    const res = await deleteVideo(finalVideoKey);
+
+    if (res.error) {
+      return { error: res.error };
+    }
+  }
+
+  return { error: null };
+}

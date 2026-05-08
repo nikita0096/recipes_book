@@ -1,4 +1,4 @@
-import {fetchRecipesPagination} from "@/services/db/fetchRecipesPagination";
+import {fetchRecipesPagination} from "@/services/db/public/fetchRecipesPagination";
 import {useInfiniteQuery} from "@tanstack/react-query";
 import {keepPreviousData} from "@tanstack/query-core";
 

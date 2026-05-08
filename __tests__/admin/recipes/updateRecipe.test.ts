@@ -3,7 +3,7 @@ import {
   updateRecipePremium,
   convertPublicToPremium,
   convertPremiumToPublic,
-} from '@/services/db/updateRecipe';
+} from '@/services/db/admin/updateRecipe';
 import { supabase } from '@/lib/supabase/ClientComponentClient';
 import {
   UpdateRecipeDataPublic,

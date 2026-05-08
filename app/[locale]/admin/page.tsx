@@ -7,7 +7,7 @@ import {useRouter} from "@/i18n/navigation";
 import {useLocale, useTranslations} from "next-intl";
 import {Controller, SubmitHandler, useFieldArray, useForm} from "react-hook-form";
 import {v4 as uuidv4} from 'uuid';
-import {insertRecipePublic, insertRecipePremiumMain} from "@/services/db/insertRecipeToDatabase";
+import {insertRecipePublic, insertRecipePremiumMain} from "@/services/db/admin/insertRecipeToDatabase";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {MdDeleteForever} from "react-icons/md";
 import {Spinner} from "@/components/ui/spinner";
@@ -15,7 +15,7 @@ import {units} from "@/constants/units";
 import {categories} from "@/constants/categories";
 import {IFormValues, Ingredient, Locale} from "@/types/forms";
 import {uploadVideoToStorage} from "@/services/storage/uploadVideoToStorage";
-import {insertPremiumRecipePart} from "@/services/db/insertPremiumRecipeToDb";
+import {insertPremiumRecipePart} from "@/services/db/admin/insertPremiumRecipeToDb";
 import {
   IRecipeUploadPublic,
   IRecipeUploadPremiumMain,
@@ -252,6 +252,11 @@ const Page = () => {
       return null;
     }
 
+    if(data.isPremium && data.price === 0) {
+      setError(t('form.validation.enterPrice'));
+      return null;
+    }
+
     const steps = [];
     const category = categories.find(cat => cat.en === data.category);
 
@@ -326,6 +331,8 @@ const Page = () => {
       title: data.title,
       description: data.description,
       category: category,
+      price: data.price,
+      discount: data.discount ? data.discount : null,
       likes: data.likes,
       recipeSteps: steps as RecipeStep[],
       ingredients: data.ingredients,
@@ -352,6 +359,7 @@ const Page = () => {
       }
 
       if (formData.isPremium) {
+
         // Premium рецепт: insert в main table + premium table
         const premiumMainData: IRecipeUploadPremiumMain = {
           id: recipeId,
@@ -373,6 +381,8 @@ const Page = () => {
           recipeId: recipeId,
           recipeSteps: recipeData.recipeSteps,
           videoUrl: recipeData.videoUrl,
+          price: recipeData.price,
+          discount: recipeData.discount,
         };
 
         await insertPremiumRecipePart(premiumPartData);
@@ -496,9 +506,9 @@ const Page = () => {
                     {t('form.fields.price')}
                   </label>
                   <div className="relative">
-                    <input {...register('preparingTime', {required: true, min: 1, max: 1000})}
-                           name="preparingTime"
-                           aria-invalid={errors.preparingTime ? "true" : "false"}
+                    <input {...register('price', {required: true, min: 1, max: 10000})}
+                           name="price"
+                           aria-invalid={errors.price ? "true" : "false"}
                            className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                            type="number"/>
                     <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">$</span>
@@ -509,9 +519,8 @@ const Page = () => {
                     {t('form.fields.discount')}
                   </label>
                   <div className="relative">
-                    <input {...register('preparingTime', {required: true, min: 1, max: 1000})}
-                           name="preparingTime"
-                           aria-invalid={errors.preparingTime ? "true" : "false"}
+                    <input {...register('discount', {required: false, min: 0, max: 100})}
+                           name="discount"
                            className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                            type="number"/>
                     <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">%</span>

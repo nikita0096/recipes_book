@@ -2,7 +2,21 @@ import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {IRecipePremiumUpload} from "@/types/recipe";
 
 export const insertPremiumRecipePart = async (recipeData: IRecipePremiumUpload) => {
-  const {data, error} = await supabase
+  if (recipeData.price === null) {
+    return;
+  }
+
+  const { error: priceError } = await supabase
+    .from('recipes_price')
+    .insert({
+      recipe_id: recipeData.recipeId,
+      price: recipeData.price,
+      discount: recipeData.discount
+    });
+
+  if (priceError) throw priceError;
+
+  const {error} = await supabase
     .from('recipes_premium')
     .insert({
       id: recipeData.id,

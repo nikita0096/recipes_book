@@ -1,5 +1,5 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
-import {IRecipe, IRecipePublic, IRecipePremiumFull, RecipeStep} from "@/types/recipe";
+import {IRecipe, IRecipePublic, IRecipePremiumFull, RecipeStep, RecipePrice} from "@/types/recipe";
 import {Ingredient, LocalizedText} from "@/types";
 
 interface FetchRecipe {
@@ -16,19 +16,29 @@ interface FetchRecipe {
   video_url: string;
 }
 
-export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, error: Error | null }> => {
+export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, price: RecipePrice | null, error: Error | null }> => {
   const {data, error} = await supabase.from('recipes')
     .select()
     .eq('id', id)
     .single();
 
-  if (error) return {data: null, error};
+  if (error) return {data: null, price: null, error};
 
   const {data: {user}} = await supabase.auth.getUser();
+
+  const {data: recipePrice} = await supabase
+    .from('recipes_price')
+    .select('price, discount')
+    .eq('recipe_id', id)
+    .single();
 
   if (!user?.id || !data.is_premium) {
     return {
       data: mapToPublic(data),
+      price: {
+        price: recipePrice?.price,
+        discount: recipePrice?.discount
+      },
       error: null
     }
   }
@@ -53,7 +63,14 @@ export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, e
   const hasAccess = isAdmin || premiumId;
 
   if (!hasAccess) {
-    return {data: mapToPublic(data), error: null};
+    return {
+      data: mapToPublic(data),
+      price: {
+        price: recipePrice?.price,
+        discount: recipePrice?.discount
+      },
+      error: null
+    };
   }
 
   const {data: premiumData, error: premiumError} = await supabase
@@ -78,20 +95,21 @@ export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, e
       recipeSteps: premiumData.recipe_steps,
       videoUrl: premiumData.video_url,
     } satisfies IRecipePremiumFull,
+    price: null,
     error: null
   }
 }
 
 const mapToPublic = (data: FetchRecipe): IRecipePublic => ({
-      id: data.id,
-      title: data.title,
-      description: data.description,
-      likes: data.likes,
-      category: data.category,
-      ingredients: data.ingredients,
-      heroImg: data.hero_img,
-      isPremium: false as const,
-      preparingTime: data.preparing_time,
-      recipeSteps: data.recipe_steps,
-      videoUrl: data.video_url,
-    })
+  id: data.id,
+  title: data.title,
+  description: data.description,
+  likes: data.likes,
+  category: data.category,
+  ingredients: data.ingredients,
+  heroImg: data.hero_img,
+  isPremium: false as const,
+  preparingTime: data.preparing_time,
+  recipeSteps: data.recipe_steps,
+  videoUrl: data.video_url,
+})

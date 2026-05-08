@@ -20,6 +20,11 @@ interface IRecipeBase {
   preparingTime: number;
 }
 
+export interface RecipePrice {
+  price: number;
+  discount: number | null;
+}
+
 // ===== FETCH ТИПЫ =====
 
 // Public рецепт (все данные в main table)
@@ -46,15 +51,6 @@ export interface IRecipePremiumIncomplete extends IRecipeBase {
   videoUrl: string | null;
 }
 
-// ===== TYPE GUARDS =====
-
-export const isPublicRecipe = (recipe: IRecipe): recipe is IRecipePublic => {
-  return recipe.isPremium === false;
-};
-
-export const isPremiumRecipe = (recipe: IRecipe): recipe is IRecipePremiumFull => {
-  return recipe.isPremium === true;
-};
 
 // ===== CREATE/UPLOAD ТИПЫ =====
 
@@ -79,6 +75,8 @@ export interface IRecipePremiumUpload {
   recipeId: string;
   recipeSteps: RecipeStep[];
   videoUrl: string;
+  price: number;
+  discount: number | null;
 }
 
 // Union для upload в main table
@@ -114,6 +112,8 @@ export interface UpdateRecipeDataPremiumPart {
   recipeId: string;
   recipeSteps: RecipeStep[];
   videoUrl: string;
+  price:number;
+  discount: number | null;
 }
 
 // Union для update main table

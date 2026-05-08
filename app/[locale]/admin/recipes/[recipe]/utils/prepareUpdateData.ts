@@ -165,6 +165,8 @@ export const prepareUpdateData = async ({
         recipeId: recipe.id,
         recipeSteps: processedSteps,
         videoUrl: videoUrl,
+        price: formData.price,
+        discount: formData.discount > 0 ? formData.discount : null,
       };
 
       return {

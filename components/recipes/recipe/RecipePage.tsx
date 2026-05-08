@@ -3,13 +3,13 @@
 import React, {useEffect, useState} from 'react';
 import Image from "next/image";
 import {Link} from "@/i18n/navigation";
-import {IRecipe, IRecipePremiumIncomplete} from "@/types/recipe";
+import {IRecipe, IRecipePremiumIncomplete, RecipePrice} from "@/types/recipe";
 import {useTranslations} from "next-intl";
 import RecipeIngredient from "@/components/recipes/recipe/RecipeIngredient";
 import {useTypedLocale} from "@/hooks/useTypedLocale";
 import {useUserStore} from "@/store/useUserStore";
 import {addNewLike} from "@/services/db/recipe-likes/addNewLike";
-import {fetchRecipe} from "@/services/db/fetchRecipe";
+import {fetchRecipe} from "@/services/db/public/fetchRecipe";
 import {deleteLike} from "@/services/db/recipe-likes/deleteLike";
 import {SecureVideoPlayer} from "@/components/video/SecureVideoPlayer";
 import Footer from "@/components/footer/Footer";
@@ -19,7 +19,13 @@ interface RecipePageProps {
   isLikedRecipe: boolean;
 }
 
-const LockIcon = ({ size = 16, className = '' }: { size?: number; className?: string }) => (
+interface FetchRecipeData {
+  data: IRecipe | null;
+  price: RecipePrice | null;
+  error: Error | null;
+}
+
+const LockIcon = ({size = 16, className = ''}: { size?: number; className?: string }) => (
   <svg
     width={size}
     height={size}
@@ -31,12 +37,16 @@ const LockIcon = ({ size = 16, className = '' }: { size?: number; className?: st
     strokeLinejoin="round"
     className={className}
   >
-    <rect x="4" y="11" width="16" height="10" rx="1.5" />
-    <path d="M8 11V7a4 4 0 1 1 8 0v4" />
+    <rect x="4"
+          y="11"
+          width="16"
+          height="10"
+          rx="1.5"/>
+    <path d="M8 11V7a4 4 0 1 1 8 0v4"/>
   </svg>
 );
 
-const UnlockIcon = ({ size = 16, className = '' }: { size?: number; className?: string }) => (
+const UnlockIcon = ({size = 16, className = ''}: { size?: number; className?: string }) => (
   <svg
     width={size}
     height={size}
@@ -48,8 +58,12 @@ const UnlockIcon = ({ size = 16, className = '' }: { size?: number; className?: 
     strokeLinejoin="round"
     className={className}
   >
-    <rect x="4" y="11" width="16" height="10" rx="1.5" />
-    <path d="M8 11V7a4 4 0 0 1 8 0" />
+    <rect x="4"
+          y="11"
+          width="16"
+          height="10"
+          rx="1.5"/>
+    <path d="M8 11V7a4 4 0 0 1 8 0"/>
   </svg>
 );
 
@@ -57,6 +71,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
   const [recipe, setRecipe] = useState<IRecipe | IRecipePremiumIncomplete | null>(null);
   const [isLiked, setIsLiked] = useState(isLikedRecipe);
   const [likes, setLikes] = useState(0);
+  const [recipePrice, setRecipePrice] = useState<RecipePrice | null>(null);
   const [error, setError] = useState<Error | null>(null);
 
   const locale = useTypedLocale();
@@ -66,13 +81,17 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
   useEffect(() => {
     const fetchData = async () => {
 
-      const {data, error} = await fetchRecipe(recipeId);
+      const {data, price, error} = await fetchRecipe(recipeId);
 
       if (error) setError(error);
 
       if (data) {
         setRecipe(data);
         setLikes(data.likes);
+      }
+
+      if (price) {
+        setRecipePrice(price);
       }
     }
 
@@ -84,7 +103,8 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
       <div className="min-h-screen bg-bg flex items-center justify-center px-4">
         <div className="text-center">
           <p className="text-red-500 text-base mb-4">Not found</p>
-          <Link href="/recipes" className="text-sm text-muted hover:text-text">
+          <Link href="/recipes"
+                className="text-sm text-muted hover:text-text">
             ← {t('singlePage.backButton')}
           </Link>
         </div>
@@ -96,7 +116,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
     return null;
   }
 
-  
+
   const handleLike = async () => {
     if (!user) return;
 
@@ -147,12 +167,12 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
               ? 'bg-red-500/80 border-red-400 text-white'
               : 'bg-white/20 border-red-300/50  text-white'
           }`}
-          style={{ WebkitBackdropFilter: 'blur(4px)', backdropFilter: 'blur(4px)' }}
+          style={{WebkitBackdropFilter: 'blur(4px)', backdropFilter: 'blur(4px)'}}
         >
           <span className={`text-lg lg:text-xl leading-none ${isLiked ? 'text-white' : 'text-red-400/70'}`}>
             {isLiked ? '♥' : '♡'}
           </span>
-          <span className={`text-xs ${ isLiked ? "text-white/70" : "text-red-400/80"}`}>{likes}</span>
+          <span className={`text-xs ${isLiked ? "text-white/70" : "text-red-400/80"}`}>{likes}</span>
         </button>
 
         {/* Hero content */}
@@ -200,7 +220,8 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px "
         >
           {recipe.ingredients.map((item, index) => (
-            <RecipeIngredient key={item.id} ingredient={item}/>
+            <RecipeIngredient key={item.id}
+                              ingredient={item}/>
           ))}
         </div>
       </section>
@@ -232,21 +253,22 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
                         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor.
                       </p>
                     </div>
-                    <div className="hidden sm:block w-36 lg:flex-1 min-h-28 lg:min-h-36 bg-surface" />
+                    <div className="hidden sm:block w-36 lg:flex-1 min-h-28 lg:min-h-36 bg-surface"/>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-linear-to-b from-transparent via-bg/50 to-bg pointer-events-none" />
+            <div className="absolute inset-0 bg-linear-to-b from-transparent via-bg/50 to-bg pointer-events-none"/>
 
             {/* Unlock card */}
             <div className='w-full h-full flex items-center justify-center pt-40 sm:pt-20'>
               <div className="relative md:w-11/12 w-9/12 max-w-md px-6 sm:px-9 py-7 sm:py-8 bg-surface border border-border text-center shadow-2xl">
                 {/* Lock icon */}
                 <div className="size-9 sm:size-10 rounded-full bg-accent/15 border border-accent mx-auto mb-3 sm:mb-4 flex items-center justify-center">
-                  <LockIcon size={16} className="text-accent" />
+                  <LockIcon size={16}
+                            className="text-accent"/>
                 </div>
 
                 {/* Eyebrow */}
@@ -266,12 +288,24 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
 
                 {/* Price */}
                 <div className="flex items-baseline justify-center gap-2.5 mb-4 sm:mb-5">
-                <span className="font-serif italic text-2xl md:text-4xl text-text leading-none">
-                  $4.90
-                </span>
-                  <span className="text-xs md:text-sm text-muted line-through">
-                  $6.50
-                </span>
+                  {recipePrice && (
+                    <span className="text-sm text-white/80">
+                        {recipePrice.discount && recipePrice.discount > 0 ? (
+                          <div className="flex items-end gap-2">
+                            <span className="font-serif italic text-2xl md:text-4xl text-text leading-none">
+                              ${(recipePrice.price * (1 - recipePrice.discount / 100)).toFixed(2)}
+                            </span>
+                            <span className="text-xs md:text-sm text-muted line-through">
+                              ${recipePrice.price}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="font-serif italic text-2xl md:text-4xl text-text leading-none">
+                            ${recipePrice?.price}
+                          </span>
+                        )}
+                      </span>
+                  )}
                 </div>
 
                 {/* Buy button */}
@@ -279,7 +313,8 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
                   type="button"
                   className="w-full bg-accent text-bg font-medium text-sm tracking-wider uppercase py-3 px-5 md:py-3.5 md:px-6 inline-flex items-center justify-center gap-2.5 cursor-pointer hover:opacity-90 transition-opacity"
                 >
-                  <UnlockIcon size={13} className="text-bg" />
+                  <UnlockIcon size={13}
+                              className="text-bg"/>
                   {t('singlePage.premiumLock.buyButton')}
                 </button>
 
@@ -302,7 +337,8 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
 
           <div className="flex flex-col gap-px bg-border">
             {recipe.recipeSteps?.map((step, i) => (
-              <div key={step.id} className="bg-bg">
+              <div key={step.id}
+                   className="bg-bg">
                 {/* Mobile/Tablet: Image on top */}
                 {step.imgUrl && (
                   <div className="lg:hidden">
@@ -393,7 +429,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
           ← {t('singlePage.backButton')}
         </Link>
       </div>
-      <Footer user={user} />
+      <Footer user={user}/>
     </div>
   );
 };

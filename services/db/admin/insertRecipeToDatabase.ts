@@ -12,7 +12,7 @@ const isPublicUpload = (data: IRecipeUpload): data is IRecipeUploadPublic => {
 
 // Insert public рецепта
 export const insertRecipePublic = async (recipeData: IRecipeUploadPublic) => {
-  const {data, error} = await supabase
+  const {error} = await supabase
     .from('recipes')
     .insert({
       id: recipeData.id,
@@ -26,20 +26,16 @@ export const insertRecipePublic = async (recipeData: IRecipeUploadPublic) => {
       preparing_time: recipeData.preparingTime,
       video_url: recipeData.videoUrl,
       recipe_steps: recipeData.recipeSteps,
-    })
-    .select('id')
-    .single();
+    });
 
   if (error) {
     throw error;
   }
-
-  return data;
 };
 
 // Insert premium рецепта (только main table часть)
 export const insertRecipePremiumMain = async (recipeData: IRecipeUploadPremiumMain) => {
-  const {data, error} = await supabase
+  const {error} = await supabase
     .from('recipes')
     .insert({
       id: recipeData.id,
@@ -54,15 +50,12 @@ export const insertRecipePremiumMain = async (recipeData: IRecipeUploadPremiumMa
       video_url: null,
       recipe_steps: null,
       premium_recipe: recipeData.premiumId
-    })
-    .select('id')
-    .single();
+    });
 
   if (error) {
     throw error;
   }
 
-  return data;
 };
 
 // Универсальная функция (для обратной совместимости)

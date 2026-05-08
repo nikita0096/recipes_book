@@ -7,8 +7,8 @@ import {useParams} from "next/navigation";
 import {IRecipe} from "@/types/recipe";
 import LoadingPage from "@/components/ui/LoadingPage";
 import {useTranslations} from "next-intl";
-import {useMutation, useQueryClient} from "@tanstack/react-query";
-import {deleteRecipe} from "@/services/db/deleteRecipe";
+import {useQueryClient} from "@tanstack/react-query";
+import {deleteRecipe} from "@/services/db/admin/deleteRecipe";
 import {useRouter} from "next/navigation";
 import {SortableStep} from "@/components/admin";
 import {
@@ -40,10 +40,11 @@ import {
   updateRecipePremium,
   convertPublicToPremium,
   convertPremiumToPublic,
-} from "@/services/db/updateRecipe";
+} from "@/services/db/admin/updateRecipe";
 import {prepareUpdateData} from "./utils/prepareUpdateData";
-import {fetchRecipeAdmin} from "@/services/db/fetchRecipeAdmin";
+import {fetchRecipeAdmin} from "@/services/db/admin/fetchRecipeAdmin";
 import {SecureVideoPlayer} from "@/components/video/SecureVideoPlayer";
+import {fetchRecipePrice, RecipePrice} from "@/services/db/public/fetchRecipePrice";
 
 type StepFields = { desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string }
 
@@ -55,6 +56,8 @@ export interface EditingValues {
   description: { ua: string; en: string };
   ingredients: Ingredient[];
   recipeSteps: StepFields[];
+  price: number,
+  discount: number,
   likes: number;
   ingredientEn: string;
   ingredientUa: string;
@@ -72,6 +75,7 @@ const Page = () => {
 
   const [recipe, setRecipe] = useState<IRecipe | null>(null);
   const[videoSrc, setVideoSrc] = useState<string | null>(null);
+  const [recipePrice, setRecipePrice] = useState<RecipePrice | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -106,6 +110,8 @@ const Page = () => {
       category: {ua: '', en: ''},
       title: {ua: '', en: ''},
       description: {ua: '', en: ''},
+      price: 0,
+      discount: 0,
       ingredients: [],
       recipeSteps: [],
       likes: 0,
@@ -154,11 +160,19 @@ const Page = () => {
         setError(null);
         const data = await fetchRecipeAdmin(params.recipe);
 
+        if(data.isPremium) {
+          const price = await fetchRecipePrice(params.recipe);
+          setRecipePrice(price);
+        }
+
         setRecipe({
           ...data
         });
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Recipe not found');
+
+        setRecipe(null);
+        setRecipePrice(null);
       } finally {
         setIsLoading(false);
       }
@@ -202,14 +216,6 @@ const Page = () => {
   const router = useRouter();
 
   const queryClient = useQueryClient();
-
-  const deleteRecipeMutation = useMutation({
-    mutationFn: deleteRecipe,
-
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({queryKey: ["recipes"]});
-    }
-  });
 
   if(!recipe) return null;
 
@@ -265,6 +271,8 @@ const Page = () => {
       setValue('videoUrl', videoSrc ?? '');
       setValue('preparingTime', recipe.preparingTime);
       setValue('isPremium', recipe.isPremium);
+      setValue('price', recipePrice?.price || 0);
+      setValue('discount', recipePrice?.discount || 0);
     }
 
     setIsEditing(true);
@@ -277,10 +285,20 @@ const Page = () => {
     reset();
   }
 
-  const handleDeleteRecipe = (id: string) => {
-    deleteRecipeMutation.mutate({id: id, videoKey: recipe.videoUrl});
+  const handleDeleteRecipe = async (id: string) => {
+    try {
+      const result = await deleteRecipe({ id, videoKey: recipe.videoUrl });
 
-    router.push(`/admin/recipes`);
+      if (result.error) {
+        setSaveError(typeof result.error === 'string' ? result.error : 'Failed to delete recipe');
+        return;
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ["recipes"] });
+      router.push(`/admin/recipes`);
+    } catch (err) {
+      setSaveError('Failed to delete recipe');
+    }
   }
 
   const handleHeroImgFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -499,8 +517,6 @@ const Page = () => {
         return;
       }
 
-      let updatedRecipe: IRecipe | null = null;
-
       if (result.isPremium && result.wasPremium) {
         const premiumResult = result as import('./utils/prepareUpdateData').PrepareUpdateDataResultPremium;
         const {data, error: updateError} = await updateRecipePremium(
@@ -514,7 +530,9 @@ const Page = () => {
           setIsSaving(false);
           return;
         }
-        updatedRecipe = data;
+
+        setRecipe(data.newRecipe);
+        setRecipePrice(data.newPrice);
 
       } else if (result.isPremium && !result.wasPremium) {
         const premiumResult = result as import('./utils/prepareUpdateData').PrepareUpdateDataResultPremium;
@@ -529,7 +547,9 @@ const Page = () => {
           setIsSaving(false);
           return;
         }
-        updatedRecipe = data;
+
+        setRecipe(data.newRecipe);
+        setRecipePrice(data.newPrice);
 
       } else if (!result.isPremium && result.wasPremium) {
         const publicResult = result as import('./utils/prepareUpdateData').PrepareUpdateDataResultPublic;
@@ -543,7 +563,9 @@ const Page = () => {
           setIsSaving(false);
           return;
         }
-        updatedRecipe = data;
+
+        setRecipe(data.newRecipe);
+        setRecipePrice(data.newPrice);
 
       } else {
         const publicResult = result as import('./utils/prepareUpdateData').PrepareUpdateDataResultPublic;
@@ -557,10 +579,11 @@ const Page = () => {
           setIsSaving(false);
           return;
         }
-        updatedRecipe = data;
+
+        setRecipe(data);
       }
 
-      setRecipe(updatedRecipe);
+
       setIsEditing(false);
       setIsEditingStep({});
       setIsEditingIngredient({});
@@ -580,7 +603,7 @@ const Page = () => {
   const stepIds = stepFields.map((step) => step.id);
 
   const mainImage = watch('heroImg');
-
+  const isPremium = watch('isPremium');
   const isVideoChanged = watch('videoFile');
 
   return (
@@ -731,9 +754,26 @@ const Page = () => {
                   ♡ {recipe.likes}
                 </span>
                 {recipe.isPremium && (
-                  <span className="text-sm text-accent">
-                    Premium
-                  </span>
+                  <>
+                    <span className="text-sm text-accent font-medium">
+                      Premium
+                    </span>
+                    {recipePrice && (
+                      <span className="text-sm text-white/80">
+                        {recipePrice.discount && recipePrice.discount > 0 ? (
+                          <>
+                            <span className="line-through text-white/40 mr-1.5">${recipePrice.price}</span>
+                            <span className="text-accent font-medium">
+                              ${(recipePrice.price * (1 - recipePrice.discount / 100)).toFixed(2)}
+                            </span>
+                            <span className="ml-1.5 text-xs text-green-400">-{recipePrice.discount}%</span>
+                          </>
+                        ) : (
+                          <span className="text-accent font-medium">${recipePrice.price}</span>
+                        )}
+                      </span>
+                    )}
+                  </>
                 )}
               </>
             )}
@@ -741,9 +781,39 @@ const Page = () => {
         </div>
       </section>
 
-      {/* Title & Description Section (Edit Mode) */}
+      {/* Title, Price, Description Section (Edit Mode) */}
       {isEditing && (
         <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-6 sm:py-7 lg:py-8">
+          {/*price*/}
+          {isPremium && (
+            <div>
+              <div className="mt-3.5">
+                <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                  {tAdmin('form.fields.price')}
+                </label>
+                <div className="relative">
+                  <input {...register('price', {required: true, min: 1, max: 10000})}
+                         name="price"
+                         aria-invalid={errors.price ? "true" : "false"}
+                         className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                         type="number"/>
+                  <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">$</span>
+                </div>
+              </div>
+              <div className="mt-3.5">
+                <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                  {tAdmin('form.fields.discount')}
+                </label>
+                <div className="relative">
+                  <input {...register('discount', {required: false, min: 0, max: 100})}
+                         name="discount"
+                         className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                         type="number"/>
+                  <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">%</span>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Title */}
           <div className="mb-6">
             <h2 className="text-sm tracking-widest uppercase text-accent mb-4">

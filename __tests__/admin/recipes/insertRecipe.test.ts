@@ -2,7 +2,7 @@ import {
   insertRecipePublic,
   insertRecipePremiumMain,
   insertRecipe,
-} from '@/services/db/insertRecipeToDatabase';
+} from '@/services/db/admin/insertRecipeToDatabase';
 import { supabase } from '@/lib/supabase/ClientComponentClient';
 import { IRecipeUploadPublic, IRecipeUploadPremiumMain } from '@/types/recipe';
 

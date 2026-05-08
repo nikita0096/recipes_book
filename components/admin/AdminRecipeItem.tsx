@@ -2,8 +2,8 @@
 
 import React, {useState} from 'react';
 import {IRecipe} from "@/types/recipe";
-import {useMutation, useQueryClient} from "@tanstack/react-query";
-import {deleteRecipe} from "@/services/db/deleteRecipe";
+import {useQueryClient} from "@tanstack/react-query";
+import {deleteRecipe} from "@/services/db/admin/deleteRecipe";
 import {Link} from "@/i18n/navigation";
 import Image from 'next/image';
 import {PAGES} from "@/config/page.config";
@@ -19,19 +19,26 @@ interface AdminRecipeItemProps {
 
 const AdminRecipeItem: React.FC<AdminRecipeItemProps> = ({recipe, index = 0}) => {
   const [image, setImage] = useState<string>(recipe.heroImg || RECIPE_PLACEHOLDER_IMAGE);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const locale = useTypedLocale();
   const t = useTranslations('admin');
   const tRecipes = useTranslations('recipes');
 
   const queryClient = useQueryClient();
 
-  const deleteRecipeMutation = useMutation({
-    mutationFn: deleteRecipe,
-
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({queryKey: ['recipes']});
-    },
-  });
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const result = await deleteRecipe({ id: recipe.id, videoKey: recipe.videoUrl });
+      if (result.error) {
+        console.log('error', result.error);
+      }
+      await queryClient.invalidateQueries({ queryKey: ['recipes'] });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const animationDelay = 100;
 
@@ -67,11 +74,12 @@ const AdminRecipeItem: React.FC<AdminRecipeItemProps> = ({recipe, index = 0}) =>
 
         {/* Delete button overlay */}
         <button
-          className='absolute bottom-3 right-3 p-2.5 bg-red-500/90 hover:bg-red-600 text-white transition-colors z-10'
+          className='absolute bottom-3 right-3 p-2.5 bg-red-500/90 hover:bg-red-600 text-white transition-colors z-10 disabled:opacity-50'
+          disabled={isDeleting}
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            deleteRecipeMutation.mutate({ id: recipe.id, videoKey: recipe.videoUrl });
+            handleDelete();
           }}
         >
           <MdDelete className="text-lg" />

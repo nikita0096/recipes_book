@@ -4,7 +4,7 @@ import {
   UpdateRecipeDataPremiumMain,
   UpdateRecipeDataPremiumPart,
   IRecipePublic,
-  IRecipePremiumFull,
+  IRecipePremiumFull, RecipePrice,
 } from "@/types/recipe";
 import {v4 as uuidv4} from 'uuid';
 
@@ -14,7 +14,7 @@ import {v4 as uuidv4} from 'uuid';
 export const updateRecipePublic = async (
   formData: UpdateRecipeDataPublic,
   id: string
-): Promise<{data: IRecipePublic | null; error: string | null}> => {
+): Promise<{ data: IRecipePublic | null; error: string | null }> => {
   const {data, error} = await supabase
     .from("recipes")
     .update({
@@ -65,7 +65,7 @@ export const updateRecipePremium = async (
   mainData: UpdateRecipeDataPremiumMain,
   premiumData: UpdateRecipeDataPremiumPart,
   id: string
-): Promise<{data: IRecipePremiumFull | null; error: string | null}> => {
+): Promise<{ data: { newRecipe: IRecipePremiumFull, newPrice: RecipePrice } | null; error: string | null }> => {
   // Update main table
   const {data, error} = await supabase
     .from("recipes")
@@ -106,19 +106,32 @@ export const updateRecipePremium = async (
     return {data: null, error: premiumError.message};
   }
 
+  await supabase
+    .from("recipes_price")
+    .update({
+      price: premiumData.price,
+      discount: premiumData.discount
+    }).eq('recipe_id', id);
+
   return {
     data: {
-      id: data.id,
-      title: data.title,
-      description: data.description,
-      likes: data.likes,
-      category: data.category,
-      ingredients: data.ingredients,
-      heroImg: data.hero_img,
-      isPremium: true as const,
-      preparingTime: data.preparing_time,
-      recipeSteps: premiumData.recipeSteps,
-      videoUrl: premiumData.videoUrl,
+      newRecipe: {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        likes: data.likes,
+        category: data.category,
+        ingredients: data.ingredients,
+        heroImg: data.hero_img,
+        isPremium: true as const,
+        preparingTime: data.preparing_time,
+        recipeSteps: premiumData.recipeSteps,
+        videoUrl: premiumData.videoUrl,
+      },
+      newPrice: {
+        price: premiumData.price,
+        discount: premiumData.discount
+      }
     },
     error: null,
   };
@@ -130,7 +143,7 @@ export const convertPublicToPremium = async (
   mainData: UpdateRecipeDataPremiumMain,
   premiumData: UpdateRecipeDataPremiumPart,
   id: string
-): Promise<{data: IRecipePremiumFull | null; error: string | null}> => {
+): Promise<{ data: { newRecipe: IRecipePremiumFull, newPrice: RecipePrice } | null; error: string | null }> => {
   const premiumId = uuidv4();
   // Update main table - убираем steps/video, ставим is_premium = true
   const {data, error} = await supabase
@@ -174,19 +187,33 @@ export const convertPublicToPremium = async (
     return {data: null, error: premiumError.message};
   }
 
+  await supabase
+    .from("recipes_price")
+    .insert({
+      price: premiumData.price,
+      discount: premiumData.discount,
+      recipe_id: id
+    });
+
   return {
     data: {
-      id: data.id,
-      title: data.title,
-      description: data.description,
-      likes: data.likes,
-      category: data.category,
-      ingredients: data.ingredients,
-      heroImg: data.hero_img,
-      isPremium: true as const,
-      preparingTime: data.preparing_time,
-      recipeSteps: premiumData.recipeSteps,
-      videoUrl: premiumData.videoUrl,
+      newRecipe: {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        likes: data.likes,
+        category: data.category,
+        ingredients: data.ingredients,
+        heroImg: data.hero_img,
+        isPremium: true as const,
+        preparingTime: data.preparing_time,
+        recipeSteps: premiumData.recipeSteps,
+        videoUrl: premiumData.videoUrl,
+      },
+      newPrice: {
+        price: premiumData.price,
+        discount: premiumData.discount
+      }
     },
     error: null,
   };
@@ -197,7 +224,7 @@ export const convertPublicToPremium = async (
 export const convertPremiumToPublic = async (
   formData: UpdateRecipeDataPublic,
   id: string
-): Promise<{data: IRecipePublic | null; error: string | null}> => {
+): Promise<{ data: { newRecipe: IRecipePublic, newPrice: RecipePrice } | null; error: string | null }> => {
   // Update main table - добавляем steps/video, ставим is_premium = false, обнуляем premium_recipe
   const {data, error} = await supabase
     .from("recipes")
@@ -237,19 +264,30 @@ export const convertPremiumToPublic = async (
     console.warn('Failed to delete premium record:', deleteError.message);
   }
 
+  await supabase
+    .from("recipes_price")
+    .delete()
+    .eq('recipe_id', id);
+
   return {
     data: {
-      id: data.id,
-      title: data.title,
-      description: data.description,
-      likes: data.likes,
-      category: data.category,
-      ingredients: data.ingredients,
-      heroImg: data.hero_img,
-      isPremium: false as const,
-      preparingTime: data.preparing_time,
-      recipeSteps: data.recipe_steps,
-      videoUrl: data.video_url,
+      newRecipe: {
+        id: data.id,
+        title: data.title,
+        description: data.description,
+        likes: data.likes,
+        category: data.category,
+        ingredients: data.ingredients,
+        heroImg: data.hero_img,
+        isPremium: false as const,
+        preparingTime: data.preparing_time,
+        recipeSteps: data.recipe_steps,
+        videoUrl: data.video_url,
+      },
+      newPrice: {
+        price: 0,
+        discount: 0
+      }
     },
     error: null,
   };
