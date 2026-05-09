@@ -21,12 +21,13 @@ interface CakeHeroLayer {
   threshold: number;
   delay: number;
   zIndex: number;
+  style?: {transform: string}
 }
 
 const layers: CakeHeroLayer[] = [
-  { id: 'layer1', src: '/images/cake-layer/layer_1.jpg', dy: 0, lblId: 'lbl1', label: {en: 'Sponge base', ua: "Бісквіт"}, threshold: 0.18, delay: 0, zIndex: 1 },
+  { id: 'layer1', src: '/images/cake-layer/1.png', dy: 0, lblId: 'lbl1', label: {en: 'Sponge base', ua: "Бісквіт"}, threshold: 0.18, delay: 0, zIndex: 1, style: {transform: "scale(1.4)"}},
   { id: 'layer2', src: '/images/cake-layer/layer_2.jpg', dy: -55, lblId: 'lbl2', label: {en: 'Strawberry jam', ua: "Полуничний джем"}, threshold: 0.26, delay: 150, zIndex: 2 },
-  { id: 'layer3', src: '/images/cake-layer/layer_3.jpg', dy: -110, lblId: 'lbl3', label: {en: 'Pistachio cheesecake', ua: "Фісташковий чізкейк"}, threshold: 0.34, delay: 300, zIndex: 3 },
+  { id: 'layer3', src: '/images/cake-layer/layer_3.jpg', dy: -100, lblId: 'lbl3', label: {en: 'Pistachio cheesecake', ua: "Фісташковий чізкейк"}, threshold: 0.34, delay: 300, zIndex: 3 },
   { id: 'layer4', src: '/images/cake-layer/layer_4.jpg', dy: -165, lblId: 'lbl4', label: {en: 'Strawberry jam', ua: "Полуничний джем"}, threshold: 0.42, delay: 450, zIndex: 4 },
   { id: 'layer5', src: '/images/cake-layer/layer_5.jpg', dy: -220, lblId: 'lbl5', label: {en: 'Sponge base', ua: "Бісквіт"}, threshold: 0.50, delay: 600, zIndex: 5 },
   { id: 'layer6', src: '/images/cake-layer/layer_6.jpg', dy: -275, lblId: 'lbl6', label: {en: 'Decoration', ua: "Декорація"}, threshold: 0.58, delay: 750, zIndex: 6 },
@@ -242,6 +243,7 @@ const CakeHero = ({
               <Image
                 src={layer.src}
                 alt={layer.label[locale]}
+                style={layer.style ? layer.style : {}}
                 width={280}
                 height={120}
                 className="cake-layer-image"

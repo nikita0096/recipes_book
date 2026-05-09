@@ -19,7 +19,6 @@ const Header: React.FC = () => {
   const {user, setUserData} = useUserStore();
   const t = useTranslations('common');
 
-
   useEffect(() => {
     const fetchUser = async () => {
       const user = await getUser();
@@ -63,7 +62,8 @@ const Header: React.FC = () => {
       <div className='flex items-center gap-10'>
         {/* Logo */}
         <Link href={PAGES.HOME} className='font-serif text-lg text-text'>
-          Sweet Recipes
+          Recipes by
+          <span className='text-accent'> Yuliia</span>
         </Link>
 
         {/* Desktop Navigation */}

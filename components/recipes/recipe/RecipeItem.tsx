@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef} from 'react';
 import {IRecipe} from "@/types/recipe";
 import Image from 'next/image';
 import {PAGES} from "@/config/page.config";
@@ -15,6 +15,8 @@ interface RecipeItemProps {
 const RecipeItem: React.FC<RecipeItemProps> = ({recipe, index = 0}) => {
   const locale = useTypedLocale();
 
+  const recipeRef = useRef(null);
+
   const tCommon = useTranslations('common');
   const tRecipes = useTranslations('recipes');
 
@@ -25,6 +27,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe, index = 0}) => {
       style={{
         animationDelay: `${animationDelay + (index * 50)}ms`,
       }}
+      ref={recipeRef}
     >
       {/* Image */}
       <Link href={PAGES.RECIPE(recipe.id)} className="block relative overflow-hidden">

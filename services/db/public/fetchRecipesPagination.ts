@@ -11,6 +11,7 @@ export const fetchRecipesPagination = async (pageParam: number) => {
     .from("recipes")
     .select('*')
     .order("created_at", {ascending: false})
+    .order("id", {ascending: false}) // Secondary sort for stable pagination
     .range(start, end);
 
   if (error) throw error;
