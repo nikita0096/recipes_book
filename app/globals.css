@@ -377,7 +377,7 @@ body {
   position: absolute;
   left: 50%;
   top: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -53%);
   width: 400px;
   height: 650px;
 }
@@ -396,9 +396,9 @@ body {
 }
 
 /* Позиционирование слоёв снизу вверх */
-.cake-layer-img:nth-child(2) { bottom: 10px; }   /* layer_1 - низ */
+.cake-layer-img:nth-child(2) { bottom: 0; }   /* layer_1 - низ */
 .cake-layer-img:nth-child(3) { bottom: 30px; }   /* layer_2 */
-.cake-layer-img:nth-child(4) { bottom: 115px; }   /* layer_3 */
+.cake-layer-img:nth-child(4) { bottom: 112px; }   /* layer_3 */
 .cake-layer-img:nth-child(5) { bottom: 125px; }   /* layer_4 */
 .cake-layer-img:nth-child(6) { bottom: 185px; }   /* layer_5 */
 .cake-layer-img:nth-child(7) { bottom: 245px; }   /* layer_6 - верх */
