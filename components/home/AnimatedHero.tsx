@@ -24,6 +24,9 @@ const AnimatedHero = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const scrollHintRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     if (words.length <= 1) return;
 
@@ -39,8 +42,28 @@ const AnimatedHero = ({
     return () => clearInterval(interval);
   }, [words.length]);
 
+  useEffect(() => {
+    const onScroll = () => {
+      if(!wrapperRef.current || !scrollHintRef.current) return;
+
+      const el = wrapperRef.current;
+      const rect = el.getBoundingClientRect();
+
+      // p = 0 когда элемент вверху, p = 1 когда проскроллен на 30% высоты
+      const p = Math.max(0, Math.min(1, -rect.top / (el.clientHeight * 0.4)));
+
+      scrollHintRef.current.style.opacity = String(1 - p);
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+    }
+  }, []);
+
   return (
-    <section className="animated-hero">
+    <section className="animated-hero" ref={wrapperRef}>
       <div className="hero-top">
         <h1 className="hero-title">
           <span className="line-static">{discoverText}</span>
@@ -67,10 +90,9 @@ const AnimatedHero = ({
         </div>
       </div>
 
-      <div className="scroll-cta">
+      <div className="scroll-cta" ref={scrollHintRef}>
         <div className="scroll-cta-line"></div>
         <div className="scroll-cta-dot"></div>
-        <span style={{ marginTop: '4px' }}>Scroll</span>
       </div>
     </section>
   );

@@ -18,6 +18,7 @@ interface IRecipeBase {
   ingredients: Ingredient[];
   heroImg: string;
   preparingTime: number;
+  stepsCount: number;
 }
 
 export interface RecipePrice {
@@ -93,6 +94,7 @@ interface UpdateRecipeBase {
   ingredients: Ingredient[];
   heroImg: string;
   preparingTime: number;
+  stepsCount: number;
 }
 
 // Public рецепт update (все поля)

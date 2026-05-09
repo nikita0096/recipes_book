@@ -24,6 +24,7 @@ export const fetchFeaturedRecipes = async (): Promise<IRecipe[]> => {
         preparingTime: item.preparing_time,
         recipeSteps: item.recipe_steps,
         videoUrl: item.video_url,
+        stepsCount: item.steps_count,
       } satisfies IRecipePublic;
     }
 
@@ -39,6 +40,7 @@ export const fetchFeaturedRecipes = async (): Promise<IRecipe[]> => {
       preparingTime: item.preparing_time,
       recipeSteps: item.recipe_steps,
       videoUrl: item.video_url,
+      stepsCount: item.steps_count,
     } satisfies IRecipePremiumFull;
   });
 };

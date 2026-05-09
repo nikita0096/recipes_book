@@ -74,7 +74,7 @@ const Recipes = () => {
             className="w-full bg-transparent text-base text-text placeholder:text-muted placeholder:opacity-50 focus:outline-none"
             value={searchValue}
             placeholder={tRecipes('search.placeholder')}
-            onChange={(e) => setSearchValue(e.target.value)}
+            onChange={(e) => setSearchValue(e.target.value.trim())}
           />
         </div>
       </div>

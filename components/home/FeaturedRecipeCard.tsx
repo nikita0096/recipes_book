@@ -1,14 +1,13 @@
 'use client';
 
-import React, {useEffect} from 'react';
+import React from 'react';
 import Image from 'next/image';
-import { IRecipe, parseJson } from '@/types/recipe';
+import { IRecipe } from '@/types/recipe';
 import { Link } from '@/i18n/navigation';
 import { PAGES } from '@/config/page.config';
 import { RECIPE_PLACEHOLDER_IMAGE } from '@/constants/images';
 import { useTypedLocale } from '@/hooks/useTypedLocale';
 import { useTranslations } from 'next-intl';
-import FeaturedRecipePreview from "@/components/home/FeaturedRecipePreview";
 
 interface FeaturedRecipeCardProps {
   recipe: IRecipe;
@@ -18,8 +17,6 @@ interface FeaturedRecipeCardProps {
 
 const FeaturedRecipeCard: React.FC<FeaturedRecipeCardProps> = ({ recipe, index, setPreviewFeaturedCard }) => {
   const locale = useTypedLocale();
-  const t = useTranslations('home');
-  const tCommon = useTranslations('common');
   const tRecipes = useTranslations('recipes');
 
 

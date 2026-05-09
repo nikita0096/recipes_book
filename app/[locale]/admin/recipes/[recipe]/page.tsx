@@ -748,7 +748,7 @@ const Page = () => {
                   ◷ {recipe.preparingTime} {tRecipes('singlePage.minutes')}
                 </span>
                 <span className="text-sm text-white/60">
-                  ☰ {recipe.recipeSteps?.length ?? 0} {tRecipes('singlePage.steps')}
+                  ☰ {tRecipes('singlePage.steps', {count: recipe.stepsCount})}
                 </span>
                 <span className="text-sm text-white/60">
                   ♡ {recipe.likes}

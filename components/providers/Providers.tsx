@@ -1,8 +1,8 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
-import {ThemeProvider, useTheme} from "next-themes";
+import {ThemeProvider} from "next-themes";
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -17,7 +17,8 @@ const Providers: React.FC<ProvidersProps> = ({children}) => {
                      storageKey='theme'
                      enableSystem
                      defaultTheme={'system'}
-                     disableTransitionOnChange>
+                     disableTransitionOnChange
+                     scriptProps={{ type: "application/json" }}>
         {children}
       </ThemeProvider>
     </QueryClientProvider>

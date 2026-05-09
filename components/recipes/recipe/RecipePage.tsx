@@ -164,7 +164,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
           onClick={handleLike}
           className={`absolute top-4 right-4 sm:right-6 lg:right-10 z-10 w-12 h-12 lg:w-14 lg:h-14 rounded-full flex flex-col items-center justify-center gap-0.5 border transition-all cursor-pointer select-none hover:scale-105 active:scale-95 ${
             isLiked
-              ? 'bg-red-500/80 border-red-400 text-white'
+              ? 'bg-red-500/80 border-red-500 text-white'
               : 'bg-white/20 border-red-300/50  text-white'
           }`}
           style={{WebkitBackdropFilter: 'blur(4px)', backdropFilter: 'blur(4px)'}}
@@ -178,7 +178,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
         {/* Hero content */}
         <div className="absolute bottom-6 left-4 sm:left-6 lg:left-10 right-16 sm:right-20 lg:right-24">
           {/* Category */}
-          <span className="inline-block text-xs tracking-widest uppercase text-accent border border-accent px-3 py-1 mb-3 bg-bg/40">
+          <span className="inline-block text-xs tracking-widest uppercase text-accent border border-accent px-3 py-1 mb-3 ">
             {recipe.category && recipe.category[locale]}
           </span>
 
@@ -193,7 +193,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
               ◷ {recipe.preparingTime} {t('singlePage.minutes')}
             </span>
             <span className="text-sm text-white/60">
-              ☰ {recipe.recipeSteps?.length ?? 0} {t('singlePage.steps')}
+              ☰ {t('singlePage.steps', {count: recipe.stepsCount})}
             </span>
           </div>
         </div>

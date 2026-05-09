@@ -26,6 +26,7 @@ export const insertRecipePublic = async (recipeData: IRecipeUploadPublic) => {
       preparing_time: recipeData.preparingTime,
       video_url: recipeData.videoUrl,
       recipe_steps: recipeData.recipeSteps,
+      steps_count: recipeData.recipeSteps.length,
     });
 
   if (error) {
@@ -34,7 +35,7 @@ export const insertRecipePublic = async (recipeData: IRecipeUploadPublic) => {
 };
 
 // Insert premium рецепта (только main table часть)
-export const insertRecipePremiumMain = async (recipeData: IRecipeUploadPremiumMain) => {
+export const insertRecipePremiumMain = async (recipeData: IRecipeUploadPremiumMain, stepsCount: number) => {
   const {error} = await supabase
     .from('recipes')
     .insert({
@@ -49,7 +50,8 @@ export const insertRecipePremiumMain = async (recipeData: IRecipeUploadPremiumMa
       preparing_time: recipeData.preparingTime,
       video_url: null,
       recipe_steps: null,
-      premium_recipe: recipeData.premiumId
+      premium_recipe: recipeData.premiumId,
+      steps_count: stepsCount,
     });
 
   if (error) {
@@ -59,9 +61,9 @@ export const insertRecipePremiumMain = async (recipeData: IRecipeUploadPremiumMa
 };
 
 // Универсальная функция (для обратной совместимости)
-export const insertRecipe = async (recipeData: IRecipeUpload) => {
+export const insertRecipe = async (recipeData: IRecipeUpload, stepsCount?: number) => {
   if (isPublicUpload(recipeData)) {
     return insertRecipePublic(recipeData);
   }
-  return insertRecipePremiumMain(recipeData);
+  return insertRecipePremiumMain(recipeData, stepsCount ?? 0);
 };

@@ -361,6 +361,7 @@ const Page = () => {
       if (formData.isPremium) {
 
         // Premium рецепт: insert в main table + premium table
+        const stepsCount = recipeData.recipeSteps.length;
         const premiumMainData: IRecipeUploadPremiumMain = {
           id: recipeId,
           title: recipeData.title,
@@ -371,10 +372,11 @@ const Page = () => {
           heroImg: recipeData.heroImg,
           isPremium: true as const,
           preparingTime: recipeData.preparingTime,
-          premiumId: premiumRecipeId
+          premiumId: premiumRecipeId,
+          stepsCount,
         };
 
-        await insertRecipePremiumMain(premiumMainData);
+        await insertRecipePremiumMain(premiumMainData, stepsCount);
 
         const premiumPartData: IRecipePremiumUpload = {
           id: premiumRecipeId,
@@ -400,6 +402,7 @@ const Page = () => {
           preparingTime: recipeData.preparingTime,
           recipeSteps: recipeData.recipeSteps,
           videoUrl: recipeData.videoUrl,
+          stepsCount: recipeData.recipeSteps.length,
         };
 
         await insertRecipePublic(publicData);

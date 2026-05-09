@@ -15,6 +15,7 @@ interface RecipeRow {
   preparing_time: number;
   recipe_steps: RecipeStep[] | null;
   video_url: string | null;
+  steps_count: number;
   created_at: string;
 }
 
@@ -44,6 +45,7 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
         preparingTime: item.preparing_time,
         recipeSteps: item.recipe_steps!,
         videoUrl: item.video_url!,
+        stepsCount: item.steps_count,
       };
     }
 
@@ -59,6 +61,7 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
       preparingTime: item.preparing_time,
       recipeSteps: item.recipe_steps ?? null,
       videoUrl: item.video_url ?? null,
+      stepsCount: item.steps_count,
     };
   });
 }

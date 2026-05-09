@@ -278,7 +278,7 @@ body {
    ══════════════════════════════════════════════════════════════ */
 
 .cake-hero-wrapper {
-  height: 500vh;
+  height: 300vh;
   position: relative;
 }
 
@@ -698,7 +698,7 @@ body {
   letter-spacing: 0.35em;
   text-transform: uppercase;
   animation: cakeHintPulse 2.2s ease-in-out infinite;
-  transition: opacity 0.5s ease-out;
+  transition: transform 0.5s ease-out;
   opacity: 0;
 }
 
@@ -713,8 +713,8 @@ body {
 }
 
 @keyframes cakeHintPulse {
-  0%, 100% { opacity: 0.4; transform: translateX(-50%) translateY(0); }
-  50%      { opacity: 1; transform: translateX(-50%) translateY(7px); }
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%      { transform: translateX(-50%) translateY(7px); }
 }
 
 /* Progress bar */
@@ -945,7 +945,7 @@ body {
 
 .animated-hero {
   position: relative;
-  min-height: 100svh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1073,7 +1073,7 @@ body {
   gap: 1rem;
   gap: 1rem;
   flex-wrap: wrap;
-  margin-bottom: 4rem;
+  margin-bottom: 1rem;
 }
 
 .btn-primary {

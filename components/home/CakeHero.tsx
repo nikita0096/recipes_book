@@ -3,10 +3,34 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
+import {useLocale, useTranslations} from "next-intl";
 
 interface CakeHeroProps {
   scrollText?: string;
 }
+
+interface CakeHeroLayer {
+  id: string;
+  src: string;
+  dy: number;
+  lblId: string;
+  label: {
+    en: string;
+    ua: string;
+  };
+  threshold: number;
+  delay: number;
+  zIndex: number;
+}
+
+const layers: CakeHeroLayer[] = [
+  { id: 'layer1', src: '/images/cake-layer/layer_1.jpg', dy: 0, lblId: 'lbl1', label: {en: 'Sponge base', ua: "Бісквіт"}, threshold: 0.18, delay: 0, zIndex: 1 },
+  { id: 'layer2', src: '/images/cake-layer/layer_2.jpg', dy: -55, lblId: 'lbl2', label: {en: 'Strawberry jam', ua: "Полуничний джем"}, threshold: 0.26, delay: 150, zIndex: 2 },
+  { id: 'layer3', src: '/images/cake-layer/layer_3.jpg', dy: -110, lblId: 'lbl3', label: {en: 'Pistachio cheesecake', ua: "Фісташковий чізкейк"}, threshold: 0.34, delay: 300, zIndex: 3 },
+  { id: 'layer4', src: '/images/cake-layer/layer_4.jpg', dy: -165, lblId: 'lbl4', label: {en: 'Strawberry jam', ua: "Полуничний джем"}, threshold: 0.42, delay: 450, zIndex: 4 },
+  { id: 'layer5', src: '/images/cake-layer/layer_5.jpg', dy: -220, lblId: 'lbl5', label: {en: 'Sponge base', ua: "Бісквіт"}, threshold: 0.50, delay: 600, zIndex: 5 },
+  { id: 'layer6', src: '/images/cake-layer/layer_6.jpg', dy: -275, lblId: 'lbl6', label: {en: 'Decoration', ua: "Декорація"}, threshold: 0.58, delay: 750, zIndex: 6 },
+];
 
 const CakeHero = ({
   scrollText = 'scroll'
@@ -18,51 +42,43 @@ const CakeHero = ({
   const plateRef = useRef<HTMLDivElement>(null);
   const recipeCardRef = useRef<HTMLDivElement>(null);
 
-  const [showHint, setShowHint] = useState(false);
-
   const layerRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
   const labelRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  const layers = [
-    { id: 'layer1', src: '/images/cake-layer/layer_1.jpg', dy: 0, lblId: 'lbl1', label: 'Sponge base', threshold: 0.18, delay: 0, zIndex: 1 },
-    { id: 'layer2', src: '/images/cake-layer/layer_2.jpg', dy: -55, lblId: 'lbl2', label: 'Strawberry jam', threshold: 0.26, delay: 150, zIndex: 2 },
-    { id: 'layer3', src: '/images/cake-layer/layer_3.jpg', dy: -110, lblId: 'lbl3', label: 'Pistachio cheesecake', threshold: 0.34, delay: 300, zIndex: 3 },
-    { id: 'layer4', src: '/images/cake-layer/layer_4.jpg', dy: -165, lblId: 'lbl4', label: 'Strawberry jam', threshold: 0.42, delay: 450, zIndex: 4 },
-    { id: 'layer5', src: '/images/cake-layer/layer_5.jpg', dy: -220, lblId: 'lbl5', label: 'Top sponge', threshold: 0.50, delay: 600, zIndex: 5 },
-    { id: 'layer6', src: '/images/cake-layer/layer_6.jpg', dy: -275, lblId: 'lbl6', label: 'Decoration', threshold: 0.58, delay: 750, zIndex: 6 },
-  ];
+  const tRecipes = useTranslations('recipes');
+  const locale = useLocale() as "en" | "ua";
 
-  // Intro animation - layers falling down
-  useEffect(() => {
-    if (plateRef.current) {
-      plateRef.current.classList.add('cake-intro-visible');
-    }
-
-    layers.forEach((layer) => {
-      setTimeout(() => {
-        const el = layerRefs.current[layer.id];
-        if (el) {
-          el.classList.add('cake-intro-landed');
-        }
-      }, layer.delay + 200);
-    });
-
-    const hintDelay = 750 + 600;
-    setTimeout(() => {
-      setShowHint(true);
-    }, hintDelay);
-
-    const cleanupDelay = hintDelay + 300;
-    setTimeout(() => {
-      layers.forEach((layer) => {
-        const el = layerRefs.current[layer.id];
-        if (el) {
-          el.classList.remove('cake-intro-layer', 'cake-intro-landed');
-          el.style.opacity = '1';
-        }
-      });
-    }, cleanupDelay);
-  }, []);
+  // // Intro animation - layers falling down
+  // useEffect(() => {
+  //   if (plateRef.current) {
+  //     plateRef.current.classList.add('cake-intro-visible');
+  //   }
+  //
+  //   layers.forEach((layer) => {
+  //     setTimeout(() => {
+  //       const el = layerRefs.current[layer.id];
+  //       if (el) {
+  //         el.classList.add('cake-intro-landed');
+  //       }
+  //     }, layer.delay + 200);
+  //   });
+  //
+  //   const hintDelay = 750 + 600;
+  //   setTimeout(() => {
+  //     setShowHint(true);
+  //   }, hintDelay);
+  //
+  //   const cleanupDelay = hintDelay + 300;
+  //   setTimeout(() => {
+  //     layers.forEach((layer) => {
+  //       const el = layerRefs.current[layer.id];
+  //       if (el) {
+  //         el.classList.remove('cake-intro-layer', 'cake-intro-landed');
+  //         el.style.opacity = '1';
+  //       }
+  //     });
+  //   }, cleanupDelay);
+  // }, []);
 
   // Generate particles on mount
   useEffect(() => {
@@ -123,10 +139,10 @@ const CakeHero = ({
       }
 
       if (scrollHintRef.current) {
-        scrollHintRef.current.style.opacity = String(Math.max(0, 1 - p * 100));
+        scrollHintRef.current.style.opacity = String(Math.max(0, 1 - p));
       }
 
-      const sepStart = 0.05;
+      const sepStart = 0.2;
       const sepEnd = 0.80;
       const sp = Math.max(0, Math.min(1, (p - sepStart) / (sepEnd - sepStart)));
 
@@ -185,7 +201,6 @@ const CakeHero = ({
 
         {/* Recipe Card - Left Side */}
         <div className="cake-recipe-card" ref={recipeCardRef}>
-          <span className="cake-recipe-label">Recipe</span>
           <div className="cake-recipe-divider" />
           <h3 className="cake-recipe-title">Pistachio Strawberry Cake</h3>
           <div className="cake-recipe-meta">
@@ -194,7 +209,7 @@ const CakeHero = ({
                 <circle cx="12" cy="12" r="10"/>
                 <path d="M12 6v6l4 2"/>
               </svg>
-              120 min
+              120 {tRecipes('singlePage.minutes')}
             </span>
             <span className="cake-recipe-steps">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -202,12 +217,13 @@ const CakeHero = ({
                 <rect x="9" y="3" width="6" height="4" rx="1"/>
                 <path d="M9 12h6M9 16h6"/>
               </svg>
-              12 steps
+              {/*{tRecipes('singlePage.steps', {count: 3})}*/}
+              4
             </span>
           </div>
           <div className="cake-recipe-divider" />
           <Link href="/recipes" className="cake-recipe-link">
-            View Recipe
+            {tRecipes("card.toRecipe")}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
@@ -225,7 +241,7 @@ const CakeHero = ({
             >
               <Image
                 src={layer.src}
-                alt={layer.label}
+                alt={layer.label[locale]}
                 width={280}
                 height={120}
                 className="cake-layer-image"
@@ -235,13 +251,13 @@ const CakeHero = ({
                 className="cake-lbl"
                 ref={(el) => { labelRefs.current[layer.lblId] = el; }}
               >
-                {layer.label}
+                {layer.label[locale]}
               </div>
             </div>
           ))}
         </div>
 
-        <div className={`cake-scroll-hint ${showHint ? 'cake-intro-visible' : ''}`} ref={scrollHintRef}>
+        <div className={`cake-scroll-hint`} ref={scrollHintRef}>
           <div className="cake-scroll-arrow" />
           <span>{scrollText}</span>
         </div>

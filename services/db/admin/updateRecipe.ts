@@ -28,6 +28,7 @@ export const updateRecipePublic = async (
       video_url: formData.videoUrl,
       preparing_time: formData.preparingTime,
       is_premium: false,
+      steps_count: formData.recipeSteps.length,
     })
     .eq('id', id)
     .select()
@@ -54,6 +55,7 @@ export const updateRecipePublic = async (
       preparingTime: data.preparing_time,
       recipeSteps: data.recipe_steps,
       videoUrl: data.video_url,
+      stepsCount: data.steps_count,
     },
     error: null,
   };
@@ -80,6 +82,7 @@ export const updateRecipePremium = async (
       is_premium: true,
       recipe_steps: null,
       video_url: null,
+      steps_count: premiumData.recipeSteps.length,
     })
     .eq('id', id)
     .select()
@@ -127,6 +130,7 @@ export const updateRecipePremium = async (
         preparingTime: data.preparing_time,
         recipeSteps: premiumData.recipeSteps,
         videoUrl: premiumData.videoUrl,
+        stepsCount: data.steps_count,
       },
       newPrice: {
         price: premiumData.price,
@@ -159,7 +163,8 @@ export const convertPublicToPremium = async (
       is_premium: true,
       recipe_steps: null,
       video_url: null,
-      premium_recipe: premiumId
+      premium_recipe: premiumId,
+      steps_count: premiumData.recipeSteps.length,
     })
     .eq('id', id)
     .select()
@@ -209,6 +214,7 @@ export const convertPublicToPremium = async (
         preparingTime: data.preparing_time,
         recipeSteps: premiumData.recipeSteps,
         videoUrl: premiumData.videoUrl,
+        stepsCount: data.steps_count,
       },
       newPrice: {
         price: premiumData.price,
@@ -240,6 +246,7 @@ export const convertPremiumToPublic = async (
       preparing_time: formData.preparingTime,
       is_premium: false,
       premium_recipe: null,
+      steps_count: formData.recipeSteps.length,
     })
     .eq('id', id)
     .select()
@@ -283,6 +290,7 @@ export const convertPremiumToPublic = async (
         preparingTime: data.preparing_time,
         recipeSteps: data.recipe_steps,
         videoUrl: data.video_url,
+        stepsCount: data.steps_count,
       },
       newPrice: {
         price: 0,

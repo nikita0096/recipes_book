@@ -14,6 +14,7 @@ interface FetchRecipe {
   preparing_time: number;
   recipe_steps: RecipeStep[];
   video_url: string;
+  steps_count: number;
 }
 
 export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, price: RecipePrice | null, error: Error | null }> => {
@@ -94,6 +95,7 @@ export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, p
       preparingTime: data.preparing_time,
       recipeSteps: premiumData.recipe_steps,
       videoUrl: premiumData.video_url,
+      stepsCount: data.steps_count,
     } satisfies IRecipePremiumFull,
     price: null,
     error: null
@@ -112,4 +114,5 @@ const mapToPublic = (data: FetchRecipe): IRecipePublic => ({
   preparingTime: data.preparing_time,
   recipeSteps: data.recipe_steps,
   videoUrl: data.video_url,
+  stepsCount: data.steps_count,
 })

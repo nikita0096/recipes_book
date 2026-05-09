@@ -13,7 +13,7 @@
   },
   "singlePage": {
     "backButton": "Back to Recipes",
-    "steps": "steps",
+    "steps": "{count, plural, =0 {No steps} one {# step} few {# steps} many {# steps} other {# steps}}",
     "likes": "likes",
     "minutes": "min",
     "keyIngredients": "Key Ingredients",
