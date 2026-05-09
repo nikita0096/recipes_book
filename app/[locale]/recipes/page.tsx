@@ -45,7 +45,7 @@ const Recipes = () => {
     }
 
     return () => observer.disconnect();
-  }, [searchValue, hasNextPage, fetchNextPage]);
+  }, [searchValue, hasNextPage, fetchNextPage, isFetching]);
 
   const {data: searchResult, loading: searchLoading} = useSearchRecipe(searchValue, locale);
 
