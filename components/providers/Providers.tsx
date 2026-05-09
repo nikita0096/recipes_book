@@ -18,7 +18,7 @@ const Providers: React.FC<ProvidersProps> = ({children}) => {
                      enableSystem
                      defaultTheme={'system'}
                      disableTransitionOnChange
-                     scriptProps={{ type: "application/json" }}>
+                     >
         {children}
       </ThemeProvider>
     </QueryClientProvider>
