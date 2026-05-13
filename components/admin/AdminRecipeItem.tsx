@@ -118,4 +118,4 @@ const AdminRecipeItem: React.FC<AdminRecipeItemProps> = ({recipe, index = 0}) =>
   );
 };
 
-export default AdminRecipeItem;
+export default React.memo(AdminRecipeItem);

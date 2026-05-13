@@ -1,38 +1,31 @@
-import {useEffect, useState} from "react";
+import {useQuery} from "@tanstack/react-query";
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {IRecipe} from "@/types";
 import {toCamelCase} from "@/utils/parseCamelcase";
 
-interface SearchRecipe {
-  data: IRecipe[] | [];
-  loading: boolean;
-}
+const fetchSearchRecipes = async (query: string, locale: string): Promise<IRecipe[]> => {
+  if (!query) return [];
 
-export function useSearchRecipe(query: string, locale: string): SearchRecipe {
-  const [data, setData] = useState<IRecipe[] | []>([]);
-  const [loading, setLoading] = useState(false);
+  const {data, error} = await supabase
+    .from('recipes')
+    .select('*')
+    .ilike(`title->>${locale}`, `%${query}%`);
 
-  useEffect(() => {
-    if (!query) {
-      setData([]);
-      return;
-    }
+  if (error) throw error;
 
-    const timeout = setTimeout(async () => {
-      setLoading(true);
+  return data.map(recipe => toCamelCase(recipe));
+};
 
-      const {data, error} = await supabase
-        .from('recipes')
-        .select('*')
-        .ilike(`title->>${locale}`, `%${query}%`);
+export function useSearchRecipe(query: string, locale: string) {
+  const {data, isLoading, isFetching} = useQuery({
+    queryKey: ['recipes', 'search', query, locale],
+    queryFn: () => fetchSearchRecipes(query, locale),
+    enabled: !!query,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
 
-      if (!error) setData(data.map(recipe => toCamelCase(recipe)));
-
-      setLoading(false);
-    }, 300);
-
-    return () => clearTimeout(timeout);
-  }, [query, locale]);
-
-  return {data, loading};
+  return {
+    data: data ?? [],
+    loading: isLoading || isFetching,
+  };
 }

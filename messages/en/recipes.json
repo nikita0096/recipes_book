@@ -4,7 +4,12 @@
     "subtitle": "Discover delicious recipes for every occasion"
   },
   "search": {
-    "placeholder": "Search for a recipe..."
+      "placeholder": "Search for a recipe...",
+    "noResults": "No matches"
+  },
+  "empty": {
+    "title": "No recipes yet",
+    "description": "Check back soon for delicious recipes"
   },
   "pagination": {
     "loadMore": "Load more",
@@ -32,6 +37,7 @@
   "card": {
     "hot": "Hot",
     "free": "Shared",
+    "premium": "Premium",
     "cookTime": "Cook time",
     "cardSteps": "Steps",
     "toRecipe": "View recipe"

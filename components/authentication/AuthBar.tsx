@@ -8,6 +8,7 @@ import {Link} from "@/i18n/navigation";
 import {PAGES} from "@/config/page.config";
 import {useTranslations} from "next-intl";
 import {usePathname} from "@/i18n/navigation";
+import ChefPlaceholder from "@/components/ui/ChefPlaceholder";
 
 interface AuthBarProps {
   user: UserState | null;
@@ -19,13 +20,6 @@ const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout}) => {
   const t = useTranslations('common');
 
   const pathname = usePathname();
-
-  // Get user initial for avatar
-  const getInitial = () => {
-    if (user?.name) return user.name.charAt(0).toUpperCase();
-    if (user?.email) return user.email.charAt(0).toUpperCase();
-    return 'U';
-  };
 
   return (
     <div>
@@ -44,8 +38,8 @@ const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout}) => {
               className='rounded-full'
             />
           ) : (
-            <div className='w-[30px] h-[30px] rounded-full bg-surface flex items-center justify-center text-xs font-semibold text-text'>
-              {getInitial()}
+            <div className='w-[30px] h-[30px] rounded-full overflow-hidden'>
+              <ChefPlaceholder />
             </div>
           )}
 

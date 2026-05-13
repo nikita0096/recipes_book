@@ -13,6 +13,7 @@ import {deleteLike} from "@/services/db/recipe-likes/deleteLike";
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {logout} from "@/lib/supabase/authClient";
 import {useRouter} from "@/i18n/navigation";
+import ChefPlaceholder from "@/components/ui/ChefPlaceholder";
 
 interface PreviewRecipe {
   id: string;
@@ -35,9 +36,6 @@ interface ProfileContentProps {
   likedRecipesData: LikedRecipe[];
   purchasedRecipesData: PurchasedRecipe[];
 }
-
-// Placeholder avatar for users without Google avatar
-const AVATAR_PLACEHOLDER = "https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=200&h=200&fit=crop&crop=face";
 
 const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purchasedRecipesData}) => {
   const [likedRecipes, setLikedRecipes] = useState(likedRecipesData);
@@ -163,14 +161,18 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
       <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] border-b border-border">
         {/* Avatar column */}
         <div className="p-8 sm:p-12 border-b sm:border-b-0 sm:border-r border-border flex flex-col items-center justify-center gap-3.5">
-          <div className="relative w-20 h-20 rounded-full overflow-hidden border border-border">
-            <Image
-              src={user.avatar_url || AVATAR_PLACEHOLDER}
-              alt={user.name}
-              width={80}
-              height={80}
-              className="w-full h-full object-cover"
-            />
+          <div className="relative w-20 h-20 rounded-full overflow-hidden border border-border bg-surface">
+            {user.avatar_url ? (
+              <Image
+                src={user.avatar_url}
+                alt={user.name}
+                width={80}
+                height={80}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <ChefPlaceholder />
+            )}
           </div>
         </div>
 

@@ -1,15 +1,20 @@
 'use client'
 
-import React, {useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import RecipesList from "@/components/recipes/RecipesList";
 import {useRecipes} from "@/hooks/useRecipes";
 import LoadingPage from "@/components/ui/LoadingPage";
 import {useLocale, useTranslations} from "next-intl";
 import {useSearchRecipe} from "@/hooks/useSearchRecipe";
+import {usePathname, useRouter, useSearchParams} from "next/navigation";
+import LoadingCircle from "@/components/ui/LoadingCircle";
 
 const Recipes = () => {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const [searchValue, setSearchValue] = useState('');
+  const [searchValue, setSearchValue] = useState(searchParams.get("search") ?? '');
 
   const sentinelRef = useRef<HTMLDivElement>(null);
 
@@ -27,6 +32,11 @@ const Recipes = () => {
     status,
   } = useRecipes();
 
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") ?? "";
+    setSearchValue(urlSearch);
+  }, [searchParams]);
+
 
   useEffect(() => {
     if (searchValue !== '') return;
@@ -37,7 +47,7 @@ const Recipes = () => {
       }
     }, {
       threshold: 0.1,
-      rootMargin: '100px',
+      rootMargin: '200px',
     });
 
     if (sentinelRef.current) {
@@ -49,18 +59,41 @@ const Recipes = () => {
 
   const {data: searchResult, loading: searchLoading} = useSearchRecipe(searchValue, locale);
 
-  const allRecipes = useMemo(
-    () => data?.pages.flatMap((page) => page.data) ?? [],
-    [data]);
-
-  const filteredRecipes = useMemo(() => {
-
+  const recipesList = useMemo(() => {
     if (searchValue !== '' && searchResult) {
-      return searchResult;
+      return [searchResult];
     }
 
-    return allRecipes;
-  }, [allRecipes, searchValue, searchResult]);
+    if (data?.pages) {
+      return data.pages.map((page) => page.data);
+    }
+
+    return [[]];
+  }, [searchValue, searchResult, data]);
+
+  const handleSearchChange = useCallback((value: string) => {
+    const params = new URLSearchParams(searchParams);
+
+    if (value) {
+      params.set('search', value);
+    } else {
+      params.delete('search');
+    }
+
+    router.replace(`${pathname}?${params.toString()}`);
+  }, [pathname, searchParams, router]);
+
+  useEffect(() => {
+    const searchUrl = searchParams.get("search") ?? '';
+
+    if (searchUrl === searchValue) return;
+
+    const timeout = setTimeout(() => {
+      handleSearchChange(searchValue)
+    });
+
+    return () => window.clearTimeout(timeout);
+  }, [searchValue, handleSearchChange, searchParams]);
 
   return (
     <div className="min-h-screen bg-bg">
@@ -89,17 +122,31 @@ const Recipes = () => {
             <path d="M21 21l-4.35-4.35"/>
           </svg>
           <input
-            type="search"
+            type="text"
             id="search"
             className="w-full bg-transparent text-base text-text placeholder:text-muted placeholder:opacity-50 focus:outline-none"
             value={searchValue}
             placeholder={tRecipes('search.placeholder')}
-            onChange={(e) => setSearchValue(e.target.value.trim())}
+            onChange={(e) => setSearchValue(prev => prev != e.target.value.trim() ? e.target.value.trim() : prev)}
           />
           {searchLoading && (
             <div className='flex items-center justify-center'>
               <LoadingCircle/>
             </div>
+          )}
+          {searchValue && (
+            <button className='cursor-pointer' onClick={() => setSearchValue('')}>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <path d="M4 6h16M9 6V4h6v2M6 6v14a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V6" />
+              </svg>
+            </button>
           )}
         </div>
       </div>
@@ -118,18 +165,54 @@ const Recipes = () => {
         <div className="flex flex-col items-center">
           {/* Cards Grid */}
           <div className="w-full px-4 sm:px-6 lg:px-10 pb-10 sm:pb-12 lg:pb-14">
-            <RecipesList filteredRecipes={filteredRecipes}/>
+            <RecipesList key={searchValue || 'all'}
+                         recipesList={recipesList}/>
 
             {isFetching && hasNextPage && (
               <div className="pt-50 flex items-center justify-center">
-                <LoadingCircle />
+                <LoadingCircle/>
               </div>
             )}
           </div>
 
-          {searchValue === '' && <div ref={sentinelRef} className="h-4" />}
+          {/* No search results */}
+          {searchValue && !searchLoading && !recipesList[0]?.length && (
+            <div className="flex flex-col items-center justify-center py-5 px-4">
+              <svg
+                width="48"
+                height="48"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                className="text-muted"
+              >
+                <circle cx="11" cy="11" r="7" />
+                <path d="M21 21l-4.35-4.35" />
+                <path d="M8 8l6 6M14 8l-6 6" />
+              </svg>
+              <p className='mt-4 text-muted'>
+                {tRecipes('search.noResults')}
+              </p>
+            </div>
+          )}
 
-          {!hasNextPage && (
+          {/* No recipes at all */}
+          {!searchValue && !isFetching && !recipesList[0]?.length && (
+            <div className="flex flex-col items-center justify-center py-16 px-4">
+              <p className='mt-4 text-lg text-text font-medium'>
+                {tRecipes('empty.title')}
+              </p>
+              <p className='mt-1 text-muted'>
+                {tRecipes('empty.description')}
+              </p>
+            </div>
+          )}
+
+          {searchValue === '' && <div ref={sentinelRef}
+                                      className="h-4"/>}
+
+          {!hasNextPage && !searchValue && recipesList[0].length > 0 && (
             <div className='mb-10 text-muted'>
               {tRecipes('pagination.allLoaded')}
             </div>
@@ -140,22 +223,6 @@ const Recipes = () => {
   );
 };
 
-const LoadingCircle = () => {
-  return (
-    <svg className="animate-spin w-4 h-4"
-         fill="none"
-         viewBox="0 0 24 24">
-      <circle className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"/>
-      <path className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
-    </svg>
-  )
-}
+
 
 export default Recipes;

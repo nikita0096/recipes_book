@@ -13,6 +13,7 @@ import {fetchRecipe} from "@/services/db/public/fetchRecipe";
 import {deleteLike} from "@/services/db/recipe-likes/deleteLike";
 import {SecureVideoPlayer} from "@/components/video/SecureVideoPlayer";
 import Footer from "@/components/footer/Footer";
+import {useRouter} from "next/navigation";
 
 interface RecipePageProps {
   recipeId: string;
@@ -78,6 +79,8 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
   const t = useTranslations('recipes');
   const {user} = useUserStore();
 
+  const router = useRouter();
+
   useEffect(() => {
     const fetchData = async () => {
 
@@ -103,10 +106,10 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
       <div className="min-h-screen bg-bg flex items-center justify-center px-4">
         <div className="text-center">
           <p className="text-red-500 text-base mb-4">Not found</p>
-          <Link href="/recipes"
+          <button onClick={router.back}
                 className="text-sm text-muted hover:text-text">
             ← {t('singlePage.backButton')}
-          </Link>
+          </button>
         </div>
       </div>
     );
@@ -135,11 +138,11 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
       setLikes(prevState => isNewLiked ? prevState - 1 : prevState + 1);
     }
   }
-
+  //
   return (
     <div className="min-h-screen bg-bg">
       {/* Hero Section */}
-      <section className="relative h-[280px] sm:h-[360px] lg:h-[480px] w-full">
+      <section className="relative h-[400px] sm:h-[470px] lg:h-[530px] 2xl:h-[800px] w-full">
         <Image
           src={recipe.heroImg}
           alt={recipe.title[locale]}
@@ -148,15 +151,15 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
           priority
         />
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-linear-to-t from-black/[0.88] via-black/[0.1] to-transparent pointer-events-none"/>
+        <div className="absolute inset-0 bg-linear-to-t from-black/88 via-black/10 to-transparent pointer-events-none"/>
 
         {/* Back link */}
-        <Link
-          href="/recipes"
-          className="absolute top-4 left-4 sm:left-6 lg:left-10 text-sm text-text/70 tracking-wide  hover:text-white mix-blend-difference transition-colors z-10"
+        <button
+          onClick={() => router.back()}
+          className="absolute top-4 left-4 sm:left-6 lg:left-10 text-sm text-text/70 tracking-wide  hover:text-white mix-blend-difference transition-colors z-10 cursor-pointer"
         >
           ← {t('singlePage.backButton')}
-        </Link>
+        </button>
 
         {/* Like button */}
         <button
@@ -219,7 +222,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
         <div
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px "
         >
-          {recipe.ingredients.map((item, index) => (
+          {recipe.ingredients.map((item) => (
             <RecipeIngredient key={item.id}
                               ingredient={item}/>
           ))}
@@ -422,12 +425,12 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
 
       {/* Back link */}
       <div className='flex items-center justify-center mb-15'>
-        <Link
-          href="/recipes"
-          className="text-sm text-text/70 tracking-wide hover:text-white/90 transition-colors z-10"
+        <button
+          onClick={() => router.back()}
+          className="text-sm text-text/70 tracking-wide hover:text-white/90 transition-colors z-10 cursor-pointer"
         >
           ← {t('singlePage.backButton')}
-        </Link>
+        </button>
       </div>
       <Footer user={user}/>
     </div>

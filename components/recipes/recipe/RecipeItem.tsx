@@ -1,4 +1,4 @@
-import React, { useRef} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {IRecipe} from "@/types/recipe";
 import Image from 'next/image';
 import {PAGES} from "@/config/page.config";
@@ -23,7 +23,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe, index = 0}) => {
   const animationDelay = 100;
 
   return (
-    <div className="bg-surface overflow-hidden animate-card-fade-in hover:scale-[1.02] transition-all duration-300"
+    <div data-id={`recipe-${recipe.id}`} className="bg-surface overflow-hidden animate-card-fade-in hover:scale-[1.02] transition-all duration-300"
       style={{
         animationDelay: `${animationDelay + (index * 50)}ms`,
       }}
@@ -41,9 +41,13 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe, index = 0}) => {
         </div>
 
         {/* Free badge */}
-        {!recipe.isPremium && (
+        {!recipe.isPremium ? (
           <span className="absolute top-3 left-3 px-2.5 py-1 bg-green-600/80 text-white text-xs tracking-wider uppercase">
             {tRecipes('card.free')}
+          </span>
+        ) : (
+          <span className="absolute top-3 left-3 px-2.5 py-1 bg-accent/80 text-white text-xs tracking-wider uppercase">
+            {tRecipes('card.premium')}
           </span>
         )}
       </Link>
