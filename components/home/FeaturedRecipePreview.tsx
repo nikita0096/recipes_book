@@ -34,7 +34,7 @@ const FeaturedRecipePreview: React.FC<IFeaturedRecipePreviewProps> = ({recipe}) 
 
       <div className='flex flex-col items-start justify-center p-10'>
 
-        <h4 className='font-serif text-3xl text-accent'>{t('featured.preview')}</h4>
+        <h4 className='font-serif text-2xl text-accent'>{t('featured.preview')}</h4>
 
         <span className='block w-full h-[0.5px] bg-accent/25 my-5'></span>
 
@@ -60,9 +60,9 @@ const FeaturedRecipePreview: React.FC<IFeaturedRecipePreviewProps> = ({recipe}) 
               </div>
               <div className='flex flex-col gap-y-1 px-3'>
                 <span className="text-xl text-accent font-serif">
-                  {recipe.recipeSteps?.length ?? 0}
+                  {recipe.stepsCount ?? 0}
                 </span>
-                <span className="text-xs text-muted ">{tRecipes('card.cardSteps')}</span>
+                <span className="text-xs text-muted ">{tRecipes('card.cardSteps', {count: recipe.stepsCount})}</span>
               </div>
             </div>
           </div>

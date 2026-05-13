@@ -39,7 +39,7 @@
     "free": "Shared",
     "premium": "Premium",
     "cookTime": "Cook time",
-    "cardSteps": "Steps",
+    "cardSteps": "{count, plural, =0 {No steps} one {step} few {steps} many {steps} other {steps}}",
     "toRecipe": "View recipe"
   }
 }

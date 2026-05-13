@@ -2,7 +2,8 @@
 
 import React, {useEffect, useState} from 'react';
 import {Link} from "@/i18n/navigation";
-import {PAGES} from '@/config/page.config'
+import {PAGES} from '@/config/page.config';
+import Image from "next/image";
 import {getUser, getUserProfile, logout} from '@/lib/supabase/authClient'
 import {supabase} from '@/lib/supabase/ClientComponentClient'
 import type {AuthChangeEvent} from '@supabase/supabase-js'
@@ -61,9 +62,23 @@ const Header: React.FC = () => {
       {/* Left side: Logo + Desktop Navigation */}
       <div className='flex items-center gap-10'>
         {/* Logo */}
-        <Link href={PAGES.HOME} className='font-serif text-lg text-text'>
-          Recipes by
-          <span className='text-accent'> Yuliia</span>
+        <Link href={PAGES.HOME}>
+          <Image
+            src="/images/logo/logo-light.svg"
+            alt="Recipes by Yuliia"
+            width={160}
+            height={50}
+            priority
+            className="dark:hidden"
+          />
+          <Image
+            src="/images/logo/logo-dark.svg"
+            alt="Recipes by Yuliia"
+            width={160}
+            height={50}
+            priority
+            className="hidden dark:block"
+          />
         </Link>
 
         {/* Desktop Navigation */}

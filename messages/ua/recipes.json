@@ -39,7 +39,7 @@
     "free": "Спільний доступ",
     "premium": "Преміум",
     "cookTime": "Час приготування",
-    "cardSteps": "Кроки",
+    "cardSteps": "{count, plural, =0 {Нема кроків} one {крок} few {кроки} many {кроків} other {кроків}}",
     "toRecipe": "До рецепту"
   }
 }
