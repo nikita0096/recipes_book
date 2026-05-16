@@ -58,31 +58,31 @@ const Header: React.FC = () => {
   }
 
   return (
-    <header className='sticky top-0 z-50 h-12 md:h-14 bg-bg border-b border-border flex items-center justify-between px-4 sm:px-6 lg:px-10 shrink-0'>
+    <header className='sticky top-0 z-50 h-15 bg-bg border-b border-border flex items-center justify-between px-4 sm:px-4 lg:px-6 shrink-0'>
       {/* Left side: Logo + Desktop Navigation */}
-      <div className='flex items-center gap-10'>
+      <div className='flex items-center gap-2'>
         {/* Logo */}
         <Link href={PAGES.HOME}>
           <Image
             src="/images/logo/logo-light.svg"
             alt="Recipes by Yuliia"
-            width={160}
-            height={50}
+            width={170}
+            height={60}
             priority
             className="dark:hidden"
           />
           <Image
             src="/images/logo/logo-dark.svg"
             alt="Recipes by Yuliia"
-            width={160}
-            height={50}
+            width={170}
+            height={60}
             priority
             className="hidden dark:block"
           />
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className='hidden lg:flex items-center gap-6'>
+        <nav className='hidden md:flex items-center gap-6'>
           <Link href={PAGES.HOME} className='text-sm text-muted hover:text-text transition-colors'>
             {t('nav.home')}
           </Link>
@@ -103,12 +103,12 @@ const Header: React.FC = () => {
       {/* Right side controls */}
       <div className='flex items-center gap-3'>
         {/* Auth bar - desktop only */}
-        <div className='hidden lg:block'>
+        <div className='hidden md:block'>
           <AuthBar user={user} handleLogout={handleLogout}/>
         </div>
 
         {/* Language switcher - hidden on mobile */}
-        <div className='hidden sm:block'>
+        <div className='hidden md:block'>
           <LanguageSwitcher/>
         </div>
 
@@ -117,11 +117,13 @@ const Header: React.FC = () => {
 
         {/* Mobile menu button */}
         <button
-          className='lg:hidden w-9 h-9 flex items-center justify-center text-xl text-muted hover:text-text transition-colors'
+          className='md:hidden w-9 h-9 flex flex-col gap-1 items-center justify-center text-xl text-muted hover:text-text transition-colors'
           onClick={() => setIsShowNav(!isShowNav)}
           aria-label="Toggle menu"
         >
-          ☰
+          <span className='w-5 h-0.5 bg-accent'></span>
+          <span className='w-5 h-0.5 bg-accent'></span>
+          <span className='w-5 h-0.5 bg-accent'></span>
         </button>
       </div>
 

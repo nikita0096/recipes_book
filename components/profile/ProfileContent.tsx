@@ -56,7 +56,6 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
   const t = useTranslations('profile');
   const locale = useTypedLocale();
 
-
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -95,8 +94,6 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
       </div>
     );
   }
-
-  console.log(formatDate(user?.createdAt));
 
   const handleUnlikeRecipe = async (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
     e.preventDefault();

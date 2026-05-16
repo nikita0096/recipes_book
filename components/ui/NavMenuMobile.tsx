@@ -49,7 +49,7 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
 
       {/* Slide-in Panel */}
       <div
-        className={`fixed top-0 right-0 bottom-0 w-[72%] max-w-[300px] flex flex-col transition-transform duration-300 ease-out ${
+        className={`fixed top-0 right-0 bottom-0 w-1/2 flex flex-col transition-transform duration-300 ease-out ${
           isShowNav ? 'translate-x-0 z-200' : 'translate-x-full'
         }`}
         style={{
@@ -96,19 +96,19 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
               href={PAGES.PROFILE(user.id)}
               onClick={() => setIsShowNav(false)}
             >
-              <div className="text-[15px] text-text font-medium">
+              <div className="text-md text-text font-medium">
                 {user.name || 'User'}
               </div>
-              <div className="text-[11px] text-muted mt-1 tracking-wide">
+              <div className="text-sm text-muted mt-1 tracking-wide">
                 {user.email}
               </div>
             </Link>
           ) : (
             <>
-              <div className="text-[15px] text-text font-medium">
+              <div className="text-md text-text font-medium">
                 {t('auth.welcomeGuest')}
               </div>
-              <div className="text-[11px] text-muted mt-1 tracking-wide">
+              <div className="text-xs text-muted mt-1 tracking-wide">
                 {t('auth.guestDescription')}
               </div>
             </>
@@ -122,7 +122,7 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
             onClick={() => setIsShowNav(false)}
             className="flex items-center justify-between px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
           >
-            <span className="text-[15px] text-text font-light tracking-tight">
+            <span className="text-sm text-text font-light tracking-tight">
               {t('nav.home')}
             </span>
             <span className="text-xs text-muted">→</span>
@@ -133,7 +133,7 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
             onClick={() => setIsShowNav(false)}
             className="flex items-center justify-between px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
           >
-            <span className="text-[15px] text-text font-light tracking-tight">
+            <span className="text-sm text-text font-light tracking-tight">
               {t('nav.recipes')}
             </span>
             <span className="text-xs text-muted">→</span>
@@ -144,7 +144,7 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
             onClick={() => setIsShowNav(false)}
             className="flex items-center justify-between px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
           >
-            <span className="text-[15px] text-text font-light tracking-tight">
+            <span className="text-sm text-text font-light tracking-tight">
               {t('nav.about')}
             </span>
             <span className="text-xs text-muted">→</span>
@@ -156,7 +156,7 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
               onClick={() => setIsShowNav(false)}
               className="flex items-center justify-between px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
             >
-              <span className="text-[15px] text-accent font-light tracking-tight">
+              <span className="text-md text-accent font-light tracking-tight">
                 {t('nav.adminPanel')}
               </span>
               <span className="text-xs text-muted">→</span>
@@ -174,7 +174,7 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
                 onClick={() => setIsShowNav(false)}
                 className="block px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
               >
-                <span className="text-[15px] text-text font-light">
+                <span className="text-sm text-text font-light">
                   {t('auth.profile')}
                 </span>
               </Link>
@@ -186,7 +186,7 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
                 }}
                 className="w-full text-left px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
               >
-                <span className="text-[15px] font-light text-red-500 dark:text-red-400">
+                <span className="text-sm font-light text-red-500 dark:text-red-400">
                   {t('auth.logout')}
                 </span>
               </button>
@@ -198,7 +198,7 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
                 onClick={() => setIsShowNav(false)}
                 className="block px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
               >
-                <span className="text-[15px] text-accent font-light">
+                <span className="text-sm text-accent font-light">
                   {t('auth.signIn')}
                 </span>
               </Link>
@@ -208,7 +208,7 @@ const NavMenuMobile: React.FC<NavMenuMobileProps> = ({
                 onClick={() => setIsShowNav(false)}
                 className="block px-6 py-3.5 cursor-pointer hover:bg-surface transition-colors"
               >
-                <span className="text-[15px] text-text font-light">
+                <span className="text-sm text-text font-light">
                   {t('auth.createAccount')}
                 </span>
               </Link>
