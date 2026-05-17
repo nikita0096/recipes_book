@@ -1,17 +1,17 @@
 'use client';
 
-import React from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import Link from 'next/link';
 import {useTranslations} from "next-intl";
 import Image from "next/image";
 import authorImage from "@/public/images/about/home-author.png";
 import {useUserStore} from "@/store/useUserStore";
 import Footer from "@/components/footer/Footer";
+import {AuthorInfo, fetchAuthorInfo} from "@/services/db/author/fetchAuthorInfo";
 
 const socialLinks = [
   {
     name: 'Instagram',
-    href: '#',
     color: '#E1306C',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -23,7 +23,6 @@ const socialLinks = [
   },
   {
     name: 'TikTok',
-    href: '#',
     color: '#000000',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
@@ -33,7 +32,6 @@ const socialLinks = [
   },
   {
     name: 'YouTube',
-    href: '#',
     color: '#FF0000',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -44,7 +42,6 @@ const socialLinks = [
   },
   {
     name: 'Facebook',
-    href: '#',
     color: '#1877F2',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -54,7 +51,6 @@ const socialLinks = [
   },
   {
     name: 'Telegram',
-    href: '#',
     color: '#2CA5E0',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -65,8 +61,43 @@ const socialLinks = [
 ];
 
 const About = () => {
+  const [author, setAuthor] = useState<AuthorInfo | null>(null);
   const t = useTranslations('about');
+
+  const initFetch = useRef(true);
   const {user} = useUserStore();
+
+  useEffect(() => {
+    const fetchAuthor =  async () => {
+      const data = await fetchAuthorInfo();
+
+      setAuthor(data);
+    }
+
+    if(initFetch.current) {
+      fetchAuthor();
+      initFetch.current = false;
+    }
+  }, [author]);
+
+  const getSocialMediaLink = (label: string) => {
+    switch (label) {
+      case 'Facebook':
+        return author?.links.facebook || '#';
+        case 'Telegram':
+          return author?.links.telegram || '#';
+          case 'Instagram':
+            return author?.links.instagram || '#';
+            case 'YouTube':
+              return author?.links.youTube || '#';
+              case 'TikTok':
+                return author?.links.tikTok || '#';
+                default:
+                  return '#';
+    }
+  }
+
+  if(!author) return null;
 
   return (
     <section className="min-h-screen">
@@ -76,7 +107,7 @@ const About = () => {
         <div className="relative bg-surface border-b lg:border-b-0 lg:border-r border-border min-h-[350px] sm:min-h-[450px] lg:min-h-[480px]">
           <Image
             src={authorImage}
-            alt="Author photo"
+            alt={author.name}
             fill
             className="object-cover"
             priority
@@ -103,9 +134,9 @@ const About = () => {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-px bg-border">
             {[
-              {num: '1000+', label: t('about.stats.recipes')},
-              {num: '1.1M+', label: t('about.stats.subscribers')},
-              {num: '1M+', label: t('about.stats.views')}
+              {num: author?.recipesCount + '+', label: t('about.stats.recipes')},
+              {num: author?.subscribers + 'M+', label: t('about.stats.subscribers')},
+              {num: author?.views + 'M+', label: t('about.stats.views')}
             ].map(({num, label}) => (
               <div key={label} className="bg-bg py-5">
                 <div className="font-serif text-center text-2xl sm:text-3xl text-accent tracking-tight mb-1">
@@ -135,7 +166,7 @@ const About = () => {
           {socialLinks.map((social) => (
             <Link
               key={social.name}
-              href={social.href}
+              href={getSocialMediaLink(social.name)}
               title={social.name}
               className="w-12 h-12 border border-border flex items-center justify-center text-muted
                          hover:border-current hover:text-[var(--hover-color)] hover:bg-[var(--hover-color)]/10

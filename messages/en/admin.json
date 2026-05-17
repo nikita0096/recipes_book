@@ -1,7 +1,8 @@
 {
   "nav": {
     "addNewRecipe": "Add new recipe",
-    "allRecipes": "All recipes"
+    "allRecipes": "All recipes",
+    "author": "Author"
   },
   "form": {
     "title": "Add New Recipe",
@@ -73,6 +74,14 @@
       "addAtLeastOneStep": "Add at least one step",
       "enterCategory": "Enter a category",
       "videoUploadingError": "Something went wrong with uploading. Remove and upload the video again and create new recipe."
+    },
+    "author": {
+      "placeholderRecipesCount": "Recipes quantity",
+      "placeholderViews": "Views",
+      "placeholderSubscribers": "Subscribers",
+      "authorName": "Author name",
+      "authorInfo": "Information",
+      "submitForm": "Save changes"
     }
   },
   "list": {

@@ -1,7 +1,8 @@
 {
   "nav": {
     "addNewRecipe": "Додати рецепт",
-    "allRecipes": "Усі рецепти"
+    "allRecipes": "Усі рецепти",
+    "author": "Автор"
   },
   "form": {
     "title": "Додати новий рецепт",
@@ -73,6 +74,14 @@
       "addAtLeastOneStep": "Додайте хоча б один крок",
       "enterCategory": "Додайте категорiю",
       "videoUploadingError": "Щось пішло не так із завантаженням. Видаліть відео та завантажте його знову, а потім створіть новий рецепт."
+    },
+    "author": {
+      "placeholderRecipesCount": "Кількість рецептів",
+      "placeholderViews": "Перегляди",
+      "placeholderSubscribers": "Підписники",
+      "authorName": "Ім'я автора",
+      "authorInfo": "Інформація",
+      "submitForm": "Зберегти зміни"
     }
   },
   "list": {

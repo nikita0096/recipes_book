@@ -11,6 +11,7 @@ const AdminNavBar = () => {
   const tabs = [
     { href: '/admin', label: t('nav.addNewRecipe') },
     { href: '/admin/recipes', label: t('nav.allRecipes') },
+    { href: '/admin/author', label: t('nav.author') },
   ];
 
   return (
