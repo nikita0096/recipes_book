@@ -83,15 +83,15 @@ const About = () => {
   const getSocialMediaLink = (label: string) => {
     switch (label) {
       case 'Facebook':
-        return author?.links.facebook || '#';
+        return author?.facebook || '#';
         case 'Telegram':
-          return author?.links.telegram || '#';
+          return author?.telegram || '#';
           case 'Instagram':
-            return author?.links.instagram || '#';
+            return author?.instagram || '#';
             case 'YouTube':
-              return author?.links.youTube || '#';
+              return author?.youTube || '#';
               case 'TikTok':
-                return author?.links.tikTok || '#';
+                return author?.tikTok || '#';
                 default:
                   return '#';
     }
@@ -106,7 +106,7 @@ const About = () => {
         {/* Left — photo */}
         <div className="relative bg-surface border-b lg:border-b-0 lg:border-r border-border min-h-[350px] sm:min-h-[450px] lg:min-h-[480px]">
           <Image
-            src={authorImage}
+            src={author.image}
             alt={author.name}
             fill
             className="object-cover"

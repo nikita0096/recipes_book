@@ -4,24 +4,31 @@ import React, {useEffect, useRef, useState} from 'react';
 import {AuthorInfo, fetchAuthorInfo} from "@/services/db/author/fetchAuthorInfo";
 import Image from "next/image";
 import {useTranslations} from "next-intl";
-import {useForm} from "react-hook-form";
+import {SubmitHandler, useForm} from "react-hook-form";
+import {updateAuthorInfo} from "@/services/db/author/updateAuthorInfo";
+import {Spinner} from "@/components/ui/spinner";
+import {MdDeleteForever} from "react-icons/md";
 
-interface AuthorInfoForm {
+export interface AuthorInfoForm {
   instagram: string;
   tikTok: string;
   youTube: string;
   facebook: string;
   telegram: string;
+  imageFile: File | null;
   image: string;
   name: string;
   recipesCount: number;
   subscribers: number;
   views: number;
+  email: string;
 }
 
 
 const Page = () => {
   const [author, setAuthor] = useState<AuthorInfo | null>(null);
+  const [error, setError] = useState<null | string>(null);
+  const [loading, setLoading] = useState(false);
 
   const initFetch = useRef(true);
 
@@ -30,12 +37,8 @@ const Page = () => {
   const {
     register,
     handleSubmit,
-    control,
     setValue,
-    resetField,
-    getValues,
     watch,
-    formState: {errors}
   } = useForm<AuthorInfoForm>({
     defaultValues: {
       instagram: '',
@@ -43,8 +46,10 @@ const Page = () => {
       youTube: '',
       facebook: '',
       telegram: '',
+      imageFile: null,
       image: '',
       name: '',
+      email: '',
       recipesCount: 0,
       subscribers: 0,
       views: 0
@@ -62,23 +67,92 @@ const Page = () => {
       fetchAuthor();
       initFetch.current = false;
     }
-    console.log(author);
+
+    if (author) {
+      setValue('youTube', author.youTube);
+      setValue('instagram', author.instagram);
+      setValue('tikTok', author.tikTok);
+      setValue('facebook', author.facebook);
+      setValue('telegram', author.telegram);
+      setValue('name', author.name);
+      setValue('image', author.image);
+      setValue('recipesCount', author.recipesCount);
+      setValue('subscribers', author.subscribers);
+      setValue('views', author.views);
+      setValue('email', author.email);
+    }
+
   }, [author]);
+
+  const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+
+    if (file !== null) {
+      const image = URL.createObjectURL(file);
+
+      setValue('image', image)
+      setValue('imageFile', file);
+    }
+  }
+
+  const deleteImage = () => {
+    setValue('image', '');
+    setValue('imageFile', null);
+  }
+
+  const updateAuthor: SubmitHandler<AuthorInfoForm> = async (formData) => {
+    if (!author?.id) return;
+    setError(null);
+
+    if (!formData.image && !formData.imageFile) {
+      setError(t('form.author.validation.addPicture'));
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const data = await updateAuthorInfo(author.id, formData, author.image);
+      setAuthor(data);
+      setValue('imageFile', null);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Couldn\'t update author');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
 
   if (!author) return null;
 
+  const imageUrl = watch('image');
+
   return (
-    <section className='flex flex-col items-center justify-center pb-10'>
-      <form className='grid grid-cols-2 gap-5 p-5 md:p-10'>
-        <div className='aspect-square'>
-          {author.image !== '' ? (
-            <Image
-              src={author.image}
-              alt={author.name}
-              fill
-              style={{objectFit: 'cover'}}
-              priority
-            />
+    <section className='flex flex-col items-center justify-center'>
+      <form onSubmit={handleSubmit(updateAuthor)}
+            className='grid grid-cols-1 md:grid-cols-2 gap-5 p-5 md:p-10 w-full'>
+        <div className='relative aspect-square'>
+          {imageUrl ? (
+            <div>
+              <Image
+                src={imageUrl}
+                alt={author.name}
+                fill
+                style={{objectFit: 'cover'}}
+                className='w-full h-full'
+                priority
+              />
+              <button
+                type="button"
+                className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+                onClick={deleteImage}
+              >
+                <MdDeleteForever className="text-lg"/>
+              </button>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center gap-3.5 w-full h-full py-12 border border-dashed border-border cursor-pointer">
               <svg width="24"
@@ -101,83 +175,110 @@ const Page = () => {
               <label className="cursor-pointer text-xs tracking-[0.06em] uppercase text-muted hover:text-text transition-colors">
                 <input type="file"
                        hidden
-                       multiple={false}/>
+                       multiple={false}
+                       accept="image/*"
+                       onChange={(e) => handleImage(e)}
+                />
                 {t('form.buttons.addPicture')}
               </label>
             </div>
           )}
         </div>
-        <div className='flex flex-col items-start justify-start gap-2 w-full p-5'>
+        <div className='flex flex-col items-start justify-start gap-2 w-full'>
           <h4>{t('form.author.authorInfo')}</h4>
-          <label className="block text-xs tracking-[0.08em] uppercase text-muted">
+          <label htmlFor="instagram" className="block text-xs tracking-[0.08em] uppercase text-muted" >
             Instagram
           </label>
-          <input className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+          <input id="instagram"
+                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                  type="text"
                  {...register('instagram', {required: true})}
                  placeholder='Instagram'/>
-          <label className="block text-xs tracking-[0.08em] uppercase text-muted">
+          <label htmlFor="tikTok" className="block text-xs tracking-[0.08em] uppercase text-muted">
             TikTok
           </label>
-          <input className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+          <input id="tikTok"
+                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                  type="text"
                  {...register('tikTok', {required: true})}
                  placeholder='TikTok'/>
-          <label className="block text-xs tracking-[0.08em] uppercase text-muted">
+          <label htmlFor="facebook" className="block text-xs tracking-[0.08em] uppercase text-muted">
             Facebook
           </label>
-          <input className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+          <input id="facebook"
+                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                  type="text"
                  {...register('facebook', {required: true})}
                  placeholder='Facebook'/>
-          <label className="block text-xs tracking-[0.08em] uppercase text-muted">
+          <label htmlFor="youTube" className="block text-xs tracking-[0.08em] uppercase text-muted">
             Youtube
           </label>
-          <input className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+          <input id="youTube"
+                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                  type="text"
                  {...register('youTube', {required: true})}
                  placeholder='Youtube'/>
-          <label className="block text-xs tracking-[0.08em] uppercase text-muted">
+          <label htmlFor="telegram" className="block text-xs tracking-[0.08em] uppercase text-muted">
             Telegram
           </label>
-          <input className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+          <input id="telegram"
+                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                  type="text"
                  {...register('telegram', {required: true})}
                  placeholder='Telegram'/>
-          <label className="block text-xs tracking-[0.08em] uppercase text-muted">
+          <label htmlFor="name" className="block text-xs tracking-[0.08em] uppercase text-muted">
             {t('form.author.authorName')}
           </label>
-          <input className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+          <input id="name"
+                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                  type="text"
                  {...register('name', {required: true})}
                  placeholder={t('form.author.authorName')}/>
-          <label className="block text-xs tracking-[0.08em] uppercase text-muted">
+          <label htmlFor="recipesCount" className="block text-xs tracking-[0.08em] uppercase text-muted">
             {t('form.author.placeholderRecipesCount')}
           </label>
-          <input className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+          <input id="recipesCount"
+                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                  type="number"
                  {...register('recipesCount', {required: true})}
                  placeholder={t('form.author.placeholderRecipesCount')}/>
-          <label className="block text-xs tracking-[0.08em] uppercase text-muted">
+          <label htmlFor="views" className="block text-xs tracking-[0.08em] uppercase text-muted">
             {t('form.author.placeholderViews')}
           </label>
-          <input className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+          <input id="views"
+                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                  type="number"
                  {...register('views', {required: true})}
                  placeholder={t('form.author.placeholderViews')}/>
-          <label className="block text-xs tracking-[0.08em] uppercase text-muted">
+          <label htmlFor="subscribers" className="block text-xs tracking-[0.08em] uppercase text-muted">
             {t('form.author.placeholderSubscribers')}
           </label>
-          <input className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+          <input id="subscribers"
+                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                  type="number"
+                 step="0.1"
                  {...register('subscribers', {required: true})}
                  placeholder={t('form.author.placeholderSubscribers')}/>
+          <label htmlFor="email" className="block text-xs tracking-[0.08em] uppercase text-muted">
+            Email
+          </label>
+          <input id="email"
+                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                 type="email"
+                 {...register('email', {required: true})}
+                 placeholder="Email"/>
+          <div className='flex flex-col gap-2 items-center justify-center w-full mt-4'>
+            {error && (
+              <p className='text-red-400'>{error}</p>
+            )}
+            <button
+              className="flex flex-row items-center justify-center px-10 py-4 bg-text text-bg text-sm tracking-[0.08em] uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+              type="submit"
+              disabled={loading}
+            >{loading ? <Spinner/> : t('form.author.submitForm')}</button>
+          </div>
         </div>
       </form>
-      <button
-        className="flex flex-row items-center justify-center px-10 py-4 bg-text text-bg text-sm tracking-[0.08em] uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
-        type="submit"
-      >{t('form.author.submitForm')}</button>
     </section>
   );
 };

@@ -81,7 +81,10 @@
       "placeholderSubscribers": "Subscribers",
       "authorName": "Author name",
       "authorInfo": "Information",
-      "submitForm": "Save changes"
+      "submitForm": "Save changes",
+      "validation": {
+        "addPicture": "Add author picture"
+      }
     }
   },
   "list": {
