@@ -19,7 +19,7 @@ export async function uploadImage({file, bucket, filePath}: UploadProps) {
     });
   } catch (error) {
     errorMessage = error instanceof Error ? error.message : 'Image compression failed';
-    return {imageUrl: "", error: errorMessage};
+    return {imagePath: "", error: errorMessage};
   }
 
   const { data, error } = await supabase.storage
@@ -28,10 +28,8 @@ export async function uploadImage({file, bucket, filePath}: UploadProps) {
 
   if (error) {
     errorMessage = 'Image uploading failed';
-    return {imageUrl: "", error: errorMessage};
+    return {imagePath: "", error: errorMessage};
   }
 
-  const imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${bucket}/${data.path}`;
-
-  return {imageUrl, error: ''};
+  return {imagePath: data.path, error: ''};
 }

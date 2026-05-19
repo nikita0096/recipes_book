@@ -1,20 +1,5 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
-
-interface AuthorInfoFetchResponse {
-  contact_email: string;
-  created_at: string;
-  facebook_link: string;
-  id: string;
-  image: string;
-  inst_link: string;
-  recipes_count: number;
-  subscribers: number;
-  telegram_link: string;
-  tik_tok_link: string;
-  views: number;
-  you_tube_link: string;
-  name: string;
-}
+import {getSignedImageUrl} from "@/services/storage/getSignedImageUrl";
 
 export interface AuthorInfo {
   instagram: string;
@@ -55,6 +40,8 @@ export const fetchAuthorInfo = async (): Promise<AuthorInfo> => {
     }
   }
 
+  const imageUrl = await getSignedImageUrl(author[0].image, 'author');
+
   return {
     instagram: author[0].inst_link,
     tikTok: author[0].tik_tok_link,
@@ -62,7 +49,7 @@ export const fetchAuthorInfo = async (): Promise<AuthorInfo> => {
     facebook: author[0].facebook_link,
     telegram: author[0].telegram_link,
     id: author[0].id,
-    image: author[0].image,
+    image: imageUrl || '',
     name: author[0].name,
     recipesCount: author[0].recipes_count,
     subscribers: author[0].subscribers,

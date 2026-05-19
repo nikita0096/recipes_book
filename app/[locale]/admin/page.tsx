@@ -288,14 +288,14 @@ const Page = () => {
 
     for (const step of data.recipeSteps) {
       const {desc, image} = step;
-      let imgUrl = null;
+      let imgPath: string | null = null;
 
-      const filePath = `${folder}/${uuidv4()}`;
+      const filePath = `${folder}/step-img-${uuidv4()}`;
 
       if (image !== null) {
-        const {imageUrl, error} = await uploadImage({
+        const {imagePath, error} = await uploadImage({
           file: image,
-          bucket: 'images',
+          bucket: 'steps',
           filePath: filePath
         });
 
@@ -303,25 +303,31 @@ const Page = () => {
           return null;
         }
 
-        imgUrl = imageUrl;
+        imgPath = imagePath;
       }
       steps.push({
         desc,
-        imgUrl,
+        imgUrl: imgPath,
         id: uuidv4(),
       });
     }
 
-    let heroImgResult = null;
+    const fileHeroPath = `${folder}/hero-img-${uuidv4()}`;
 
-    const fileHeroPath = `${folder}/${"heroImg" + uuidv4()}`;
-
+    let heroImgPath: string;
     try {
-      heroImgResult = await uploadImage({
+      const heroImgResult = await uploadImage({
         file: data.heroImg,
-        bucket: 'images',
+        bucket: 'hero-images',
         filePath: fileHeroPath
       });
+
+      if (heroImgResult.error) {
+        setError(t('form.validation.reloadHeroImage'));
+        return null;
+      }
+
+      heroImgPath = heroImgResult.imagePath;
     } catch {
       setError(t('form.validation.reloadHeroImage'));
       return null;
@@ -336,7 +342,7 @@ const Page = () => {
       likes: data.likes,
       recipeSteps: steps as RecipeStep[],
       ingredients: data.ingredients,
-      heroImg: heroImgResult.imageUrl,
+      heroImg: heroImgPath,
       preparingTime: data.preparingTime,
       videoUrl: videoUrl,  // R2 key stored as videoUrl
     };

@@ -1,6 +1,7 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {IRecipePublic, IRecipePremiumIncomplete, RecipeStep} from "@/types/recipe";
 import {Ingredient, LocalizedText} from "@/types/forms";
+import {batchGetSignedUrls} from "@/services/storage/getSignedImageUrl";
 
 // Database row type
 interface RecipeRow {
@@ -31,7 +32,13 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
 
   if (error) throw error;
 
-  return (data as RecipeRow[]).map((item): RecipeListItem => {
+  const recipes = data as RecipeRow[];
+  const heroPaths = recipes.map(r => r.hero_img).filter(Boolean);
+  const urlMap = await batchGetSignedUrls(heroPaths, 'hero-images');
+
+  return recipes.map((item): RecipeListItem => {
+    const heroImg = urlMap[item.hero_img] || '';
+
     if (!item.is_premium) {
       return {
         id: item.id,
@@ -40,7 +47,7 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
         likes: item.likes,
         category: item.category,
         ingredients: item.ingredients,
-        heroImg: item.hero_img,
+        heroImg,
         isPremium: false as const,
         preparingTime: item.preparing_time,
         recipeSteps: item.recipe_steps!,
@@ -56,7 +63,7 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
       likes: item.likes,
       category: item.category,
       ingredients: item.ingredients,
-      heroImg: item.hero_img,
+      heroImg,
       isPremium: true as const,
       preparingTime: item.preparing_time,
       recipeSteps: item.recipe_steps ?? null,

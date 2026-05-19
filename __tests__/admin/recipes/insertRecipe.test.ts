@@ -25,13 +25,14 @@ const createMockPublicRecipe = (): IRecipeUploadPublic => ({
   ingredients: [
     { id: 'ing-1', value: { ua: 'Цукор', en: 'Sugar' }, quantity: '100', unit: 'g' },
   ],
-  heroImg: 'https://example.com/hero.jpg',
+  heroImg: 'recipe-123/hero-img-1.jpg',
   isPremium: false,
   preparingTime: 30,
-  videoUrl: 'https://example.com/video.mp4',
+  videoUrl: 'video-key-1',
   recipeSteps: [
     { desc: { ua: 'Крок 1', en: 'Step 1' }, imgUrl: null, id: 'step-1' },
   ],
+  stepsCount: 1,
 });
 
 const createMockPremiumRecipe = (): IRecipeUploadPremiumMain => ({
@@ -43,9 +44,11 @@ const createMockPremiumRecipe = (): IRecipeUploadPremiumMain => ({
   ingredients: [
     { id: 'ing-1', value: { ua: 'Борошно', en: 'Flour' }, quantity: '200', unit: 'g' },
   ],
-  heroImg: 'https://example.com/premium-hero.jpg',
+  heroImg: 'recipe-456/hero-img-1.jpg',
   isPremium: true,
   preparingTime: 60,
+  premiumId: 'premium-123',
+  stepsCount: 1,
 });
 
 describe('insertRecipePublic', () => {
@@ -55,20 +58,14 @@ describe('insertRecipePublic', () => {
 
   test('should insert public recipe successfully', async () => {
     const mockRecipe = createMockPublicRecipe();
-    const mockSelect = jest.fn().mockReturnValue({
-      single: jest.fn().mockResolvedValue({
-        data: { id: mockRecipe.id },
-        error: null,
-      }),
-    });
-    const mockInsert = jest.fn().mockReturnValue({
-      select: mockSelect,
+    const mockInsert = jest.fn().mockResolvedValue({
+      error: null,
     });
     (mockSupabase.from as jest.Mock).mockReturnValue({
       insert: mockInsert,
     });
 
-    const result = await insertRecipePublic(mockRecipe);
+    await insertRecipePublic(mockRecipe);
 
     expect(mockSupabase.from).toHaveBeenCalledWith('recipes');
     expect(mockInsert).toHaveBeenCalledWith({
@@ -83,20 +80,14 @@ describe('insertRecipePublic', () => {
       preparing_time: mockRecipe.preparingTime,
       video_url: mockRecipe.videoUrl,
       recipe_steps: mockRecipe.recipeSteps,
+      steps_count: mockRecipe.recipeSteps.length,
     });
-    expect(result).toEqual({ id: mockRecipe.id });
   });
 
   test('should throw error when insert fails', async () => {
     const mockRecipe = createMockPublicRecipe();
-    const mockSelect = jest.fn().mockReturnValue({
-      single: jest.fn().mockResolvedValue({
-        data: null,
-        error: { message: 'Database error' },
-      }),
-    });
-    const mockInsert = jest.fn().mockReturnValue({
-      select: mockSelect,
+    const mockInsert = jest.fn().mockResolvedValue({
+      error: { message: 'Database error' },
     });
     (mockSupabase.from as jest.Mock).mockReturnValue({
       insert: mockInsert,
@@ -109,14 +100,8 @@ describe('insertRecipePublic', () => {
 
   test('should map all fields correctly to snake_case', async () => {
     const mockRecipe = createMockPublicRecipe();
-    const mockSelect = jest.fn().mockReturnValue({
-      single: jest.fn().mockResolvedValue({
-        data: { id: mockRecipe.id },
-        error: null,
-      }),
-    });
-    const mockInsert = jest.fn().mockReturnValue({
-      select: mockSelect,
+    const mockInsert = jest.fn().mockResolvedValue({
+      error: null,
     });
     (mockSupabase.from as jest.Mock).mockReturnValue({
       insert: mockInsert,
@@ -142,20 +127,14 @@ describe('insertRecipePremiumMain', () => {
 
   test('should insert premium recipe main data successfully', async () => {
     const mockRecipe = createMockPremiumRecipe();
-    const mockSelect = jest.fn().mockReturnValue({
-      single: jest.fn().mockResolvedValue({
-        data: { id: mockRecipe.id },
-        error: null,
-      }),
-    });
-    const mockInsert = jest.fn().mockReturnValue({
-      select: mockSelect,
+    const mockInsert = jest.fn().mockResolvedValue({
+      error: null,
     });
     (mockSupabase.from as jest.Mock).mockReturnValue({
       insert: mockInsert,
     });
 
-    const result = await insertRecipePremiumMain(mockRecipe);
+    await insertRecipePremiumMain(mockRecipe, 3);
 
     expect(mockSupabase.from).toHaveBeenCalledWith('recipes');
     expect(mockInsert).toHaveBeenCalledWith({
@@ -170,26 +149,21 @@ describe('insertRecipePremiumMain', () => {
       preparing_time: mockRecipe.preparingTime,
       video_url: null,
       recipe_steps: null,
+      premium_recipe: mockRecipe.premiumId,
+      steps_count: 3,
     });
-    expect(result).toEqual({ id: mockRecipe.id });
   });
 
   test('should set video_url and recipe_steps to null for premium', async () => {
     const mockRecipe = createMockPremiumRecipe();
-    const mockSelect = jest.fn().mockReturnValue({
-      single: jest.fn().mockResolvedValue({
-        data: { id: mockRecipe.id },
-        error: null,
-      }),
-    });
-    const mockInsert = jest.fn().mockReturnValue({
-      select: mockSelect,
+    const mockInsert = jest.fn().mockResolvedValue({
+      error: null,
     });
     (mockSupabase.from as jest.Mock).mockReturnValue({
       insert: mockInsert,
     });
 
-    await insertRecipePremiumMain(mockRecipe);
+    await insertRecipePremiumMain(mockRecipe, 3);
 
     const insertCall = mockInsert.mock.calls[0][0];
     expect(insertCall.video_url).toBeNull();
@@ -199,20 +173,14 @@ describe('insertRecipePremiumMain', () => {
 
   test('should throw error when insert fails', async () => {
     const mockRecipe = createMockPremiumRecipe();
-    const mockSelect = jest.fn().mockReturnValue({
-      single: jest.fn().mockResolvedValue({
-        data: null,
-        error: { message: 'Duplicate key' },
-      }),
-    });
     const mockInsert = jest.fn().mockReturnValue({
-      select: mockSelect,
+      error: { message: 'Duplicate key' },
     });
     (mockSupabase.from as jest.Mock).mockReturnValue({
       insert: mockInsert,
     });
 
-    await expect(insertRecipePremiumMain(mockRecipe)).rejects.toEqual({
+    await expect(insertRecipePremiumMain(mockRecipe, 3)).rejects.toEqual({
       message: 'Duplicate key',
     });
   });

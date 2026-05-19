@@ -1,7 +1,7 @@
 import {v4 as uuidv4} from "uuid";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {uploadVideoToStorage} from "@/services/storage/uploadVideoToStorage";
-import {deleteImage} from "@/services/storage/deleteImageFromStorage";
+import {deleteFileByPath} from "@/services/storage/deleteImageFromStorage";
 import {EditingValues} from "../page";
 import {
   IRecipe,
@@ -56,20 +56,20 @@ export const prepareUpdateData = async ({
     // Process steps - upload new images if needed
     const processedSteps: RecipeStep[] = [];
     for (const step of formData.recipeSteps) {
-      let imgUrl = step.imgUrl;
+      let imgPath = step.imgUrl;
 
       // If there's a new image file, upload it
       if (step.imgFile) {
-        // Find old image URL for this step and delete it
+        // Find old image path for this step and delete it
         const oldStep = recipe.recipeSteps.find(s => s.id === step.id);
         if (oldStep?.imgUrl) {
-          await deleteImage(oldStep.imgUrl);
+          await deleteFileByPath(oldStep.imgUrl, 'steps');
         }
 
-        const filePath = `${folder}/${uuidv4()}`;
-        const {imageUrl, error: uploadError} = await uploadImage({
+        const filePath = `${folder}/step-img-${uuidv4()}`;
+        const {imagePath, error: uploadError} = await uploadImage({
           file: step.imgFile,
-          bucket: 'images',
+          bucket: 'steps',
           filePath: filePath
         });
 
@@ -77,12 +77,12 @@ export const prepareUpdateData = async ({
           return {success: false, error: 'Failed to upload step image'};
         }
 
-        imgUrl = imageUrl;
+        imgPath = imagePath;
       }
 
       processedSteps.push({
         desc: step.desc,
-        imgUrl: imgUrl,
+        imgUrl: imgPath,
         id: step.id
       });
     }
@@ -91,22 +91,22 @@ export const prepareUpdateData = async ({
     const newStepIds = new Set(formData.recipeSteps.map(s => s.id));
     for (const oldStep of recipe.recipeSteps) {
       if (!newStepIds.has(oldStep.id) && oldStep.imgUrl) {
-        await deleteImage(oldStep.imgUrl);
+        await deleteFileByPath(oldStep.imgUrl, 'steps');
       }
     }
 
     // Process hero image if there's a new file
-    let heroImgUrl = formData.heroImg;
+    let heroImgPath = formData.heroImg;
     if (formData.heroImgFile) {
       // Delete old hero image before uploading new one
       if (recipe.heroImg) {
-        await deleteImage(recipe.heroImg);
+        await deleteFileByPath(recipe.heroImg, 'hero-images');
       }
 
-      const filePath = `${folder}/heroImg-${uuidv4()}`;
-      const {imageUrl, error: heroError} = await uploadImage({
+      const filePath = `${folder}/hero-img-${uuidv4()}`;
+      const {imagePath, error: heroError} = await uploadImage({
         file: formData.heroImgFile,
-        bucket: 'images',
+        bucket: 'hero-images',
         filePath: filePath
       });
 
@@ -114,7 +114,7 @@ export const prepareUpdateData = async ({
         return {success: false, error: 'Failed to upload hero image'};
       }
 
-      heroImgUrl = imageUrl;
+      heroImgPath = imagePath;
     }
 
     // Process video if there's a new file
@@ -156,7 +156,7 @@ export const prepareUpdateData = async ({
         category: formData.category,
         likes: Number(formData.likes),
         ingredients,
-        heroImg: heroImgUrl,
+        heroImg: heroImgPath,
         preparingTime: formData.preparingTime,
         isPremium: true as const,
         stepsCount: processedSteps.length,
@@ -187,7 +187,7 @@ export const prepareUpdateData = async ({
       likes: Number(formData.likes),
       recipeSteps: processedSteps,
       ingredients,
-      heroImg: heroImgUrl,
+      heroImg: heroImgPath,
       videoUrl: videoUrl,
       preparingTime: formData.preparingTime,
       isPremium: false as const,

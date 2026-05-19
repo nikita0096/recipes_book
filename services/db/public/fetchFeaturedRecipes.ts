@@ -1,7 +1,19 @@
 import { supabase } from "@/lib/supabase/ClientComponentClient";
-import { IRecipe, IRecipePublic, IRecipePremiumFull } from "@/types/recipe";
+import {getSignedImageUrl} from "@/services/storage/getSignedImageUrl";
+import {LocalizedText} from "@/types";
 
-export const fetchFeaturedRecipes = async (): Promise<IRecipe[]> => {
+interface FeaturedRecipe {
+  id: string;
+  title: LocalizedText;
+  heroImg: string;
+  stepsCount: number;
+  isPremium: boolean;
+  likes: number;
+  category: LocalizedText;
+  description: LocalizedText;
+}
+
+export const fetchFeaturedRecipes = async (): Promise<FeaturedRecipe[] | []> => {
   const { data, error } = await supabase
     .from("recipes")
     .select('*')
@@ -10,37 +22,31 @@ export const fetchFeaturedRecipes = async (): Promise<IRecipe[]> => {
 
   if (error) throw error;
 
-  return (data || []).map((item): IRecipe => {
-    if (!item.is_premium) {
-      return {
-        id: item.id,
-        title: item.title,
-        description: item.description,
-        likes: item.likes,
-        category: item.category,
-        ingredients: item.ingredients,
-        heroImg: item.hero_img,
-        isPremium: false as const,
-        preparingTime: item.preparing_time,
-        recipeSteps: item.recipe_steps,
-        videoUrl: item.video_url,
-        stepsCount: item.steps_count,
-      } satisfies IRecipePublic;
-    }
+  const result = await Promise.all(
+    data.map(async (recipe) => {
+      if(recipe.hero_img) {
+        const heroUrl = await getSignedImageUrl(recipe.hero_img, 'hero-images');
 
+        return {
+          ...recipe,
+          hero_img: heroUrl,
+        }
+      }
+    })
+  );
+
+  if(!result.length)  return [];
+
+  return (result || []).map((item) => {
     return {
       id: item.id,
       title: item.title,
-      description: item.description,
+      heroImg: item.hero_img || '',
+      stepsCount: item.steps_count,
+      isPremium: item.is_premium,
       likes: item.likes,
       category: item.category,
-      ingredients: item.ingredients,
-      heroImg: item.hero_img,
-      isPremium: true as const,
-      preparingTime: item.preparing_time,
-      recipeSteps: item.recipe_steps,
-      videoUrl: item.video_url,
-      stepsCount: item.steps_count,
-    } satisfies IRecipePremiumFull;
+      description: item.description,
+    }
   });
 };

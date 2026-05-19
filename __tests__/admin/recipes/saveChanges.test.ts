@@ -13,6 +13,14 @@ jest.mock('@/services/storage/uploadVideoToStorage', () => ({
   uploadVideoToStorage: jest.fn(),
 }));
 
+jest.mock('@/services/storage/deleteImageFromStorage', () => ({
+  deleteFileByPath: jest.fn().mockResolvedValue({success: true}),
+}));
+
+jest.mock('@/services/storage/deleteVideoR2Bucket', () => ({
+  deleteVideo: jest.fn().mockResolvedValue({success: true}),
+}));
+
 // Mock uuid
 jest.mock('uuid', () => ({
   v4: jest.fn(() => 'test-uuid'),
@@ -29,17 +37,18 @@ const createMockRecipePublic = (): IRecipePublic => ({
   likes: 10,
   category: {ua: 'Десерти', en: 'Desserts'},
   recipeSteps: [
-    {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: 'https://example.com/step1.jpg', id: 'step-1'},
+    {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: '1/step-img-1.jpg', id: 'step-1'},
     {desc: {ua: 'Крок 2', en: 'Step 2'}, imgUrl: null, id: 'step-2'},
   ],
   ingredients: [
     {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '100', unit: 'g'},
     {id: 'ing-2', value: {ua: 'Борошно', en: 'Flour'}, quantity: '200', unit: 'g'},
   ],
-  heroImg: 'https://example.com/hero.jpg',
+  heroImg: '1/hero-img-1.jpg',
   isPremium: false,
   preparingTime: 30,
-  videoUrl: 'https://example.com/video.mp4',
+  videoUrl: 'video-key-1',
+  stepsCount: 2,
 });
 
 const createMockRecipePremium = (): IRecipePremiumFull => ({
@@ -49,19 +58,20 @@ const createMockRecipePremium = (): IRecipePremiumFull => ({
   likes: 50,
   category: {ua: 'Супи', en: 'Soups'},
   recipeSteps: [
-    {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: 'https://example.com/step1.jpg', id: 'step-1'},
+    {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: '2/step-img-1.jpg', id: 'step-1'},
   ],
   ingredients: [
     {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '100', unit: 'g'},
   ],
-  heroImg: 'https://example.com/hero.jpg',
+  heroImg: '2/hero-img-2.jpg',
   isPremium: true,
   preparingTime: 60,
-  videoUrl: 'https://example.com/video.mp4',
+  videoUrl: 'video-key-2',
+  stepsCount: 1,
 });
 
 const createMockFormData = (overrides?: Partial<EditingValues>): EditingValues => ({
-  heroImg: 'https://example.com/hero.jpg',
+  heroImg: '1/hero-img-1.jpg',
   heroImgFile: null,
   category: {ua: 'Десерти', en: 'Desserts'},
   title: {ua: 'Тестовий рецепт', en: 'Test Recipe'},
@@ -71,7 +81,7 @@ const createMockFormData = (overrides?: Partial<EditingValues>): EditingValues =
     {id: 'ing-2', value: {ua: 'Борошно', en: 'Flour'}, quantity: '200', unit: 'g'},
   ],
   recipeSteps: [
-    {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: 'https://example.com/step1.jpg', imgFile: null, id: 'step-1'},
+    {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: '1/step-img-1.jpg', imgFile: null, id: 'step-1'},
     {desc: {ua: 'Крок 2', en: 'Step 2'}, imgUrl: null, imgFile: null, id: 'step-2'},
   ],
   likes: 10,
@@ -79,10 +89,12 @@ const createMockFormData = (overrides?: Partial<EditingValues>): EditingValues =
   ingredientUa: '',
   ingredientQuantity: '',
   ingredientUnit: 'g',
-  videoUrl: 'https://example.com/video.mp4',
+  videoUrl: 'video-key-1',
   videoFile: null,
   preparingTime: 30,
   isPremium: false,
+  price: 0,
+  discount: 0,
   ...overrides,
 });
 
@@ -98,8 +110,8 @@ const isPremiumResult = (result: PrepareUpdateDataResult): result is Extract<Pre
 describe('prepareUpdateData - Public recipes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUploadImage.mockResolvedValue({imageUrl: 'https://example.com/new-image.jpg', error: ''});
-    mockUploadVideo.mockResolvedValue({publicUrl: 'https://example.com/new-video.mp4', error: ''});
+    mockUploadImage.mockResolvedValue({imagePath: 'recipe-id/new-image.jpg', error: ''});
+    mockUploadVideo.mockResolvedValue({videoUrl: 'new-video-key', error: ''});
   });
 
   // Test 1: Nothing changed - save with same data
@@ -110,7 +122,6 @@ describe('prepareUpdateData - Public recipes', () => {
     const result = await prepareUpdateData({
       formData,
       recipe,
-      updatedHeroImg: null,
     });
 
     expect(result.success).toBe(true);
@@ -134,7 +145,6 @@ describe('prepareUpdateData - Public recipes', () => {
     const result = await prepareUpdateData({
       formData,
       recipe,
-      updatedHeroImg: null,
     });
 
     expect(result.success).toBe(true);
@@ -154,7 +164,6 @@ describe('prepareUpdateData - Public recipes', () => {
     const result = await prepareUpdateData({
       formData,
       recipe,
-      updatedHeroImg: null,
     });
 
     expect(result.success).toBe(true);
@@ -173,7 +182,6 @@ describe('prepareUpdateData - Public recipes', () => {
     const result = await prepareUpdateData({
       formData,
       recipe,
-      updatedHeroImg: null,
     });
 
     expect(result.success).toBe(true);
@@ -187,7 +195,7 @@ describe('prepareUpdateData - Public recipes', () => {
     const recipe = createMockRecipePublic();
     const formData = createMockFormData({
       recipeSteps: [
-        {desc: {ua: 'Оновлений крок 1', en: 'Updated Step 1'}, imgUrl: 'https://example.com/step1.jpg', imgFile: null, id: 'step-1'},
+        {desc: {ua: 'Оновлений крок 1', en: 'Updated Step 1'}, imgUrl: '1/step-img-1.jpg', imgFile: null, id: 'step-1'},
         {desc: {ua: 'Крок 2', en: 'Step 2'}, imgUrl: null, imgFile: null, id: 'step-2'},
       ],
     });
@@ -195,7 +203,6 @@ describe('prepareUpdateData - Public recipes', () => {
     const result = await prepareUpdateData({
       formData,
       recipe,
-      updatedHeroImg: null,
     });
 
     expect(result.success).toBe(true);
@@ -219,13 +226,12 @@ describe('prepareUpdateData - Public recipes', () => {
     const result = await prepareUpdateData({
       formData,
       recipe,
-      updatedHeroImg: null,
     });
 
     expect(result.success).toBe(true);
     expect(mockUploadImage).toHaveBeenCalledTimes(1);
     if (isPublicResult(result)) {
-      expect(result.data.recipeSteps[0].imgUrl).toBe('https://example.com/new-image.jpg');
+      expect(result.data.recipeSteps[0].imgUrl).toBe('recipe-id/new-image.jpg');
     }
   });
 
@@ -241,13 +247,12 @@ describe('prepareUpdateData - Public recipes', () => {
     const result = await prepareUpdateData({
       formData,
       recipe,
-      updatedHeroImg: null,
     });
 
     expect(result.success).toBe(true);
     expect(mockUploadVideo).toHaveBeenCalledTimes(1);
     if (isPublicResult(result)) {
-      expect(result.data.videoUrl).toBe('https://example.com/new-video.mp4');
+      expect(result.data.videoUrl).toBe('new-video-key');
     }
   });
 
@@ -265,7 +270,6 @@ describe('prepareUpdateData - Public recipes', () => {
     const result = await prepareUpdateData({
       formData,
       recipe,
-      updatedHeroImg: null,
     });
 
     expect(result.success).toBe(true);
@@ -300,7 +304,6 @@ describe('prepareUpdateData - Public recipes', () => {
     const result = await prepareUpdateData({
       formData,
       recipe,
-      updatedHeroImg: 'blob:new-hero',
     });
 
     expect(result.success).toBe(true);
@@ -315,7 +318,7 @@ describe('prepareUpdateData - Public recipes', () => {
 
   // Test 10: Upload error handling
   test('should return error when image upload fails', async () => {
-    mockUploadImage.mockResolvedValue({imageUrl: '', error: 'Upload failed'});
+    mockUploadImage.mockResolvedValue({imagePath: '', error: 'Upload failed'});
 
     const recipe = createMockRecipePublic();
     const mockFile = new File(['test'], 'test.jpg', {type: 'image/jpeg'});
@@ -328,7 +331,6 @@ describe('prepareUpdateData - Public recipes', () => {
     const result = await prepareUpdateData({
       formData,
       recipe,
-      updatedHeroImg: null,
     });
 
     expect(result.success).toBe(false);
@@ -341,8 +343,8 @@ describe('prepareUpdateData - Public recipes', () => {
 describe('prepareUpdateData - Premium recipes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUploadImage.mockResolvedValue({imageUrl: 'https://example.com/new-image.jpg', error: ''});
-    mockUploadVideo.mockResolvedValue({publicUrl: 'https://example.com/new-video.mp4', error: ''});
+    mockUploadImage.mockResolvedValue({imagePath: 'recipe-id/new-image.jpg', error: ''});
+    mockUploadVideo.mockResolvedValue({videoUrl: 'new-video-key', error: ''});
   });
 
   test('should return premium structure for premium recipe', async () => {
@@ -354,7 +356,7 @@ describe('prepareUpdateData - Premium recipes', () => {
       likes: 50,
       preparingTime: 60,
       recipeSteps: [
-        {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: 'https://example.com/step1.jpg', imgFile: null, id: 'step-1'},
+        {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: '1/step-img-1.jpg', imgFile: null, id: 'step-1'},
       ],
       ingredients: [
         {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '100', unit: 'g'},
@@ -364,7 +366,6 @@ describe('prepareUpdateData - Premium recipes', () => {
     const result = await prepareUpdateData({
       formData,
       recipe,
-      updatedHeroImg: null,
     });
 
     expect(result.success).toBe(true);
@@ -379,7 +380,7 @@ describe('prepareUpdateData - Premium recipes', () => {
       // Premium data should contain recipeSteps and videoUrl
       expect(result.premiumData.recipeId).toBe('2');
       expect(result.premiumData.recipeSteps).toHaveLength(1);
-      expect(result.premiumData.videoUrl).toBe('https://example.com/video.mp4');
+      expect(result.premiumData.videoUrl).toBe('video-key-2');
     }
   });
 
@@ -394,7 +395,7 @@ describe('prepareUpdateData - Premium recipes', () => {
       preparingTime: 60,
       videoFile: mockVideoFile,
       recipeSteps: [
-        {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: 'https://example.com/step1.jpg', imgFile: null, id: 'step-1'},
+        {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: '1/step-img-1.jpg', imgFile: null, id: 'step-1'},
       ],
       ingredients: [
         {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '100', unit: 'g'},
@@ -404,13 +405,12 @@ describe('prepareUpdateData - Premium recipes', () => {
     const result = await prepareUpdateData({
       formData,
       recipe,
-      updatedHeroImg: null,
     });
 
     expect(result.success).toBe(true);
     expect(mockUploadVideo).toHaveBeenCalledTimes(1);
     if (isPremiumResult(result)) {
-      expect(result.premiumData.videoUrl).toBe('https://example.com/new-video.mp4');
+      expect(result.premiumData.videoUrl).toBe('new-video-key');
     }
   });
 });
@@ -481,7 +481,7 @@ describe('hasDataChanged', () => {
     const recipe = createMockRecipePublic();
     const formData = createMockFormData({
       recipeSteps: [
-        {desc: {ua: 'Змінений крок', en: 'Changed Step'}, imgUrl: 'https://example.com/step1.jpg', imgFile: null, id: 'step-1'},
+        {desc: {ua: 'Змінений крок', en: 'Changed Step'}, imgUrl: '1/step-img-1.jpg', imgFile: null, id: 'step-1'},
         {desc: {ua: 'Крок 2', en: 'Step 2'}, imgUrl: null, imgFile: null, id: 'step-2'},
       ],
     });
@@ -497,7 +497,7 @@ describe('hasDataChanged', () => {
     const mockFile = new File(['test'], 'test.jpg', {type: 'image/jpeg'});
     const formData = createMockFormData({
       recipeSteps: [
-        {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: 'https://example.com/step1.jpg', imgFile: mockFile, id: 'step-1'},
+        {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: '1/step-img-1.jpg', imgFile: mockFile, id: 'step-1'},
         {desc: {ua: 'Крок 2', en: 'Step 2'}, imgUrl: null, imgFile: null, id: 'step-2'},
       ],
     });

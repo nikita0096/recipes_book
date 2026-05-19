@@ -29,13 +29,14 @@ const createMockPublicUpdateData = (): UpdateRecipeDataPublic => ({
   ingredients: [
     { id: 'ing-1', value: { ua: 'Цукор', en: 'Sugar' }, quantity: '100', unit: 'g' },
   ],
-  heroImg: 'https://example.com/hero.jpg',
+  heroImg: 'recipe-123/hero-img-1.jpg',
   isPremium: false,
   preparingTime: 45,
-  videoUrl: 'https://example.com/video.mp4',
+  videoUrl: 'video-key-1',
   recipeSteps: [
     { desc: { ua: 'Крок 1', en: 'Step 1' }, imgUrl: null, id: 'step-1' },
   ],
+  stepsCount: 1,
 });
 
 const createMockPremiumMainData = (): UpdateRecipeDataPremiumMain => ({
@@ -46,30 +47,35 @@ const createMockPremiumMainData = (): UpdateRecipeDataPremiumMain => ({
   ingredients: [
     { id: 'ing-1', value: { ua: 'Борошно', en: 'Flour' }, quantity: '200', unit: 'g' },
   ],
-  heroImg: 'https://example.com/premium-hero.jpg',
+  heroImg: 'recipe-123/hero-img-1.jpg',
   isPremium: true,
   preparingTime: 90,
+  stepsCount: 1,
 });
 
 const createMockPremiumPartData = (): UpdateRecipeDataPremiumPart => ({
   recipeId: 'recipe-123',
   recipeSteps: [
-    { desc: { ua: 'Преміум крок 1', en: 'Premium Step 1' }, imgUrl: 'https://example.com/step1.jpg', id: 'step-1' },
+    { desc: { ua: 'Преміум крок 1', en: 'Premium Step 1' }, imgUrl: 'recipe-123/step-img-1.jpg', id: 'step-1' },
   ],
-  videoUrl: 'https://example.com/premium-video.mp4',
+  videoUrl: 'video-key-premium',
+  price: 100,
+  discount: null,
 });
 
 const createMockDbResponse = (id: string, isPremium: boolean) => ({
   id,
   title: { ua: 'Рецепт', en: 'Recipe' },
+  description: { ua: 'Опис', en: 'Description' },
   likes: 10,
   category: { ua: 'Десерти', en: 'Desserts' },
   ingredients: [],
-  hero_img: 'https://example.com/hero.jpg',
+  hero_img: `${id}/hero-img-1.jpg`,
   is_premium: isPremium,
   preparing_time: 30,
   recipe_steps: isPremium ? null : [],
-  video_url: isPremium ? null : 'https://example.com/video.mp4',
+  video_url: isPremium ? null : 'video-key-1',
+  steps_count: 1,
 });
 
 // Helper to setup supabase mock chain
@@ -184,7 +190,7 @@ describe('updateRecipePremium', () => {
 
     expect(result.error).toBeNull();
     expect(result.data).not.toBeNull();
-    expect(result.data?.isPremium).toBe(true);
+    expect(result.data?.newRecipe.isPremium).toBe(true);
     expect(mockSupabase.from).toHaveBeenCalledWith('recipes');
     expect(mockSupabase.from).toHaveBeenCalledWith('recipes_premium');
   });
@@ -271,7 +277,7 @@ describe('convertPublicToPremium', () => {
     const result = await convertPublicToPremium(mainData, premiumData, 'recipe-123');
 
     expect(result.error).toBeNull();
-    expect(result.data?.isPremium).toBe(true);
+    expect(result.data?.newRecipe.isPremium).toBe(true);
     expect(mockSupabase.from).toHaveBeenCalledWith('recipes_premium');
   });
 
@@ -331,7 +337,7 @@ describe('convertPremiumToPublic', () => {
     const result = await convertPremiumToPublic(formData, 'recipe-123');
 
     expect(result.error).toBeNull();
-    expect(result.data?.isPremium).toBe(false);
+    expect(result.data?.newRecipe.isPremium).toBe(false);
   });
 
   test('should DELETE from premium table', async () => {

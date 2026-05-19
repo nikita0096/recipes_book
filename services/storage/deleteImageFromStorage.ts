@@ -36,3 +36,23 @@ export const deleteImage = async (imageUrl: string): Promise<{success: boolean; 
   return deleteFile(imageUrl, 'images');
 };
 
+export const deleteFileByPath = async (
+  path: string,
+  bucket: string
+): Promise<{success: boolean; error?: string}> => {
+  if (!path) {
+    return {success: false, error: 'Invalid path'};
+  }
+
+  const {error} = await supabase.storage
+    .from(bucket)
+    .remove([path]);
+
+  if (error) {
+    console.error(`Failed to delete file from ${bucket}:`, error.message);
+    return {success: false, error: error.message};
+  }
+
+  return {success: true};
+};
+

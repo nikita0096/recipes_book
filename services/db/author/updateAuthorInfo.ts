@@ -1,26 +1,27 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {AuthorInfoForm} from "@/app/[locale]/admin/author/page";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
-import {deleteFile} from "@/services/storage/deleteImageFromStorage";
+import {deleteFileByPath} from "@/services/storage/deleteImageFromStorage";
 import {AuthorInfo} from "@/services/db/author/fetchAuthorInfo";
 import {v4 as uuidv4} from "uuid";
+import {getSignedImageUrl} from "@/services/storage/getSignedImageUrl";
 
 const AUTHOR_BUCKET = 'author';
 
 export const updateAuthorInfo = async (
   id: string,
   data: AuthorInfoForm,
-  currentImageUrl: string
+  currentImagePath: string
 ): Promise<AuthorInfo> => {
-  let imageUrl = currentImageUrl;
+  let imagePath = currentImagePath;
 
   if (data.imageFile) {
-    if (currentImageUrl) {
-      await deleteFile(currentImageUrl, AUTHOR_BUCKET);
+    if (currentImagePath) {
+      await deleteFileByPath(currentImagePath, AUTHOR_BUCKET);
     }
 
     const filePath = `author-${uuidv4()}`;
-    const {imageUrl: newImageUrl, error: uploadError} = await uploadImage({
+    const {imagePath: newImagePath, error: uploadError} = await uploadImage({
       file: data.imageFile,
       bucket: AUTHOR_BUCKET,
       filePath: filePath
@@ -30,7 +31,7 @@ export const updateAuthorInfo = async (
       throw new Error('Failed to upload image');
     }
 
-    imageUrl = newImageUrl;
+    imagePath = newImagePath;
   }
 
   const {data: updatedAuthor, error} = await supabase
@@ -38,7 +39,7 @@ export const updateAuthorInfo = async (
     .update({
       contact_email: data.email,
       facebook_link: data.facebook,
-      image: imageUrl,
+      image: imagePath,
       inst_link: data.instagram,
       recipes_count: data.recipesCount,
       subscribers: data.subscribers,
@@ -56,6 +57,8 @@ export const updateAuthorInfo = async (
     throw new Error(error?.message || 'Failed to update author');
   }
 
+  const imageUrl = await getSignedImageUrl(updatedAuthor.image, 'author');
+
   return {
     instagram: updatedAuthor.inst_link,
     tikTok: updatedAuthor.tik_tok_link,
@@ -63,7 +66,7 @@ export const updateAuthorInfo = async (
     facebook: updatedAuthor.facebook_link,
     telegram: updatedAuthor.telegram_link,
     id: updatedAuthor.id,
-    image: updatedAuthor.image,
+    image: imageUrl || '',
     name: updatedAuthor.name,
     recipesCount: updatedAuthor.recipes_count,
     subscribers: updatedAuthor.subscribers,

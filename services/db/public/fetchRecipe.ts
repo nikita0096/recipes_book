@@ -1,6 +1,7 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {IRecipe, IRecipePublic, IRecipePremiumFull, RecipeStep, RecipePrice} from "@/types/recipe";
 import {Ingredient, LocalizedText} from "@/types";
+import {getSignedImageUrl, batchGetSignedUrls} from "@/services/storage/getSignedImageUrl";
 
 interface FetchRecipe {
   id: string;
@@ -35,7 +36,7 @@ export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, p
 
   if (!user?.id || !data.is_premium) {
     return {
-      data: mapToPublic(data),
+      data: await mapToPublic(data),
       price: {
         price: recipePrice?.price,
         discount: recipePrice?.discount
@@ -65,7 +66,7 @@ export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, p
 
   if (!hasAccess) {
     return {
-      data: mapToPublic(data),
+      data: await mapToPublic(data),
       price: {
         price: recipePrice?.price,
         discount: recipePrice?.discount
@@ -82,6 +83,19 @@ export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, p
 
   if (premiumError) throw premiumError;
 
+  const heroImg = await getSignedImageUrl(data.hero_img, 'hero-images') || '';
+
+  const stepPaths = (premiumData.recipe_steps as RecipeStep[] | null)
+    ?.map((step) => step.imgUrl)
+    .filter((url): url is string => Boolean(url)) || [];
+
+  const stepUrlMap = await batchGetSignedUrls(stepPaths, 'steps');
+
+  const recipeSteps = (premiumData.recipe_steps as RecipeStep[] | null)?.map((step) => ({
+    ...step,
+    imgUrl: step.imgUrl ? (stepUrlMap[step.imgUrl] || step.imgUrl) : null,
+  })) || [];
+
   return {
     data: {
       id: data.id,
@@ -90,10 +104,10 @@ export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, p
       likes: data.likes,
       category: data.category,
       ingredients: data.ingredients,
-      heroImg: data.hero_img,
+      heroImg,
       isPremium: true as const,
       preparingTime: data.preparing_time,
-      recipeSteps: premiumData.recipe_steps,
+      recipeSteps,
       videoUrl: premiumData.video_url,
       stepsCount: data.steps_count,
     } satisfies IRecipePremiumFull,
@@ -102,17 +116,32 @@ export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, p
   }
 }
 
-const mapToPublic = (data: FetchRecipe): IRecipePublic => ({
-  id: data.id,
-  title: data.title,
-  description: data.description,
-  likes: data.likes,
-  category: data.category,
-  ingredients: data.ingredients,
-  heroImg: data.hero_img,
-  isPremium: false as const,
-  preparingTime: data.preparing_time,
-  recipeSteps: data.recipe_steps,
-  videoUrl: data.video_url,
-  stepsCount: data.steps_count,
-})
+const mapToPublic = async (data: FetchRecipe): Promise<IRecipePublic> => {
+  const heroImg = await getSignedImageUrl(data.hero_img, 'hero-images') || '';
+
+  const stepPaths = data.recipe_steps
+    ?.map(step => step.imgUrl)
+    .filter((url): url is string => Boolean(url)) || [];
+
+  const stepUrlMap = await batchGetSignedUrls(stepPaths, 'steps');
+
+  const recipeSteps = data.recipe_steps?.map(step => ({
+    ...step,
+    imgUrl: step.imgUrl ? (stepUrlMap[step.imgUrl] || step.imgUrl) : null,
+  })) || [];
+
+  return {
+    id: data.id,
+    title: data.title,
+    description: data.description,
+    likes: data.likes,
+    category: data.category,
+    ingredients: data.ingredients,
+    heroImg,
+    isPremium: false as const,
+    preparingTime: data.preparing_time,
+    recipeSteps,
+    videoUrl: data.video_url,
+    stepsCount: data.steps_count,
+  };
+}
