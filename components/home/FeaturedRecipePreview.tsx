@@ -5,9 +5,10 @@ import {useTypedLocale} from "@/hooks/useTypedLocale";
 import {PAGES} from "@/config/page.config";
 import {Link} from "@/i18n/navigation";
 import {useTranslations} from "next-intl";
+import {FeaturedRecipe} from "@/services/db/public/fetchFeaturedRecipes";
 
 interface IFeaturedRecipePreviewProps {
-  recipe: IRecipe | null;
+  recipe: FeaturedRecipe | null;
 }
 
 

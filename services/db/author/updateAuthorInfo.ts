@@ -4,7 +4,7 @@ import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {deleteFileByPath} from "@/services/storage/deleteImageFromStorage";
 import {AuthorInfo} from "@/services/db/author/fetchAuthorInfo";
 import {v4 as uuidv4} from "uuid";
-import {getSignedImageUrl} from "@/services/storage/getSignedImageUrl";
+import {getPublicImageUrl} from "@/services/storage/getPublicImageUrl";
 
 const AUTHOR_BUCKET = 'author';
 
@@ -57,7 +57,7 @@ export const updateAuthorInfo = async (
     throw new Error(error?.message || 'Failed to update author');
   }
 
-  const imageUrl = await getSignedImageUrl(updatedAuthor.image, 'author');
+  const imageUrl = getPublicImageUrl(updatedAuthor.image, 'author');
 
   return {
     instagram: updatedAuthor.inst_link,

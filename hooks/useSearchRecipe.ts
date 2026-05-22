@@ -2,6 +2,7 @@ import {useQuery} from "@tanstack/react-query";
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {IRecipe} from "@/types";
 import {toCamelCase} from "@/utils/parseCamelcase";
+import {batchGetPublicUrls} from "@/services/storage/getPublicImageUrl";
 
 const fetchSearchRecipes = async (query: string, locale: string): Promise<IRecipe[]> => {
   if (!query) return [];
@@ -13,7 +14,17 @@ const fetchSearchRecipes = async (query: string, locale: string): Promise<IRecip
 
   if (error) throw error;
 
-  return data.map(recipe => toCamelCase(recipe));
+  const heroPaths = data.map(r => r.hero_img).filter(Boolean);
+  const urlsMap = batchGetPublicUrls(heroPaths, 'hero-images');
+
+  return data.map(recipe => {
+    const parsedRecipe = toCamelCase<IRecipe>(recipe);
+
+    return {
+      ...parsedRecipe,
+      heroImg: urlsMap[recipe.hero_img],
+    }
+  });
 };
 
 export function useSearchRecipe(query: string, locale: string) {

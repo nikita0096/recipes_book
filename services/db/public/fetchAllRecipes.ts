@@ -1,7 +1,7 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {IRecipePublic, IRecipePremiumIncomplete, RecipeStep} from "@/types/recipe";
 import {Ingredient, LocalizedText} from "@/types/forms";
-import {batchGetSignedUrls} from "@/services/storage/getSignedImageUrl";
+import {batchGetPublicUrls} from "@/services/storage/getPublicImageUrl";
 
 // Database row type
 interface RecipeRow {
@@ -34,7 +34,7 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
 
   const recipes = data as RecipeRow[];
   const heroPaths = recipes.map(r => r.hero_img).filter(Boolean);
-  const urlMap = await batchGetSignedUrls(heroPaths, 'hero-images');
+  const urlMap = batchGetPublicUrls(heroPaths, 'hero-images');
 
   return recipes.map((item): RecipeListItem => {
     const heroImg = urlMap[item.hero_img] || '';

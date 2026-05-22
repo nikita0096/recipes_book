@@ -74,16 +74,6 @@ const About = () => {
 
       setAuthor(data);
     }
-    const test = async () => {
-      const key ="author-b321a897-4f2f-4342-8ec9-a02cf008f7ca.jpg";
-
-      const {data, error} = await supabase.storage
-        .from('author')
-        .createSignedUrl(key, 60);
-
-      return data;
-    }
-    test().then(res => console.log(res))
 
     if(initFetch.current) {
       fetchAuthor();

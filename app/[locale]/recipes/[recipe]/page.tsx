@@ -25,6 +25,9 @@ export default async function Page({params}: PageProps){
   }
 
   return (
-    <RecipePage recipeId={recipeId} isLikedRecipe={ isLiked } />
+    <RecipePage
+      recipeId={recipeId}
+      isLikedRecipe={isLiked}
+    />
   );
 };

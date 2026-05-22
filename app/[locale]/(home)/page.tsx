@@ -11,10 +11,10 @@ import AnimatedHero from "@/components/home/AnimatedHero";
 import {useUserStore} from "@/store/useUserStore";
 import FeaturedRecipePreview from "@/components/home/FeaturedRecipePreview";
 import {useFeaturedRecipes} from "@/hooks/useFeaturedRecipes";
-import {IRecipe} from "@/types";
+import {FeaturedRecipe} from "@/services/db/public/fetchFeaturedRecipes";
 
 export default function Home() {
-  const [previewFeaturedCard, setPreviewFeaturedCard] = useState<IRecipe | null>(null);
+  const [previewFeaturedCard, setPreviewFeaturedCard] = useState<FeaturedRecipe | null>(null);
 
   const t = useTranslations('home');
   const {data: featuredRecipes, isLoading} = useFeaturedRecipes();

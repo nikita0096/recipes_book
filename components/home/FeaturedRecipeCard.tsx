@@ -2,17 +2,17 @@
 
 import React from 'react';
 import Image from 'next/image';
-import { IRecipe } from '@/types/recipe';
 import { Link } from '@/i18n/navigation';
 import { PAGES } from '@/config/page.config';
 import { RECIPE_PLACEHOLDER_IMAGE } from '@/constants/images';
 import { useTypedLocale } from '@/hooks/useTypedLocale';
 import { useTranslations } from 'next-intl';
+import {FeaturedRecipe} from "@/services/db/public/fetchFeaturedRecipes";
 
 interface FeaturedRecipeCardProps {
-  recipe: IRecipe;
+  recipe: FeaturedRecipe;
   index: number;
-  setPreviewFeaturedCard: (featuredCard: IRecipe) => void;
+  setPreviewFeaturedCard: (featuredCard: FeaturedRecipe) => void;
 }
 
 const FeaturedRecipeCard: React.FC<FeaturedRecipeCardProps> = ({ recipe, index, setPreviewFeaturedCard }) => {
@@ -30,9 +30,10 @@ const FeaturedRecipeCard: React.FC<FeaturedRecipeCardProps> = ({ recipe, index, 
     >
 
       <div className="block relative overflow-hidden cursor-pointer">
-        <div className='hidden md:block w-full aspect-4/3' onClick={() => setPreviewFeaturedCard(recipe)}>
+        <div className='hidden md:block relative w-full aspect-4/3' onClick={() => setPreviewFeaturedCard(recipe)}>
           <Image
             fill
+            sizes="100vh"
             className="object-cover"
             src={recipe.heroImg || RECIPE_PLACEHOLDER_IMAGE}
             alt={recipe.title[locale]}
@@ -41,6 +42,7 @@ const FeaturedRecipeCard: React.FC<FeaturedRecipeCardProps> = ({ recipe, index, 
         <Link className='block md:hidden relative w-full aspect-4/3' href={PAGES.RECIPE(recipe.id)}>
           <Image
             fill
+            sizes="100vh"
             className="object-cover"
             src={recipe.heroImg || RECIPE_PLACEHOLDER_IMAGE}
             alt={recipe.title[locale]}

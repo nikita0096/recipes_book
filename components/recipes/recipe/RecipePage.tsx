@@ -2,7 +2,6 @@
 
 import React, {useEffect, useState} from 'react';
 import Image from "next/image";
-import {Link} from "@/i18n/navigation";
 import {IRecipe, IRecipePremiumIncomplete, RecipePrice} from "@/types/recipe";
 import {useTranslations} from "next-intl";
 import RecipeIngredient from "@/components/recipes/recipe/RecipeIngredient";
@@ -14,16 +13,15 @@ import {deleteLike} from "@/services/db/recipe-likes/deleteLike";
 import {SecureVideoPlayer} from "@/components/video/SecureVideoPlayer";
 import Footer from "@/components/footer/Footer";
 import {useRouter} from "next/navigation";
+import {RECIPE_PLACEHOLDER_IMAGE} from "@/constants/images";
+
 
 interface RecipePageProps {
   recipeId: string;
   isLikedRecipe: boolean;
-}
-
-interface FetchRecipeData {
-  data: IRecipe | null;
-  price: RecipePrice | null;
-  error: Error | null;
+  initialRecipe?: IRecipe | null;
+  initialPrice?: RecipePrice | null;
+  initialError?: string | null;
 }
 
 const LockIcon = ({size = 16, className = ''}: { size?: number; className?: string }) => (
@@ -68,12 +66,18 @@ const UnlockIcon = ({size = 16, className = ''}: { size?: number; className?: st
   </svg>
 );
 
-const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
-  const [recipe, setRecipe] = useState<IRecipe | IRecipePremiumIncomplete | null>(null);
+const RecipePage: React.FC<RecipePageProps> = ({
+  recipeId,
+  isLikedRecipe,
+  initialRecipe = null,
+  initialPrice = null,
+  initialError = null
+}) => {
+  const [recipe, setRecipe] = useState<IRecipe | IRecipePremiumIncomplete | null>(initialRecipe);
   const [isLiked, setIsLiked] = useState(isLikedRecipe);
-  const [likes, setLikes] = useState(0);
-  const [recipePrice, setRecipePrice] = useState<RecipePrice | null>(null);
-  const [error, setError] = useState<Error | null>(null);
+  const [likes, setLikes] = useState(initialRecipe?.likes || 0);
+  const [recipePrice, setRecipePrice] = useState<RecipePrice | null>(initialPrice);
+  const [error, setError] = useState<Error | string | null>(initialError);
 
   const locale = useTypedLocale();
   const t = useTranslations('recipes');
@@ -82,8 +86,9 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchData = async () => {
+    if (initialRecipe) return;
 
+    const fetchData = async () => {
       const {data, price, error} = await fetchRecipe(recipeId);
 
       if (error) setError(error);
@@ -99,7 +104,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
     }
 
     fetchData();
-  }, [recipeId]);
+  }, [recipeId, initialRecipe]);
 
   if (error) {
     return (
@@ -138,15 +143,16 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
       setLikes(prevState => isNewLiked ? prevState - 1 : prevState + 1);
     }
   }
-  //
+
   return (
     <div className="min-h-screen bg-bg">
       {/* Hero Section */}
       <section className="relative h-[400px] sm:h-[470px] lg:h-[530px] 2xl:h-[800px] w-full">
         <Image
-          src={recipe.heroImg}
+          src={recipe.heroImg || RECIPE_PLACEHOLDER_IMAGE}
           alt={recipe.title[locale]}
           fill
+          sizes="100vh"
           className="object-cover"
           priority
         />
@@ -230,7 +236,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
       </section>
 
       {/* Premium Lock Block - показываем когда steps и video недоступны */}
-      {recipe.recipeSteps === null && recipe.videoUrl === null && (
+      {!recipe.recipeSteps?.length && recipe.videoUrl === null && (
         <section className="px-4 sm:px-6 lg:px-10 pt-6 sm:pt-7 lg:pt-8 pb-10 sm:pb-12 lg:pb-14">
           <div className="relative">
             {/* Blurred fake steps */}
@@ -347,7 +353,7 @@ const RecipePage: React.FC<RecipePageProps> = ({recipeId, isLikedRecipe}) => {
                   <div className="lg:hidden">
                     <div className="relative w-full aspect-video">
                       <Image
-                        src={step.imgUrl}
+                        src={step.imgUrl || RECIPE_PLACEHOLDER_IMAGE}
                         alt={`${t('singlePage.step')} ${i + 1}`}
                         fill
                         className="object-cover"

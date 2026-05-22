@@ -1,8 +1,8 @@
 import { supabase } from "@/lib/supabase/ClientComponentClient";
-import {getSignedImageUrl} from "@/services/storage/getSignedImageUrl";
+import {getPublicImageUrl} from "@/services/storage/getPublicImageUrl";
 import {LocalizedText} from "@/types";
 
-interface FeaturedRecipe {
+export interface FeaturedRecipe {
   id: string;
   title: LocalizedText;
   heroImg: string;
@@ -11,6 +11,7 @@ interface FeaturedRecipe {
   likes: number;
   category: LocalizedText;
   description: LocalizedText;
+  preparingTime: number;
 }
 
 export const fetchFeaturedRecipes = async (): Promise<FeaturedRecipe[] | []> => {
@@ -22,18 +23,17 @@ export const fetchFeaturedRecipes = async (): Promise<FeaturedRecipe[] | []> => 
 
   if (error) throw error;
 
-  const result = await Promise.all(
-    data.map(async (recipe) => {
-      if(recipe.hero_img) {
-        const heroUrl = await getSignedImageUrl(recipe.hero_img, 'hero-images');
+  const result = data.map((recipe) => {
+    if(recipe.hero_img) {
+      const heroUrl = getPublicImageUrl(recipe.hero_img, 'hero-images');
 
-        return {
-          ...recipe,
-          hero_img: heroUrl,
-        }
+      return {
+        ...recipe,
+        hero_img: heroUrl,
       }
-    })
-  );
+    }
+    return recipe;
+  });
 
   if(!result.length)  return [];
 
@@ -47,6 +47,7 @@ export const fetchFeaturedRecipes = async (): Promise<FeaturedRecipe[] | []> => 
       likes: item.likes,
       category: item.category,
       description: item.description,
+      preparingTime: item.preparingTime
     }
   });
 };

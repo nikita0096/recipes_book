@@ -1,7 +1,7 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {toCamelCase} from "@/utils/parseCamelcase";
 import {IRecipe} from "@/types";
-import {batchGetSignedUrls} from "@/services/storage/getSignedImageUrl";
+import {batchGetPublicUrls} from "@/services/storage/getPublicImageUrl";
 
 export const fetchRecipesPagination = async (pageParam: number) => {
 
@@ -18,7 +18,7 @@ export const fetchRecipesPagination = async (pageParam: number) => {
   if (error) throw error;
 
   const heroPaths = data.map((r) => r.hero_img).filter(Boolean);
-  const urlMap = await batchGetSignedUrls(heroPaths, 'hero-images');
+  const urlMap = batchGetPublicUrls(heroPaths, 'hero-images');
 
   const parsedData = data.map((recipe) => {
     const camelCased = toCamelCase<IRecipe>(recipe);

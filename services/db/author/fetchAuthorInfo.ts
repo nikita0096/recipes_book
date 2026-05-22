@@ -1,5 +1,5 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
-import {getSignedImageUrl} from "@/services/storage/getSignedImageUrl";
+import {getPublicImageUrl} from "@/services/storage/getPublicImageUrl";
 
 export interface AuthorInfo {
   instagram: string;
@@ -40,7 +40,7 @@ export const fetchAuthorInfo = async (): Promise<AuthorInfo> => {
     }
   }
 
-  const imageUrl = await getSignedImageUrl(author[0].image, 'author');
+  const imageUrl = getPublicImageUrl(author[0].image, 'author');
 
   return {
     instagram: author[0].inst_link,
