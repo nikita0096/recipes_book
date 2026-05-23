@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Link from 'next/link';
 import {useLocale, useTranslations} from "next-intl";
 import Image from "next/image";
@@ -10,6 +10,7 @@ import Footer from "@/components/footer/Footer";
 import {fetchAuthorInfo} from "@/services/db/author/fetchAuthorInfo";
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {LocalizedText} from "@/types";
+import Loading from "@/app/[locale]/loading";
 
 interface AuthorData {
   instagram: string;

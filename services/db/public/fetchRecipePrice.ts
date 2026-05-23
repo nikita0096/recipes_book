@@ -1,12 +1,7 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
+import {RecipePrice} from "@/types/recipe";
 
-export interface RecipePrice {
-  price: {
-    en: number;
-    ua: number;
-  };
-  discount: number | null;
-}
+export type {RecipePrice};
 
 export const fetchRecipePrice = async (id: string): Promise<RecipePrice> => {
   const {data, error} = await supabase

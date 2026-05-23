@@ -93,6 +93,27 @@ body {
   color: var(--muted);
 }
 
+.sweep-rule {
+  display: block;
+  width: 42px;
+  height: 2px;
+  background: rgba(200, 155, 74, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.sweep-rule::after {
+  content: '';
+  position: absolute;
+  inset: -1px 0;
+  background: linear-gradient(90deg, transparent, #c89b4a, transparent);
+  animation: sweep-rule-anim 1.8s linear infinite;
+}
+
+@keyframes sweep-rule-anim {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
 
 .loader {
   width: 100px;

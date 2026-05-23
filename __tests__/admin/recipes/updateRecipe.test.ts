@@ -337,7 +337,7 @@ describe('convertPremiumToPublic', () => {
     const result = await convertPremiumToPublic(formData, 'recipe-123');
 
     expect(result.error).toBeNull();
-    expect(result.data?.newRecipe.isPremium).toBe(false);
+    expect(result.data?.isPremium).toBe(false);
   });
 
   test('should DELETE from premium table', async () => {

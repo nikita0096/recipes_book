@@ -4,7 +4,7 @@ import Image from "next/image";
 import {Link} from "@/i18n/navigation";
 import React, {useEffect, useState} from "react";
 import {useParams} from "next/navigation";
-import {IRecipe} from "@/types/recipe";
+import {IRecipe, RecipePrice} from "@/types/recipe";
 import LoadingPage from "@/components/ui/LoadingPage";
 import {useTranslations} from "next-intl";
 import {useQueryClient} from "@tanstack/react-query";
@@ -44,7 +44,7 @@ import {
 import {prepareUpdateData} from "./utils/prepareUpdateData";
 import {fetchRecipeAdmin} from "@/services/db/admin/fetchRecipeAdmin";
 import {SecureVideoPlayer} from "@/components/video/SecureVideoPlayer";
-import {fetchRecipePrice, RecipePrice} from "@/services/db/public/fetchRecipePrice";
+import {fetchRecipePrice} from "@/services/db/public/fetchRecipePrice";
 
 type StepFields = { desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string }
 
@@ -564,8 +564,8 @@ const Page = () => {
           return;
         }
 
-        setRecipe(data.newRecipe);
-        setRecipePrice(data.newPrice);
+        setRecipe(data);
+        setRecipePrice(null);
 
       } else {
         const publicResult = result as import('./utils/prepareUpdateData').PrepareUpdateDataResultPublic;
@@ -581,6 +581,7 @@ const Page = () => {
         }
 
         setRecipe(data);
+        setRecipePrice(null);
       }
 
 

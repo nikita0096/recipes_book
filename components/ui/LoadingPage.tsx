@@ -3,15 +3,16 @@ import React from 'react';
 const LoadingPage = () => {
   return (
     <div className='fixed inset-0 flex justify-center items-center bg-bg'>
-      <div className="loader">
-        <div className="cup">
-          <div className="cup-handle"></div>
-          <div className="smoke one"></div>
-          <div className="smoke two"></div>
-          <div className="smoke three"></div>
-        </div>
-        <div className="load">..........................</div>
-      </div>
+      {/*<div className="loader">*/}
+      {/*  <div className="cup">*/}
+      {/*    <div className="cup-handle"></div>*/}
+      {/*    <div className="smoke one"></div>*/}
+      {/*    <div className="smoke two"></div>*/}
+      {/*    <div className="smoke three"></div>*/}
+      {/*  </div>*/}
+      {/*  <div className="load">..........................</div>*/}
+      {/*</div>*/}
+      <div className="sweep-rule"></div>
     </div>
   );
 };
