@@ -47,7 +47,8 @@ export const updateAuthorInfo = async (
       tik_tok_link: data.tikTok,
       views: data.views,
       you_tube_link: data.youTube,
-      name: data.name
+      name: data.name,
+      description: data.description
     })
     .eq('id', id)
     .select()
@@ -60,18 +61,24 @@ export const updateAuthorInfo = async (
   const imageUrl = getPublicImageUrl(updatedAuthor.image, 'author');
 
   return {
-    instagram: updatedAuthor.inst_link,
-    tikTok: updatedAuthor.tik_tok_link,
-    youTube: updatedAuthor.you_tube_link,
-    facebook: updatedAuthor.facebook_link,
-    telegram: updatedAuthor.telegram_link,
-    id: updatedAuthor.id,
-    image: imageUrl || '',
-    name: updatedAuthor.name,
-    recipesCount: updatedAuthor.recipes_count,
-    subscribers: updatedAuthor.subscribers,
-    views: updatedAuthor.views,
-    email: updatedAuthor.contact_email,
+    data: {
+      instagram: updatedAuthor.inst_link,
+      tikTok: updatedAuthor.tik_tok_link,
+      youTube: updatedAuthor.you_tube_link,
+      facebook: updatedAuthor.facebook_link,
+      telegram: updatedAuthor.telegram_link,
+      id: updatedAuthor.id,
+      image: imageUrl || '',
+      name: updatedAuthor.name,
+      recipesCount: updatedAuthor.recipes_count,
+      subscribers: updatedAuthor.subscribers,
+      views: updatedAuthor.views,
+      email: updatedAuthor.contact_email,
+      description: {
+        en: updatedAuthor.description.en,
+        ua: updatedAuthor.description.ua,
+      }
+    },
     error: null
   };
 };

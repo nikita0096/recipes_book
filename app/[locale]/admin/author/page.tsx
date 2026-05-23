@@ -1,13 +1,14 @@
 'use client';
 
 import React, {useEffect, useRef, useState} from 'react';
-import {AuthorInfo, fetchAuthorInfo} from "@/services/db/author/fetchAuthorInfo";
+import {fetchAuthorInfo} from "@/services/db/author/fetchAuthorInfo";
 import Image from "next/image";
 import {useTranslations} from "next-intl";
 import {SubmitHandler, useForm} from "react-hook-form";
 import {updateAuthorInfo} from "@/services/db/author/updateAuthorInfo";
 import {Spinner} from "@/components/ui/spinner";
 import {MdDeleteForever} from "react-icons/md";
+import {LocalizedText} from "@/types";
 
 export interface AuthorInfoForm {
   instagram: string;
@@ -22,11 +23,28 @@ export interface AuthorInfoForm {
   subscribers: number;
   views: number;
   email: string;
+  description: LocalizedText
+}
+
+interface AuthorInfoState {
+  instagram: string;
+  tikTok: string;
+  youTube: string;
+  facebook: string;
+  telegram: string;
+  id: string;
+  image: string;
+  name: string;
+  recipesCount: number;
+  subscribers: number;
+  views: number;
+  email: string;
+  description: LocalizedText;
 }
 
 
 const Page = () => {
-  const [author, setAuthor] = useState<AuthorInfo | null>(null);
+  const [author, setAuthor] = useState<AuthorInfoState | null>(null);
   const [error, setError] = useState<null | string>(null);
   const [loading, setLoading] = useState(false);
 
@@ -52,7 +70,11 @@ const Page = () => {
       email: '',
       recipesCount: 0,
       subscribers: 0,
-      views: 0
+      views: 0,
+      description: {
+        en: '',
+        ua: ''
+      }
     }
   });
 
@@ -60,7 +82,9 @@ const Page = () => {
     const fetchAuthor = async () => {
       const data = await fetchAuthorInfo();
 
-      setAuthor(data);
+      if(data.error) setError(data.error.message);
+
+      setAuthor(data.data);
     }
 
     if (initFetch.current) {
@@ -80,8 +104,10 @@ const Page = () => {
       setValue('subscribers', author.subscribers);
       setValue('views', author.views);
       setValue('email', author.email);
+      setValue('description.en', author.description.en || '');
+      setValue('description.ua', author.description.ua || '');
     }
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [author]);
 
   const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -113,7 +139,7 @@ const Page = () => {
 
     try {
       const data = await updateAuthorInfo(author.id, formData, author.image);
-      setAuthor(data);
+      setAuthor(data.data);
       setValue('imageFile', null);
     } catch (error) {
       if (error instanceof Error) {
@@ -192,7 +218,7 @@ const Page = () => {
           <input id="instagram"
                  className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                  type="text"
-                 {...register('instagram', {required: true})}
+                 {...register('instagram')}
                  placeholder='Instagram'/>
           <label htmlFor="tikTok" className="block text-xs tracking-[0.08em] uppercase text-muted">
             TikTok
@@ -200,7 +226,7 @@ const Page = () => {
           <input id="tikTok"
                  className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                  type="text"
-                 {...register('tikTok', {required: true})}
+                 {...register('tikTok')}
                  placeholder='TikTok'/>
           <label htmlFor="facebook" className="block text-xs tracking-[0.08em] uppercase text-muted">
             Facebook
@@ -208,7 +234,7 @@ const Page = () => {
           <input id="facebook"
                  className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                  type="text"
-                 {...register('facebook', {required: true})}
+                 {...register('facebook')}
                  placeholder='Facebook'/>
           <label htmlFor="youTube" className="block text-xs tracking-[0.08em] uppercase text-muted">
             Youtube
@@ -216,7 +242,7 @@ const Page = () => {
           <input id="youTube"
                  className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                  type="text"
-                 {...register('youTube', {required: true})}
+                 {...register('youTube')}
                  placeholder='Youtube'/>
           <label htmlFor="telegram" className="block text-xs tracking-[0.08em] uppercase text-muted">
             Telegram
@@ -224,7 +250,7 @@ const Page = () => {
           <input id="telegram"
                  className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                  type="text"
-                 {...register('telegram', {required: true})}
+                 {...register('telegram')}
                  placeholder='Telegram'/>
           <label htmlFor="name" className="block text-xs tracking-[0.08em] uppercase text-muted">
             {t('form.author.authorName')}
@@ -267,6 +293,24 @@ const Page = () => {
                  type="email"
                  {...register('email', {required: true})}
                  placeholder="Email"/>
+          <label htmlFor="description-ua" className="block text-xs tracking-[0.08em] uppercase text-muted mt-4">
+            {t('form.author.descriptionUA')}
+          </label>
+          <textarea
+            id="description-ua"
+            className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors min-h-[120px]"
+            {...register('description.ua', {required: true})}
+            placeholder={t('form.author.descriptionUA')}
+          />
+          <label htmlFor="description-en" className="block text-xs tracking-[0.08em] uppercase text-muted">
+            {t('form.author.descriptionEN')}
+          </label>
+          <textarea
+            id="description-en"
+            className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors min-h-[120px]"
+            {...register('description.en', {required: true})}
+            placeholder={t('form.author.descriptionEN')}
+          />
           <div className='flex flex-col gap-2 items-center justify-center w-full mt-4'>
             {error && (
               <p className='text-red-400'>{error}</p>

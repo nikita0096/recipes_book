@@ -93,7 +93,7 @@ const createMockFormData = (overrides?: Partial<EditingValues>): EditingValues =
   videoFile: null,
   preparingTime: 30,
   isPremium: false,
-  price: 0,
+  price: { en: 0, ua: 0 },
   discount: 0,
   ...overrides,
 });

@@ -89,7 +89,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
     if (initialRecipe) return;
 
     const fetchData = async () => {
-      const {data, price, error} = await fetchRecipe(recipeId);
+      const {data, totalPrice, error} = await fetchRecipe(recipeId);
 
       if (error) setError(error);
 
@@ -98,8 +98,8 @@ const RecipePage: React.FC<RecipePageProps> = ({
         setLikes(data.likes);
       }
 
-      if (price) {
-        setRecipePrice(price);
+      if (totalPrice) {
+        setRecipePrice(totalPrice);
       }
     }
 
@@ -301,16 +301,16 @@ const RecipePage: React.FC<RecipePageProps> = ({
                     <span className="text-sm text-white/80">
                         {recipePrice.discount && recipePrice.discount > 0 ? (
                           <div className="flex items-end gap-2">
-                            <span className="font-serif italic text-2xl md:text-4xl text-text leading-none">
-                              ${(recipePrice.price * (1 - recipePrice.discount / 100)).toFixed(2)}
-                            </span>
+                              <span className="font-serif italic text-2xl md:text-4xl text-text leading-none">
+                                {locale === 'en' ? '$' : '₴'}{(recipePrice.price[locale] * (1 - recipePrice.discount / 100)).toFixed(2)}
+                              </span>
                             <span className="text-xs md:text-sm text-muted line-through">
-                              ${recipePrice.price}
-                            </span>
+                                ${recipePrice.price[locale]}
+                              </span>
                           </div>
                         ) : (
                           <span className="font-serif italic text-2xl md:text-4xl text-text leading-none">
-                            ${recipePrice?.price}
+                            {locale === 'en' ? '$' : '₴'}{recipePrice?.price[locale]}
                           </span>
                         )}
                       </span>

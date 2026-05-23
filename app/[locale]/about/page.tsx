@@ -2,13 +2,30 @@
 
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import Link from 'next/link';
-import {useTranslations} from "next-intl";
+import {useLocale, useTranslations} from "next-intl";
 import Image from "next/image";
 import authorImage from "@/public/images/about/home-author.png";
 import {useUserStore} from "@/store/useUserStore";
 import Footer from "@/components/footer/Footer";
-import {AuthorInfo, fetchAuthorInfo} from "@/services/db/author/fetchAuthorInfo";
+import {fetchAuthorInfo} from "@/services/db/author/fetchAuthorInfo";
 import {supabase} from "@/lib/supabase/ClientComponentClient";
+import {LocalizedText} from "@/types";
+
+interface AuthorData {
+  instagram: string;
+  tikTok: string;
+  youTube: string;
+  facebook: string;
+  telegram: string;
+  id: string;
+  image: string;
+  name: string;
+  recipesCount: number;
+  subscribers: number;
+  views: number;
+  email: string;
+  description: LocalizedText;
+}
 
 const socialLinks = [
   {
@@ -62,8 +79,9 @@ const socialLinks = [
 ];
 
 const About = () => {
-  const [author, setAuthor] = useState<AuthorInfo | null>(null);
+  const [author, setAuthor] = useState<AuthorData | null>(null);
   const t = useTranslations('about');
+  const locale = useLocale();
 
   const initFetch = useRef(true);
   const {user} = useUserStore();
@@ -72,7 +90,7 @@ const About = () => {
     const fetchAuthor =  async () => {
       const data = await fetchAuthorInfo();
 
-      setAuthor(data);
+      setAuthor(data.data);
     }
 
     if(initFetch.current) {
@@ -86,17 +104,17 @@ const About = () => {
   const getSocialMediaLink = (label: string) => {
     switch (label) {
       case 'Facebook':
-        return author?.facebook || '#';
+        return author?.facebook;
         case 'Telegram':
-          return author?.telegram || '#';
+          return author?.telegram;
           case 'Instagram':
-            return author?.instagram || '#';
+            return author?.instagram;
             case 'YouTube':
-              return author?.youTube || '#';
+              return author?.youTube;
               case 'TikTok':
-                return author?.tikTok || '#';
+                return author?.tikTok;
                 default:
-                  return '#';
+                  return '';
     }
   }
 
@@ -127,11 +145,8 @@ const About = () => {
           <h1 className="font-serif text-4xl sm:text-5xl italic font-normal text-text leading-tight tracking-tight mb-6">
             {t('about.title')}
           </h1>
-          <p className="text-sm text-muted leading-relaxed mb-4 max-w-md">
-            {t('about.description')}
-          </p>
-          <p className="text-sm text-muted leading-relaxed mb-10 max-w-md">
-            {t('about.description2')}
+          <p className="text-sm text-muted leading-relaxed mb-10 max-w-md whitespace-pre-line">
+            {author.description[locale as 'en' | 'ua']}
           </p>
 
           {/* Stats */}
@@ -166,19 +181,25 @@ const About = () => {
           {t('page.subtitle')}
         </p>
         <div className="flex justify-center gap-4">
-          {socialLinks.map((social) => (
-            <Link
-              key={social.name}
-              href={getSocialMediaLink(social.name)}
-              title={social.name}
-              className="w-12 h-12 border border-border flex items-center justify-center text-muted
+          {socialLinks.map((social) => {
+            const link = getSocialMediaLink(social.name);
+
+            if(!link) return null;
+
+            return (
+              <Link
+                key={social.name}
+                href={link}
+                title={social.name}
+                className="w-12 h-12 border border-border flex items-center justify-center text-muted
                          hover:border-current hover:text-[var(--hover-color)] hover:bg-[var(--hover-color)]/10
                          transition-all duration-200"
-              style={{'--hover-color': social.color} as React.CSSProperties}
-            >
-              {social.icon}
-            </Link>
-          ))}
+                style={{'--hover-color': social.color} as React.CSSProperties}
+              >
+                {social.icon}
+              </Link>
+            )
+          })}
         </div>
 
       </div>

@@ -1,7 +1,10 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 
 export interface RecipePrice {
-  price: number;
+  price: {
+    en: number;
+    ua: number;
+  };
   discount: number | null;
 }
 
@@ -17,7 +20,10 @@ export const fetchRecipePrice = async (id: string): Promise<RecipePrice> => {
   if(data) return data;
 
   return {
-    price: 0,
+    price: {
+      en: 0,
+      ua: 0
+    },
     discount: 0,
   }
 }

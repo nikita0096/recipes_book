@@ -56,7 +56,7 @@ export interface EditingValues {
   description: { ua: string; en: string };
   ingredients: Ingredient[];
   recipeSteps: StepFields[];
-  price: number,
+  price: { en: number; ua: number },
   discount: number,
   likes: number;
   ingredientEn: string;
@@ -110,7 +110,7 @@ const Page = () => {
       category: {ua: '', en: ''},
       title: {ua: '', en: ''},
       description: {ua: '', en: ''},
-      price: 0,
+      price: { en: 0, ua: 0 },
       discount: 0,
       ingredients: [],
       recipeSteps: [],
@@ -271,7 +271,7 @@ const Page = () => {
       setValue('videoUrl', videoSrc ?? '');
       setValue('preparingTime', recipe.preparingTime);
       setValue('isPremium', recipe.isPremium);
-      setValue('price', recipePrice?.price || 0);
+      setValue('price', recipePrice?.price || { en: 0, ua: 0 });
       setValue('discount', recipePrice?.discount || 0);
     }
 
@@ -762,14 +762,24 @@ const Page = () => {
                       <span className="text-sm text-white/80">
                         {recipePrice.discount && recipePrice.discount > 0 ? (
                           <>
-                            <span className="line-through text-white/40 mr-1.5">${recipePrice.price}</span>
-                            <span className="text-accent font-medium">
-                              ${(recipePrice.price * (1 - recipePrice.discount / 100)).toFixed(2)}
-                            </span>
+                            <div className="line-through text-white/40 mr-1.5 flex gap-2">
+                              <span>${recipePrice.price.en}</span>
+                              /
+                              <span>{recipePrice.price.ua}₴</span>
+                            </div>
+                            <div className="text-accent font-medium flex gap-2">
+                              <span>${(recipePrice.price.en * (1 - recipePrice.discount / 100)).toFixed(2)}</span>
+                              /
+                              <span>{(recipePrice.price.ua * (1 - recipePrice.discount / 100)).toFixed(2)}₴</span>
+                            </div>
                             <span className="ml-1.5 text-xs text-green-400">-{recipePrice.discount}%</span>
                           </>
                         ) : (
-                          <span className="text-accent font-medium">${recipePrice.price}</span>
+                          <div className="text-accent font-medium flex gap-2">
+                            <span>${recipePrice.price.en}</span>
+                            /
+                            <span>{recipePrice.price.ua}₴</span>
+                          </div>
                         )}
                       </span>
                     )}
@@ -789,15 +799,28 @@ const Page = () => {
             <div>
               <div className="mt-3.5">
                 <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
-                  {tAdmin('form.fields.price')}
+                  {tAdmin('form.fields.price')} (USD)
                 </label>
                 <div className="relative">
-                  <input {...register('price', {required: true, min: 1, max: 10000})}
-                         name="price"
-                         aria-invalid={errors.price ? "true" : "false"}
+                  <input {...register('price.en', {required: true, min: 1, max: 10000, valueAsNumber: true})}
+                         name="price.en"
+                         aria-invalid={errors.price?.en ? "true" : "false"}
                          className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                          type="number"/>
                   <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">$</span>
+                </div>
+              </div>
+              <div className="mt-3.5">
+                <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                  {tAdmin('form.fields.price')} (UAH)
+                </label>
+                <div className="relative">
+                  <input {...register('price.ua', {required: true, min: 1, max: 100000, valueAsNumber: true})}
+                         name="price.ua"
+                         aria-invalid={errors.price?.ua ? "true" : "false"}
+                         className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                         type="number"/>
+                  <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">₴</span>
                 </div>
               </div>
               <div className="mt-3.5">

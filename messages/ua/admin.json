@@ -81,6 +81,8 @@
       "placeholderSubscribers": "Підписники",
       "authorName": "Ім'я автора",
       "authorInfo": "Інформація",
+      "descriptionUA": "Опис (Українська)",
+      "descriptionEN": "Опис (Англійська)",
       "submitForm": "Зберегти зміни",
       "validation": {
         "addPicture": "Додати зображення автора"

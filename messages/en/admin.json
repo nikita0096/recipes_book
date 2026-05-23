@@ -81,6 +81,8 @@
       "placeholderSubscribers": "Subscribers",
       "authorName": "Author name",
       "authorInfo": "Information",
+      "descriptionUA": "Description (Ukrainian)",
+      "descriptionEN": "Description (English)",
       "submitForm": "Save changes",
       "validation": {
         "addPicture": "Add author picture"

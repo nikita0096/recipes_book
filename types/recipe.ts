@@ -22,7 +22,10 @@ interface IRecipeBase {
 }
 
 export interface RecipePrice {
-  price: number;
+  price: {
+    en: number;
+    ua: number;
+  };
   discount: number | null;
 }
 
@@ -76,7 +79,10 @@ export interface IRecipePremiumUpload {
   recipeId: string;
   recipeSteps: RecipeStep[];
   videoUrl: string;
-  price: number;
+  price: {
+    en: number;
+    ua: number;
+  };
   discount: number | null;
 }
 
@@ -114,7 +120,10 @@ export interface UpdateRecipeDataPremiumPart {
   recipeId: string;
   recipeSteps: RecipeStep[];
   videoUrl: string;
-  price:number;
+  price: {
+    en: number;
+    ua: number;
+  };
   discount: number | null;
 }
 

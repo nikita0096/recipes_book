@@ -59,7 +59,7 @@ const createMockPremiumPartData = (): UpdateRecipeDataPremiumPart => ({
     { desc: { ua: 'Преміум крок 1', en: 'Premium Step 1' }, imgUrl: 'recipe-123/step-img-1.jpg', id: 'step-1' },
   ],
   videoUrl: 'video-key-premium',
-  price: 100,
+  price: { en: 100, ua: 4000 },
   discount: null,
 });
 

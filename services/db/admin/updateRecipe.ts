@@ -293,7 +293,7 @@ export const convertPremiumToPublic = async (
         stepsCount: data.steps_count,
       },
       newPrice: {
-        price: 0,
+        price: { en: 0, ua: 0 },
         discount: 0
       }
     },

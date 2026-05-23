@@ -59,7 +59,7 @@ const Page = () => {
       description: {en: '', ua: ''},
       likes: 0,
       category: categories.find(cat => cat.en === 'Desserts')?.en,
-      price: 0,
+      price: { en: 0, ua: 0 },
       discount: 0,
       ingredientEn: '',
       ingredientUa: '',
@@ -252,7 +252,7 @@ const Page = () => {
       return null;
     }
 
-    if(data.isPremium && data.price === 0) {
+    if(data.isPremium && (data.price.en === 0 || data.price.ua === 0)) {
       setError(t('form.validation.enterPrice'));
       return null;
     }
@@ -512,15 +512,28 @@ const Page = () => {
               <div>
                 <div className="mt-3.5">
                   <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
-                    {t('form.fields.price')}
+                    {t('form.fields.price')} (USD)
                   </label>
                   <div className="relative">
-                    <input {...register('price', {required: true, min: 1, max: 10000})}
-                           name="price"
-                           aria-invalid={errors.price ? "true" : "false"}
+                    <input {...register('price.en', {required: true, min: 1, max: 10000, valueAsNumber: true})}
+                           name="price.en"
+                           aria-invalid={errors.price?.en ? "true" : "false"}
                            className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                            type="number"/>
                     <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">$</span>
+                  </div>
+                </div>
+                <div className="mt-3.5">
+                  <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                    {t('form.fields.price')} (UAH)
+                  </label>
+                  <div className="relative">
+                    <input {...register('price.ua', {required: true, min: 1, max: 100000, valueAsNumber: true})}
+                           name="price.ua"
+                           aria-invalid={errors.price?.ua ? "true" : "false"}
+                           className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                           type="number"/>
+                    <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">₴</span>
                   </div>
                 </div>
                 <div className="mt-3.5">

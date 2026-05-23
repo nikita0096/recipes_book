@@ -19,13 +19,13 @@ interface FetchRecipe {
   steps_count: number;
 }
 
-export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, price: RecipePrice | null, error: Error | null }> => {
+export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, totalPrice: RecipePrice | null, error: Error | null }> => {
   const {data, error} = await supabase.from('recipes')
     .select()
     .eq('id', id)
     .single();
 
-  if (error) return {data: null, price: null, error};
+  if (error) return {data: null, totalPrice: null, error};
 
   const {data: {user}} = await supabase.auth.getUser();
 
@@ -34,8 +34,10 @@ export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, p
   if (!user?.id || !data.is_premium) {
     return {
       data: mapToPublic(data),
-      price: {
-        price: recipePrice?.price,
+      totalPrice: {
+        price: {
+          ...recipePrice?.price
+        },
         discount: recipePrice?.discount
       },
       error: null
@@ -64,8 +66,10 @@ export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, p
   if (!hasAccess) {
     return {
       data: mapToPublic(data),
-      price: {
-        price: recipePrice?.price,
+      totalPrice: {
+        price: {
+          ...recipePrice?.price
+        },
         discount: recipePrice?.discount
       },
       error: null
@@ -108,7 +112,7 @@ export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, p
       videoUrl: premiumData.video_url,
       stepsCount: data.steps_count,
     } satisfies IRecipePremiumFull,
-    price: null,
+    totalPrice: null,
     error: null
   }
 }
