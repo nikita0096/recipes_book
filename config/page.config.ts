@@ -9,4 +9,7 @@ export const PAGES = {
   RECIPE: (id: string): string => `/recipes/${id}`,
   PROFILE: (id: string): string => `/profile/${id}`,
   ADMIN_RECIPE_PAGE: (id: string): string => `/admin/recipes/${id}`,
+  TERMS: '/legal/terms',
+  PRIVACY: '/legal/privacy',
+  REFUND: '/legal/refund',
 }

@@ -14,6 +14,7 @@ export default getRequestConfig(async ({requestLocale}) => {
   const about = (await import(`../messages/${locale}/about.json`)).default;
   const footer = (await import(`../messages/${locale}/footer.json`)).default;
   const profile = (await import(`../messages/${locale}/profile.json`)).default;
+  const legal = (await import(`../messages/${locale}/legal.json`)).default;
 
   return {
     locale,
@@ -24,7 +25,8 @@ export default getRequestConfig(async ({requestLocale}) => {
       admin,
       about,
       footer,
-      profile
+      profile,
+      legal
     }
   };
 });

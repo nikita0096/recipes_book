@@ -7,6 +7,12 @@
     "recipes": "Recipes",
     "profile": "Profile"
   },
+  "legal": {
+    "title": "Legal",
+    "terms": "Terms of Service",
+    "privacy": "Privacy Policy",
+    "refund": "Refund Policy"
+  },
   "contact": {
     "title": "Get in Touch"
   },

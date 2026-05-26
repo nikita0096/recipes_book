@@ -1,0 +1,124 @@
+{
+  "terms": {
+    "title": "Terms of Service",
+    "lastUpdated": "Last updated: 2026",
+    "welcome": "Welcome to The Cookbook by YS. By accessing or using this website, you agree to the following terms:",
+    "sections": {
+      "use": {
+        "title": "1. Use of the Service",
+        "content": "You agree to use this website only for lawful purposes and in accordance with these Terms."
+      },
+      "accounts": {
+        "title": "2. Accounts",
+        "content": "You may register using email or third-party authentication providers such as Google. You are responsible for maintaining the confidentiality of your account."
+      },
+      "purchases": {
+        "title": "3. Purchases",
+        "content": "All recipes are sold as one-time purchases. Upon purchase, you receive lifetime access to the purchased content."
+      },
+      "refund": {
+        "title": "4. No Refund Policy",
+        "content": "All sales are final. Due to the nature of digital products, we do not offer refunds. If you experience technical issues accessing your purchase, please contact us."
+      },
+      "ip": {
+        "title": "5. Intellectual Property",
+        "intro": "All content on this website, including recipes, text, images, and design, is the property of The Cookbook by YS. You may not:",
+        "items": ["copy", "reproduce", "distribute", "resell"],
+        "outro": "any content without permission."
+      },
+      "disclaimer": {
+        "title": "6. Disclaimer",
+        "content": "All recipes are provided for informational purposes only. We are not responsible for any adverse effects, including allergies, health issues, or unsuccessful results."
+      },
+      "liability": {
+        "title": "7. Limitation of Liability",
+        "content": "We are not liable for any damages resulting from the use of this website or its content."
+      },
+      "changes": {
+        "title": "8. Changes",
+        "content": "We reserve the right to update these Terms at any time."
+      }
+    }
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: 2026",
+    "intro": "The Cookbook by YS respects your privacy.",
+    "sections": {
+      "collect": {
+        "title": "1. Information We Collect",
+        "intro": "We may collect:",
+        "items": [
+          "Email address",
+          "Account information",
+          "Payment-related data (processed securely via third-party providers)",
+          "Usage data (cookies, analytics)"
+        ]
+      },
+      "auth": {
+        "title": "2. Authentication",
+        "intro": "You may sign in using:",
+        "items": ["Email", "Google authentication"],
+        "outro": "When using Google login, we may receive basic profile information."
+      },
+      "usage": {
+        "title": "3. How We Use Information",
+        "intro": "We use your data to:",
+        "items": [
+          "provide access to purchased recipes",
+          "manage your account",
+          "improve our service"
+        ]
+      },
+      "sharing": {
+        "title": "4. Sharing",
+        "content": "We do not sell your personal data. We may share data with trusted third-party services (e.g., payment processors, analytics)."
+      },
+      "cookies": {
+        "title": "5. Cookies",
+        "content": "We use cookies to improve user experience and analyze traffic."
+      },
+      "security": {
+        "title": "6. Data Security",
+        "content": "We take reasonable measures to protect your data."
+      },
+      "rights": {
+        "title": "7. Your Rights",
+        "content": "You may request access, update, or deletion of your data."
+      }
+    }
+  },
+  "refund": {
+    "title": "Refund Policy",
+    "lastUpdated": "Last updated: 2026",
+    "thanks": "Thank you for your purchase at The Cookbook by YS.",
+    "sections": {
+      "digital": {
+        "title": "1. Digital Products",
+        "content": "All products sold on this website are digital recipes delivered instantly after purchase."
+      },
+      "noRefunds": {
+        "title": "2. No Refunds",
+        "content": "All sales are final. Due to the nature of digital products, we do not offer refunds or exchanges once a purchase is completed."
+      },
+      "exceptions": {
+        "title": "3. Exceptions",
+        "intro": "We may provide a refund only in the following cases:",
+        "items": [
+          "You were charged multiple times for the same product",
+          "You are unable to access your purchased content due to a technical issue on our side"
+        ],
+        "outro": "If you experience any issues, please contact us and we will do our best to resolve the problem."
+      },
+      "unauthorized": {
+        "title": "4. Unauthorized Transactions",
+        "content": "If you believe your payment was made without your authorization, please contact us immediately."
+      },
+      "contact": {
+        "title": "5. Contact",
+        "content": "For any billing or access issues, please contact:"
+      }
+    }
+  },
+  "backButton": "Back"
+}

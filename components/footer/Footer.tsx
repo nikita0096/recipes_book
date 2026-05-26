@@ -58,7 +58,7 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
 
           {/* Brand section */}
           <div className="lg:col-span-2">
@@ -193,6 +193,34 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
                   {t('quickLinks.profile')}
                 </Link>
               )}
+            </nav>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h4 className="text-sm md:text-md font-semibold mb-6 flex items-center gap-2 text-text">
+              <span className="w-8 h-0.5 bg-linear-to-r from-[#a67c52] to-[#d4a574] rounded-full" />
+              {t('legal.title')}
+            </h4>
+            <nav className="space-y-3">
+              <Link
+                href={PAGES.TERMS}
+                className="block text-xs md:text-sm text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-x-1 transform"
+              >
+                {t('legal.terms')}
+              </Link>
+              <Link
+                href={PAGES.PRIVACY}
+                className="block text-xs md:text-sm text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-x-1 transform"
+              >
+                {t('legal.privacy')}
+              </Link>
+              <Link
+                href={PAGES.REFUND}
+                className="block text-xs md:text-sm text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-x-1 transform"
+              >
+                {t('legal.refund')}
+              </Link>
             </nav>
           </div>
 
