@@ -47,7 +47,7 @@ export const fetchFeaturedRecipes = async (): Promise<FeaturedRecipe[] | []> => 
       likes: item.likes,
       category: item.category,
       description: item.description,
-      preparingTime: item.preparingTime
+      preparingTime: item.preparing_time
     }
   });
 };

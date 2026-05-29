@@ -13,19 +13,20 @@ interface FeaturedRecipeCardProps {
   recipe: FeaturedRecipe;
   index: number;
   setPreviewFeaturedCard: (featuredCard: FeaturedRecipe) => void;
+  isAnimateCards: boolean;
 }
 
-const FeaturedRecipeCard: React.FC<FeaturedRecipeCardProps> = ({ recipe, index, setPreviewFeaturedCard }) => {
+const FeaturedRecipeCard: React.FC<FeaturedRecipeCardProps> = ({ recipe, index, setPreviewFeaturedCard, isAnimateCards }) => {
   const locale = useTypedLocale();
   const tRecipes = useTranslations('recipes');
 
 
-  const animationDelay = 100;
+  const animationDelay = 0;
 
   return (
-    <div className="bg-surface overflow-hidden animate-card-fade-in hover:scale-[1.02] transition-all duration-300"
+    <div className={`bg-surface overflow-hidden ${isAnimateCards ? 'animate-card-fade-in' : 'hidden'} hover:scale-[1.02] transition-all duration-300`}
          style={{
-           animationDelay: `${animationDelay + (index * 50)}ms`,
+           animationDelay: `${animationDelay + (index * 100)}ms`,
          }}
     >
 

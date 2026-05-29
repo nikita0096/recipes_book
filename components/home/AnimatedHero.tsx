@@ -21,41 +21,68 @@ const AnimatedHero = ({
   browseText = 'Browse recipes',
   aboutText = 'About the author',
 }: AnimatedHeroProps) => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [height, setHeight] = useState(0);
 
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const scrollHintRef = useRef<HTMLDivElement | null>(null);
 
+  const innerRef = useRef<HTMLDivElement>(null);
+  const currentRef = useRef(0);
+
+  const interval = 2000;
+  const duration = 700;
+
   useEffect(() => {
-    if (words.length <= 1) return;
+    const measure = () => {
+      const first = innerRef.current?.children[0];
+      if (first) setHeight(first.clientHeight);
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);   // ← cleanup #1
+  }, [words]);
 
-    const interval = setInterval(() => {
-      setIsAnimating(true);
+  useEffect(() => {
+    if (!height) return;
 
-      setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % words.length);
-        setIsAnimating(false);
-      }, 300);
-    }, 2500);
+    const inner = innerRef.current;
+    if (!inner) return;
 
-    return () => clearInterval(interval);
-  }, [words.length]);
+    const id = setInterval(() => {
+      currentRef.current += 1;
+      inner.style.transform = `translateY(-${currentRef.current * height}px)`;
+
+      if (currentRef.current >= words.length) {
+        setTimeout(() => {
+          inner.style.transition = 'none';
+          inner.style.transform = `translateY(0px)`;
+          currentRef.current = 0;
+
+          // Force reflow to apply the instant reset
+          void inner.offsetHeight;
+
+          // Restore transition
+          inner.style.transition = `transform ${duration}ms cubic-bezier(0.76,0,0.24,1)`;
+        }, duration);
+      }
+    }, interval);
+
+    return () => clearInterval(id);
+  }, [height, words, interval, duration]);
 
   useEffect(() => {
     const onScroll = () => {
-      if(!wrapperRef.current || !scrollHintRef.current) return;
+      if (!wrapperRef.current || !scrollHintRef.current) return;
 
       const el = wrapperRef.current;
       const rect = el.getBoundingClientRect();
 
-      // p = 0 когда элемент вверху, p = 1 когда проскроллен на 30% высоты
       const p = Math.max(0, Math.min(1, -rect.top / (el.clientHeight * 0.4)));
 
       scrollHintRef.current.style.opacity = String(1 - p);
     }
 
-    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('scroll', onScroll, {passive: true});
     onScroll();
     return () => {
       window.removeEventListener('scroll', onScroll);
@@ -63,34 +90,53 @@ const AnimatedHero = ({
   }, []);
 
   return (
-    <section className="animated-hero" ref={wrapperRef}>
+    <section className="animated-hero"
+             ref={wrapperRef}>
       <div className="hero-top">
         <h1 className="hero-title">
           <span className="line-static">{discoverText}</span>
-          <span className="word-flipper">
-            <span className={`word-current ${isAnimating ? 'word-exit' : ''}`}>
-              {words[currentIndex]}
-            </span>
-          </span>
+          <span
+            className='word-wrapper'
+            style={{ height: height || '1em' }}>
+          <div
+            ref={innerRef}
+            className="flex flex-col will-change-transform"
+            style={{ transition: `transform ${duration}ms cubic-bezier(0.76,0,0.24,1)` }}
+          >
+            {words.map((w, i) => (
+              <span key={i} className="word-flipper">{w}</span>
+            ))}
+            <span className="word-flipper">{words[0]}</span>
+          </div>
+        </span>
+
           <span className="line-static">{recipesText}</span>
         </h1>
 
         <p className="hero-byline">{byAuthor}</p>
 
         <div className="hero-cta">
-          <Link href={PAGES.RECIPES} className="btn-primary">
+          <Link href={PAGES.RECIPES}
+                className="btn-primary">
             {browseText}
-            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="12"
+                 height="12"
+                 viewBox="0 0 16 16"
+                 fill="none"
+                 stroke="currentColor"
+                 strokeWidth="2">
               <path d="M3 8h10M9 4l4 4-4 4"/>
             </svg>
           </Link>
-          <Link href={PAGES.ABOUT} className="btn-ghost">
+          <Link href={PAGES.ABOUT}
+                className="btn-ghost">
             {aboutText}
           </Link>
         </div>
       </div>
 
-      <div className="scroll-cta" ref={scrollHintRef}>
+      <div className="scroll-cta"
+           ref={scrollHintRef}>
         <div className="scroll-cta-line"></div>
         <div className="scroll-cta-dot"></div>
       </div>

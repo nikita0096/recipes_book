@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {Link} from "@/i18n/navigation";
 import {PAGES} from "@/config/page.config";
 import {useTranslations} from "next-intl";
@@ -15,12 +15,32 @@ import {FeaturedRecipe} from "@/services/db/public/fetchFeaturedRecipes";
 
 export default function Home() {
   const [previewFeaturedCard, setPreviewFeaturedCard] = useState<FeaturedRecipe | null>(null);
+  const [isAnimateCards, setIsAnimateCards] = useState<boolean>(false);
 
   const t = useTranslations('home');
   const {data: featuredRecipes, isLoading} = useFeaturedRecipes();
   const {user} = useUserStore();
 
+  const triggerFeaturedCardsRef = useRef<HTMLDivElement>(null);
+
   const words = t.raw('title.words') as string[];
+
+  useEffect(() => {
+    if(!triggerFeaturedCardsRef.current) return;
+
+    const margin = window.innerHeight;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        setIsAnimateCards(true);
+      }
+    }, {
+      threshold: 1,
+    });
+
+    observer.observe(triggerFeaturedCardsRef.current);
+    return () => observer.disconnect();
+  })
 
   return (
     <div className="relative -mt-[65px]">
@@ -48,7 +68,7 @@ export default function Home() {
           </div>
 
           <div className="relative max-w-7xl mx-auto">
-            <h2 className="text-2xl md:text-4xl text-start font-serif w-1/2 whitespace-pre-line p-4 mb-5">
+            <h2 ref={triggerFeaturedCardsRef} className="text-2xl md:text-4xl text-start font-serif w-1/2 whitespace-pre-line p-4 mb-5">
               {t.rich('featured.title', {
                 highlight: (chunks) => (
                   <span className='text-accent'>{chunks}</span>
@@ -68,12 +88,13 @@ export default function Home() {
               </div>
             ) : (
               <>
-                <div className="relative grid grid-cols-1 md:grid-cols-3 md:gap-8">
+                <div className="relative grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-8">
                   {featuredRecipes?.map((recipe, index) => (
                     <FeaturedRecipeCard key={recipe.id}
                                         recipe={recipe}
                                         index={index}
-                                        setPreviewFeaturedCard={setPreviewFeaturedCard}/>
+                                        setPreviewFeaturedCard={setPreviewFeaturedCard}
+                                        isAnimateCards={isAnimateCards}/>
                   ))}
                 </div>
               </>

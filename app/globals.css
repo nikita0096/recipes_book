@@ -172,7 +172,7 @@ body {
    ══════════════════════════════════════════════════════════════ */
 
 .cake-hero-wrapper {
-  height: 300vh;
+  height: 200vh;
   position: relative;
 }
 
@@ -897,6 +897,12 @@ body {
   display: block;
 }
 
+.word-wrapper {
+  position: relative;
+  overflow: hidden;
+  display: inline-block;
+}
+
 /* Word flipper */
 .word-flipper {
   display: block;
@@ -905,19 +911,9 @@ body {
   font-style: italic;
   font-weight: 400;
   color: var(--accent);
-  min-height: 1.1em;
+  min-height: 1em;
+  line-height: 1em;
 }
-
-.word-current {
-  display: inline-block;
-  transition: all 0.3s ease-out;
-}
-
-.word-current.word-exit {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
 /* Byline under title */
 .hero-byline {
   font-family: var(--font-cormorant), 'Cormorant Garamond', Georgia, serif;
@@ -974,7 +970,7 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 200px;
+  min-width: 200px;
   gap: 0.5rem;
   padding: 0.75rem 2rem;
   background: var(--accent);

@@ -157,12 +157,12 @@ const RecipePage: React.FC<RecipePageProps> = ({
           priority
         />
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-linear-to-t from-black/88 via-black/10 to-transparent pointer-events-none"/>
+        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent pointer-events-none"/>
 
         {/* Back link */}
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-4 sm:left-6 lg:left-10 text-sm text-text/70 tracking-wide  hover:text-white mix-blend-difference transition-colors z-10 cursor-pointer"
+          className="absolute top-4 left-4 sm:left-6 lg:left-10 text-smtracking-widez-10 cursor-pointer text-black/50"
         >
           ← {t('singlePage.backButton')}
         </button>
@@ -187,7 +187,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
         {/* Hero content */}
         <div className="absolute bottom-6 left-4 sm:left-6 lg:left-10 right-16 sm:right-20 lg:right-24">
           {/* Category */}
-          <span className="inline-block text-xs tracking-widest uppercase text-accent border border-accent px-3 py-1 mb-3 ">
+          <span className="inline-block text-xs tracking-widest uppercase text-accent border border-accent bg-white/15 px-3 py-1 mb-3 ">
             {recipe.category && recipe.category[locale]}
           </span>
 
