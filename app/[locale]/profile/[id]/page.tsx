@@ -7,12 +7,14 @@ import {RECIPE_PLACEHOLDER_IMAGE} from "@/constants/images";
 
 interface PreviewLikedRecipeData {
   id: string;
+  slug: string;
   hero_img: string;
   title: LocalizedText;
 }
 
 interface PreviewPurchasedRecipeData {
   id: string;
+  slug: string;
   hero_img: string;
   title: LocalizedText;
 }
@@ -44,7 +46,7 @@ export default async function ProfilePage() {
 
   const {data: likedRecipes} = await supabase
     .from('recipe_likes')
-    .select('id, recipe: recipe_id (id, hero_img, title)')
+    .select('id, recipe: recipe_id (id, slug, hero_img, title)')
     .eq('user_id', user.id) as unknown as { data: UserLikesData[] | null }
 
   if (likedRecipes) likedRecipesData = likedRecipes.map(like => {
@@ -53,6 +55,7 @@ export default async function ProfilePage() {
       id: like.id,
       recipe: {
         id: like.recipe.id,
+        slug: like.recipe.slug,
         heroImg: imgUrl || RECIPE_PLACEHOLDER_IMAGE,
         title: like.recipe.title
       }
@@ -67,7 +70,7 @@ export default async function ProfilePage() {
       id,
       purchased_at,
       recipe_premium:premium_recipe_id (
-        recipe:recipe_id (id, hero_img, title)
+        recipe:recipe_id (id, slug, hero_img, title)
       )
     `)
     .eq('user_id', user.id) as unknown as { data: UserPurchasedData[] | null };4
@@ -81,6 +84,7 @@ export default async function ProfilePage() {
           purchasedAt: purchase.purchased_at,
           recipe: {
             id: purchase.recipe_premium.recipe.id,
+            slug: purchase.recipe_premium.recipe.slug,
             heroImg: imgUrl || RECIPE_PLACEHOLDER_IMAGE,
             title: purchase.recipe_premium.recipe.title
           }

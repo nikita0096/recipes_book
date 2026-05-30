@@ -1,6 +1,6 @@
 'use client';
 
-import React, {ChangeEvent, useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Image from 'next/image';
 import {useUserStore} from "@/store/useUserStore";
 import {useRouter} from "@/i18n/navigation";
@@ -69,7 +69,8 @@ const Page = () => {
       heroImg: null,
       isPremium: true,
       preparingTime: 0,
-      videoFile: null
+      videoFile: null,
+      slug: ''
     }
   });
 
@@ -282,7 +283,7 @@ const Page = () => {
       setIsVideoUploading(false);
     } catch(error) {
       setVideoError(t('form.validation.videoUploadingError'));
-      console.log(error)
+      console.log(error);
       return null;
     }
 
@@ -345,6 +346,7 @@ const Page = () => {
       heroImg: heroImgPath,
       preparingTime: data.preparingTime,
       videoUrl: videoUrl,  // R2 key stored as videoUrl
+      slug: data.slug,
     };
   };
 
@@ -379,6 +381,7 @@ const Page = () => {
           isPremium: true as const,
           preparingTime: recipeData.preparingTime,
           premiumId: premiumRecipeId,
+          slug: recipeData.slug,
           stepsCount,
         };
 
@@ -409,6 +412,7 @@ const Page = () => {
           recipeSteps: recipeData.recipeSteps,
           videoUrl: recipeData.videoUrl,
           stepsCount: recipeData.recipeSteps.length,
+          slug: recipeData.slug,
         };
 
         await insertRecipePublic(publicData);
@@ -431,6 +435,25 @@ const Page = () => {
   };
 
   const isPremium = watch('isPremium');
+
+  const engTitle = watch('title.en');
+
+  const generateSlug = (str: string): string => {
+    if(str.trim() !== '') {
+      return engTitle.toLowerCase().split(' ').join('-');
+    }
+
+    return '';
+  };
+
+  useEffect(() => {
+    if(engTitle.trim()) {
+      const slug = generateSlug(engTitle);
+
+      setValue('slug', slug);
+      console.log('render')
+    }
+  }, [engTitle, generateSlug]);
 
   return (
     <div className="max-w-3xl mx-auto px-6 sm:px-10 py-8 pb-16">
@@ -476,6 +499,13 @@ const Page = () => {
                      className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                      type="text"
                      placeholder={t('form.fields.titlePlaceholderEn')}/>
+              <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                Slug
+              </label>
+              <input {...register('slug', {required: true})}
+                     className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                     type="text"
+                     placeholder='URL slug'/>
             </div>
 
             <div className="space-y-3">

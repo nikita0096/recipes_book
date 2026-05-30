@@ -28,8 +28,6 @@ export default function Home() {
   useEffect(() => {
     if(!triggerFeaturedCardsRef.current) return;
 
-    const margin = window.innerHeight;
-
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
         setIsAnimateCards(true);

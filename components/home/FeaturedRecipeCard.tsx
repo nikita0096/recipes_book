@@ -40,7 +40,7 @@ const FeaturedRecipeCard: React.FC<FeaturedRecipeCardProps> = ({ recipe, index, 
             alt={recipe.title[locale]}
           />
         </div>
-        <Link className='block md:hidden relative w-full aspect-4/3' href={PAGES.RECIPE(recipe.id)}>
+        <Link className='block md:hidden relative w-full aspect-4/3' href={PAGES.RECIPE(recipe.slug + '--' + recipe.id)}>
           <Image
             fill
             sizes="100vh"
@@ -70,7 +70,7 @@ const FeaturedRecipeCard: React.FC<FeaturedRecipeCardProps> = ({ recipe, index, 
             ♡ {recipe.likes}
           </span>
           <Link
-            href={PAGES.RECIPE(recipe.id)}
+            href={PAGES.RECIPE(recipe.slug + '--' + recipe.id)}
             className="text-sm border border-border text-text px-4 py-2 hover:bg-surface transition-colors"
           >
             {tRecipes("card.toRecipe")}

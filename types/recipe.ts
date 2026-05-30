@@ -19,6 +19,7 @@ interface IRecipeBase {
   heroImg: string;
   preparingTime: number;
   stepsCount: number;
+  slug: string;
 }
 
 export interface RecipePrice {

@@ -30,4 +30,5 @@ export interface IFormValues {
   isPremium: boolean;
   preparingTime: number;
   videoFile: File | null;
+  slug: string;
 }

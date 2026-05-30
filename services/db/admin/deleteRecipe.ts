@@ -27,23 +27,44 @@ export const deleteRecipe = async ({ id, videoKey }: { id: string; videoKey: str
     return { error: deleteError };
   }
 
-
-  const { data, error: listError } = await supabase
+  const { data: heroImage, error: listError } = await supabase
     .storage
-    .from('images')
+    .from('hero-images')
     .list(id);
 
   if (listError) {
     return { error: listError };
   }
 
-  const imagesList = data?.map((item) => `${id}/${item.name}`);
+  const heroImgList = heroImage?.map((item) => `${id}/${item.name}`);
 
-  if (imagesList && imagesList.length > 0) {
+  if (heroImgList && heroImgList.length > 0) {
     const { error: removeError } = await supabase
       .storage
-      .from('images')
-      .remove(imagesList);
+      .from('hero-images')
+      .remove(heroImgList);
+
+    if (removeError) {
+      return { error: removeError };
+    }
+  }
+
+  const { data: stepsList, error: stepListError } = await supabase
+    .storage
+    .from('steps')
+    .list(id);
+
+  if (stepListError) {
+    return { error: stepListError };
+  }
+
+  const stepsImagesList = stepsList?.map((item) => `${id}/${item.name}`);
+
+  if (stepsImagesList && stepsImagesList.length > 0) {
+    const { error: removeError } = await supabase
+      .storage
+      .from('steps')
+      .remove(stepsImagesList);
 
     if (removeError) {
       return { error: removeError };

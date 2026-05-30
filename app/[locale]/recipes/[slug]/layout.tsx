@@ -11,7 +11,7 @@ export async function generateMetadata({params}: Props): Promise<Metadata> {
 
   const {locale, slug} = await params;
 
-  const id = slug.split('-').pop();
+  const id = slug.split('--').pop();
 
   const {data} = await supabase
     .from('recipes')
@@ -31,8 +31,6 @@ interface RecipeLayoutProps {
 }
 
 export default async function RecipeLayout({children, params}: RecipeLayoutProps) {
-    const slug = await params;
-
     return (
       <div>
         {children}

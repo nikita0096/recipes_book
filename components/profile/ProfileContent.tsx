@@ -17,6 +17,7 @@ import ChefPlaceholder from "@/components/ui/ChefPlaceholder";
 
 interface PreviewRecipe {
   id: string;
+  slug: string;
   heroImg: string;
   title: LocalizedText;
 }
@@ -261,7 +262,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
               {displayedPurchasedRecipes.map((purchase) => (
                 <Link
                   key={purchase.id}
-                  href={PAGES.RECIPE(purchase.recipe.id)}
+                  href={PAGES.RECIPE(purchase.recipe.slug + '--' + purchase.recipe.id)}
                   className="group bg-bg"
                 >
                   {/* Recipe image */}
@@ -348,7 +349,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
             {displayedLikedRecipes.map((item) => (
               <Link
                 key={item.id}
-                href={PAGES.RECIPE(item.recipe.id)}
+                href={PAGES.RECIPE(item.recipe.slug + '--' + item.recipe.id)}
                 className="group bg-bg"
               >
                 {/* Recipe image */}

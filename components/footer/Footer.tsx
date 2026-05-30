@@ -172,23 +172,23 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
               <span className="w-8 h-0.5 bg-linear-to-r from-[#a67c52] to-[#d4a574] rounded-full" />
               {t('quickLinks.title')}
             </h4>
-            <nav className="space-y-3">
+            <nav className="space-y-4 md:space-y-3">
               <Link
                 href={PAGES.HOME}
-                className="block text-xs md:text-sm text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-x-1 transform"
+                className="block text-sm text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-x-1 transform"
               >
                 {t('quickLinks.home')}
               </Link>
               <Link
                 href={PAGES.RECIPES}
-                className="block text-xs md:text-sm text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-x-1 transform"
+                className="block text-sm text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-x-1 transform"
               >
                 {t('quickLinks.recipes')}
               </Link>
               {user !== null && (
                 <Link
                   href={PAGES.PROFILE(user.id)}
-                  className="block text-xs md:text-sm text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-x-1 transform"
+                  className="block text-sm text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-x-1 transform"
                 >
                   {t('quickLinks.profile')}
                 </Link>
@@ -202,22 +202,22 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
               <span className="w-8 h-0.5 bg-linear-to-r from-[#a67c52] to-[#d4a574] rounded-full" />
               {t('legal.title')}
             </h4>
-            <nav className="space-y-3">
+            <nav className="space-y-4 md:space-y-3">
               <Link
                 href={PAGES.TERMS}
-                className="block text-xs md:text-sm text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-x-1 transform"
+                className="block text-sm text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-x-1 transform"
               >
                 {t('legal.terms')}
               </Link>
               <Link
                 href={PAGES.PRIVACY}
-                className="block text-xs md:text-sm text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-x-1 transform"
+                className="block text-sm text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-x-1 transform"
               >
                 {t('legal.privacy')}
               </Link>
               <Link
                 href={PAGES.REFUND}
-                className="block text-xs md:text-sm text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-x-1 transform"
+                className="block text-sm text-gray-400 hover:text-accent transition-colors duration-300 hover:translate-x-1 transform"
               >
                 {t('legal.refund')}
               </Link>

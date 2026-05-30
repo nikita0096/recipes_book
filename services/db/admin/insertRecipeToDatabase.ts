@@ -27,6 +27,7 @@ export const insertRecipePublic = async (recipeData: IRecipeUploadPublic) => {
       video_url: recipeData.videoUrl,
       recipe_steps: recipeData.recipeSteps,
       steps_count: recipeData.recipeSteps.length,
+      slug: recipeData.slug
     });
 
   if (error) {
@@ -52,6 +53,7 @@ export const insertRecipePremiumMain = async (recipeData: IRecipeUploadPremiumMa
       recipe_steps: null,
       premium_recipe: recipeData.premiumId,
       steps_count: stepsCount,
+      slug: recipeData.slug
     });
 
   if (error) {

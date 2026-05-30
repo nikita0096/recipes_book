@@ -4,6 +4,7 @@ import {LocalizedText} from "@/types";
 
 export interface FeaturedRecipe {
   id: string;
+  slug: string;
   title: LocalizedText;
   heroImg: string;
   stepsCount: number;
@@ -40,6 +41,7 @@ export const fetchFeaturedRecipes = async (): Promise<FeaturedRecipe[] | []> => 
   return (result || []).map((item) => {
     return {
       id: item.id,
+      slug: item.slug,
       title: item.title,
       heroImg: item.hero_img || '',
       stepsCount: item.steps_count,
