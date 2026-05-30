@@ -45,8 +45,11 @@ import {prepareUpdateData} from "./utils/prepareUpdateData";
 import {fetchRecipeAdmin} from "@/services/db/admin/fetchRecipeAdmin";
 import {SecureVideoPlayer} from "@/components/video/SecureVideoPlayer";
 import {fetchRecipePrice} from "@/services/db/public/fetchRecipePrice";
+import {getPublicImageUrl} from "@/services/storage/getPublicImageUrl";
 
 type StepFields = { desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string }
+
+type EditingSteps = {desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string ;fieldId: string};
 
 export interface EditingValues {
   heroImg: string;
@@ -67,6 +70,7 @@ export interface EditingValues {
   videoFile: File | null;
   preparingTime: number;
   isPremium: boolean;
+  slug: string;
 }
 
 
@@ -74,13 +78,14 @@ const Page = () => {
   const params = useParams<{ recipe: string }>();
 
   const [recipe, setRecipe] = useState<IRecipe | null>(null);
-  const[videoSrc, setVideoSrc] = useState<string | null>(null);
+  const [videoSrc, setVideoSrc] = useState<string | null>(null);
   const [recipePrice, setRecipePrice] = useState<RecipePrice | null>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [stepFieldError, setStepFieldError] = useState<string | null>(null);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isEditingIngredient, setIsEditingIngredient] = useState<Record<string, boolean>>({});
@@ -122,7 +127,8 @@ const Page = () => {
       videoUrl: '',
       videoFile: null,
       preparingTime: 0,
-      isPremium: false
+      isPremium: false,
+      slug: ''
     }
   });
 
@@ -146,6 +152,12 @@ const Page = () => {
     control,
     name: 'recipeSteps',
   });
+
+  const watchedSteps = watch('recipeSteps');
+  const mainImage = watch('heroImg');
+  const isPremium = watch('isPremium');
+  const isVideoChanged = watch('videoFile');
+  const engTitle = watch('title.en');
 
   const sensors = useSensors(
     useSensor(PointerSensor, {activationConstraint: {distance: 6}}),
@@ -213,6 +225,36 @@ const Page = () => {
     }
   }, [recipe?.videoUrl, recipe?.id]);
 
+
+  const editingSteps: EditingSteps[] = stepFields.map((field, i) => {
+    const step = watchedSteps[i];
+    const imgUrl = step.imgUrl && !step.imgUrl.startsWith('blob:') && !step.imgUrl.startsWith('http')
+      ? getPublicImageUrl(step.imgUrl, 'steps')
+      : step.imgUrl;
+    return {...step, imgUrl, fieldId: field.id};
+  });
+
+
+  const stepIds = isEditing
+    ? editingSteps.map(step => step.fieldId)  // Use react-hook-form field IDs for drag-and-drop
+    : recipe?.recipeSteps.map(step => step.id) || [];
+
+  const generateSlug = (str: string): string => {
+    if(str.trim() !== '') {
+      return engTitle.trim().toLowerCase().split(' ').join('-');
+    }
+
+    return '';
+  };
+
+  useEffect(() => {
+    if(engTitle.trim()) {
+      const slug = generateSlug(engTitle);
+
+      setValue('slug', slug);
+    }
+  }, [engTitle, generateSlug]);
+
   const router = useRouter();
 
   const queryClient = useQueryClient();
@@ -273,6 +315,7 @@ const Page = () => {
       setValue('isPremium', recipe.isPremium);
       setValue('price', recipePrice?.price || { en: 0, ua: 0 });
       setValue('discount', recipePrice?.discount || 0);
+      setValue('slug', recipe.slug)
     }
 
     setIsEditing(true);
@@ -419,9 +462,9 @@ const Page = () => {
 
   const addNewStep = () => {
     const newId = uuidv4();
+    startEditingStep(newId);
     const newStep = {desc: {en: '', ua: ''}, imgUrl: null, imgFile: null, id: newId};
     appendStep(newStep);
-    startEditingStep(newStep.id);
   };
 
   const handleCloseStepEditing = (id: string) => {
@@ -437,14 +480,14 @@ const Page = () => {
   };
 
   const handleStepChange = (id: string, field: 'ua' | 'en', value: string) => {
-    const index = stepFields.findIndex(item => item.id === id);
+    const index = watchedSteps.findIndex(item => item.id === id);
     if (index === -1) return;
 
     setValue(`recipeSteps.${index}.desc.${field}`, value);
   };
 
   const handleStepImageChange = (id: string, file: File) => {
-    const index = stepFields.findIndex(item => item.id === id);
+    const index = watchedSteps.findIndex(item => item.id === id);
     if (index === -1) return;
 
     const previewUrl = URL.createObjectURL(file);
@@ -453,15 +496,18 @@ const Page = () => {
   };
 
   const deleteStepImage = (id: string) => {
-    const index = stepFields.findIndex(item => item.id === id);
+    const index = watchedSteps.findIndex(item => item.id === id);
     if (index === -1) return;
 
     setValue(`recipeSteps.${index}.imgUrl`, null);
     setValue(`recipeSteps.${index}.imgFile`, null);
   };
 
-  const saveStepChanges = (id: string) => {
-    handleCloseStepEditing(id);
+  const saveStepChanges = (id: string, i: number) => {
+    if(stepFields[i].desc.en && stepFields[i].desc.ua) {
+      handleCloseStepEditing(id);
+      setStepFieldError(null);
+    } else setStepFieldError(locale === 'ua' ? "Додайте хоча б опис" : "Add at least description");
   };
 
   const handleDragEnd = (event: DragEndEvent, fields: StepFields[] | Ingredient[], type: 'steps' | 'ingredients') => {
@@ -596,16 +642,6 @@ const Page = () => {
       setIsSaving(false);
     }
   }
-
-  const watchedSteps = watch('recipeSteps');
-  const stepsToRender = isEditing
-    ? stepFields.map((field, i) => ({...watchedSteps[i], id: field.id}))
-    : recipe?.recipeSteps;
-  const stepIds = stepFields.map((step) => step.id);
-
-  const mainImage = watch('heroImg');
-  const isPremium = watch('isPremium');
-  const isVideoChanged = watch('videoFile');
 
   return (
     <div className="min-h-screen bg-bg">
@@ -797,7 +833,10 @@ const Page = () => {
         <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-6 sm:py-7 lg:py-8">
           {/*price*/}
           {isPremium && (
-            <div>
+            <div className='mb-6'>
+              <h2 className="text-sm tracking-widest uppercase text-accent mb-4">
+                {tAdmin('form.fields.price')}
+              </h2>
               <div className="mt-3.5">
                 <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
                   {tAdmin('form.fields.price')} (USD)
@@ -866,6 +905,16 @@ const Page = () => {
             </div>
           </div>
 
+          {/*Slug*/}
+          <div className="mb-6">
+            <h2 className="text-sm tracking-widest uppercase text-accent mb-4">
+              URL Slug
+            </h2>
+            <input {...register('slug', {required: true})}
+                   className="w-full px-3.5 py-2.5 max-w-2xl bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                   type="text"
+                   placeholder='URL slug'/>
+          </div>
           {/* Description */}
           <div>
             <h2 className="text-sm tracking-widest uppercase text-accent mb-4">
@@ -1062,16 +1111,17 @@ const Page = () => {
           {tRecipes('singlePage.preparationSteps')}
         </h2>
 
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={(e) => handleDragEnd(e, stepFields, 'steps')}
-        >
-          <SortableContext items={stepIds} strategy={verticalListSortingStrategy}>
-            <div className="flex flex-col gap-px bg-border">
-              {stepsToRender.map((step, i) => (
-                <div key={step.id} className="bg-bg">
-                  {isEditingStep[step.id] ? (
+        {isEditing ? (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={(e) => handleDragEnd(e, stepFields, 'steps')}
+          >
+            <SortableContext items={stepIds} strategy={verticalListSortingStrategy}>
+              <div className="flex flex-col gap-px bg-border">
+                {editingSteps.map((step, i) => (
+                  <div key={step.fieldId} className="bg-bg">
+                    {isEditingStep[step.id] ? (
                     // Edit mode for step
                     <div className=" p-4 sm:p-5 lg:p-6 border border-accent">
 
@@ -1136,6 +1186,7 @@ const Page = () => {
                               value={typeof step.desc === 'string' ? '' : step.desc.ua}
                               onChange={(e) => handleStepChange(step.id, 'ua', e.target.value)}
                               rows={3}
+                              required={true}
                               className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
                             />
                           </div>
@@ -1154,15 +1205,22 @@ const Page = () => {
                               value={typeof step.desc === 'string' ? '' : step.desc.en}
                               onChange={(e) => handleStepChange(step.id, 'en', e.target.value)}
                               rows={3}
+                              required={true}
                               className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
                             />
                           </div>
                         </div>
                       </div>
 
+                      {stepFieldError && (
+                        <div className='flex items-center justify-center'>
+                          <p className='text-center text-xs bg-red-400 text-white px-3 py-1'>{stepFieldError}</p>
+                        </div>
+                      )}
+
                       <div className="flex gap-5 justify-end mt-4 col-span-2 place-self-center">
                         <button
-                          onClick={() => saveStepChanges(step.id)}
+                          onClick={() => saveStepChanges(step.id, i)}
                           className="p-2 bg-green-500 text-white hover:bg-green-600 transition-colors"
                         >
                           <IoCheckmark className="text-lg"/>
@@ -1177,20 +1235,41 @@ const Page = () => {
                     </div>
                   ) : (
                     // View mode for step (using SortableStep for drag)
-                    <SortableStep
-                      step={step}
-                      stepId={step.id}
-                      index={i}
-                      isEditing={isEditing}
-                      onEdit={() => startEditingStep(step.id)}
-                      onRemove={() => removeStep(i)}
-                    />
-                  )}
+                      <SortableStep
+                        step={step}
+                        stepId={step.fieldId}
+                        index={i}
+                        isEditing={isEditing}
+                        onEdit={() => startEditingStep(step.id)}
+                        onRemove={() => removeStep(i)}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        ) : (
+          <div className="flex flex-col gap-px bg-border">
+            {recipe?.recipeSteps.map((step, i) => {
+              const imgUrl = step.imgUrl && !step.imgUrl.startsWith('http')
+                ? getPublicImageUrl(step.imgUrl, 'steps')
+                : step.imgUrl;
+              return (
+                <div key={step.id} className="bg-bg">
+                  <SortableStep
+                    step={{...step, imgUrl}}
+                    stepId={step.id}
+                    index={i}
+                    isEditing={false}
+                    onEdit={() => {}}
+                    onRemove={() => {}}
+                  />
                 </div>
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
+              );
+            })}
+          </div>
+        )}
 
         {/* Add new step button */}
         {isEditing && (

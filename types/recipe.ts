@@ -102,6 +102,7 @@ interface UpdateRecipeBase {
   heroImg: string;
   preparingTime: number;
   stepsCount: number;
+  slug: string;
 }
 
 // Public рецепт update (все поля)

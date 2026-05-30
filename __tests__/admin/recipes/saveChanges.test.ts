@@ -49,6 +49,7 @@ const createMockRecipePublic = (): IRecipePublic => ({
   preparingTime: 30,
   videoUrl: 'video-key-1',
   stepsCount: 2,
+  slug: 'test-recipe',
 });
 
 const createMockRecipePremium = (): IRecipePremiumFull => ({
@@ -68,6 +69,7 @@ const createMockRecipePremium = (): IRecipePremiumFull => ({
   preparingTime: 60,
   videoUrl: 'video-key-2',
   stepsCount: 1,
+  slug: 'premium-recipe',
 });
 
 const createMockFormData = (overrides?: Partial<EditingValues>): EditingValues => ({
@@ -95,6 +97,7 @@ const createMockFormData = (overrides?: Partial<EditingValues>): EditingValues =
   isPremium: false,
   price: { en: 0, ua: 0 },
   discount: 0,
+  slug: 'test-recipe',
   ...overrides,
 });
 

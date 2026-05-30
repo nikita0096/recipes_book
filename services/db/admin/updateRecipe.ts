@@ -7,6 +7,7 @@ import {
   IRecipePremiumFull, RecipePrice,
 } from "@/types/recipe";
 import {v4 as uuidv4} from 'uuid';
+import {getPublicImageUrl} from "@/services/storage/getPublicImageUrl";
 
 
 // ===== PUBLIC → PUBLIC =====
@@ -29,6 +30,7 @@ export const updateRecipePublic = async (
       preparing_time: formData.preparingTime,
       is_premium: false,
       steps_count: formData.recipeSteps.length,
+      slug: formData.slug,
     })
     .eq('id', id)
     .select()
@@ -42,6 +44,8 @@ export const updateRecipePublic = async (
     return {data: null, error: 'Recipe not found'};
   }
 
+  const heroImgUrl = getPublicImageUrl(data.hero_img, 'hero-images') || data.hero_img;
+
   return {
     data: {
       id: data.id,
@@ -50,12 +54,13 @@ export const updateRecipePublic = async (
       likes: data.likes,
       category: data.category,
       ingredients: data.ingredients,
-      heroImg: data.hero_img,
+      heroImg: heroImgUrl,
       isPremium: false as const,
       preparingTime: data.preparing_time,
       recipeSteps: data.recipe_steps,
       videoUrl: data.video_url,
       stepsCount: data.steps_count,
+      slug: data.slug
     },
     error: null,
   };
@@ -83,6 +88,7 @@ export const updateRecipePremium = async (
       recipe_steps: null,
       video_url: null,
       steps_count: premiumData.recipeSteps.length,
+      slug: mainData.slug,
     })
     .eq('id', id)
     .select()
@@ -116,6 +122,8 @@ export const updateRecipePremium = async (
       discount: premiumData.discount
     }).eq('recipe_id', id);
 
+  const heroImgUrl = getPublicImageUrl(data.hero_img, 'hero-images') || data.hero_img;
+
   return {
     data: {
       newRecipe: {
@@ -125,12 +133,13 @@ export const updateRecipePremium = async (
         likes: data.likes,
         category: data.category,
         ingredients: data.ingredients,
-        heroImg: data.hero_img,
+        heroImg: heroImgUrl,
         isPremium: true as const,
         preparingTime: data.preparing_time,
         recipeSteps: premiumData.recipeSteps,
         videoUrl: premiumData.videoUrl,
         stepsCount: data.steps_count,
+        slug: data.slug
       },
       newPrice: {
         price: premiumData.price,
@@ -165,6 +174,7 @@ export const convertPublicToPremium = async (
       video_url: null,
       premium_recipe: premiumId,
       steps_count: premiumData.recipeSteps.length,
+      slug: mainData.slug,
     })
     .eq('id', id)
     .select()
@@ -200,6 +210,8 @@ export const convertPublicToPremium = async (
       recipe_id: id
     });
 
+  const heroImgUrl = getPublicImageUrl(data.hero_img, 'hero-images') || data.hero_img;
+
   return {
     data: {
       newRecipe: {
@@ -209,12 +221,13 @@ export const convertPublicToPremium = async (
         likes: data.likes,
         category: data.category,
         ingredients: data.ingredients,
-        heroImg: data.hero_img,
+        heroImg: heroImgUrl,
         isPremium: true as const,
         preparingTime: data.preparing_time,
         recipeSteps: premiumData.recipeSteps,
         videoUrl: premiumData.videoUrl,
         stepsCount: data.steps_count,
+        slug: data.slug
       },
       newPrice: {
         price: premiumData.price,
@@ -247,6 +260,7 @@ export const convertPremiumToPublic = async (
       is_premium: false,
       premium_recipe: null,
       steps_count: formData.recipeSteps.length,
+      slug: formData.slug,
     })
     .eq('id', id)
     .select()
@@ -276,6 +290,8 @@ export const convertPremiumToPublic = async (
     .delete()
     .eq('recipe_id', id);
 
+  const heroImgUrl = getPublicImageUrl(data.hero_img, 'hero-images') || data.hero_img;
+
   return {
     data: {
       id: data.id,
@@ -284,12 +300,13 @@ export const convertPremiumToPublic = async (
       likes: data.likes,
       category: data.category,
       ingredients: data.ingredients,
-      heroImg: data.hero_img,
+      heroImg: heroImgUrl,
       isPremium: false as const,
       preparingTime: data.preparing_time,
       recipeSteps: data.recipe_steps,
       videoUrl: data.video_url,
       stepsCount: data.steps_count,
+      slug: data.slug
     },
     error: null,
   };

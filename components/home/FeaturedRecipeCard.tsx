@@ -21,7 +21,7 @@ const FeaturedRecipeCard: React.FC<FeaturedRecipeCardProps> = ({ recipe, index, 
   const tRecipes = useTranslations('recipes');
 
 
-  const animationDelay = 0;
+  const animationDelay = 100;
 
   return (
     <div className={`bg-surface overflow-hidden ${isAnimateCards ? 'animate-card-fade-in' : 'hidden'} hover:scale-[1.02] transition-all duration-300`}

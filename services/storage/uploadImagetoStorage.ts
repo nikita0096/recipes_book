@@ -15,7 +15,7 @@ export async function uploadImage({file, bucket, filePath}: UploadProps) {
 
   try {
     file = await imageCompression(file, {
-      maxSizeMB: 1
+      maxSizeMB: 5
     });
   } catch (error) {
     errorMessage = error instanceof Error ? error.message : 'Image compression failed';

@@ -18,6 +18,20 @@ jest.mock('@/lib/supabase/ClientComponentClient', () => ({
   },
 }));
 
+// Mock getPublicImageUrl
+jest.mock('@/services/storage/getPublicImageUrl', () => ({
+  getPublicImageUrl: jest.fn((path: string | null) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return `https://supabase.url/storage/v1/object/public/bucket/${path}`;
+  }),
+}));
+
+// Mock uuid
+jest.mock('uuid', () => ({
+  v4: jest.fn(() => 'test-uuid-123'),
+}));
+
 const mockSupabase = supabase as jest.Mocked<typeof supabase>;
 
 const createMockPublicData = (): UpdateRecipeDataPublic => ({
@@ -36,6 +50,7 @@ const createMockPublicData = (): UpdateRecipeDataPublic => ({
   ],
   videoUrl: 'video-key-1',
   stepsCount: 1,
+  slug: 'public-recipe',
 });
 
 const createMockPremiumMainData = (): UpdateRecipeDataPremiumMain => ({
@@ -50,6 +65,7 @@ const createMockPremiumMainData = (): UpdateRecipeDataPremiumMain => ({
   preparingTime: 60,
   isPremium: true as const,
   stepsCount: 2,
+  slug: 'premium-recipe',
 });
 
 const createMockPremiumPartData = (): UpdateRecipeDataPremiumPart => ({
@@ -89,6 +105,7 @@ describe('Recipe Conversions - All Scenarios', () => {
                 is_premium: false,
                 recipe_steps: formData.recipeSteps,
                 steps_count: formData.stepsCount,
+                slug: 'test-slug',
               },
               error: null,
             }),
@@ -170,6 +187,7 @@ describe('Recipe Conversions - All Scenarios', () => {
                 recipe_steps: null,
                 video_url: null,
                 steps_count: 2,
+                slug: 'test-slug',
               },
               error: null,
             }),
@@ -274,6 +292,7 @@ describe('Recipe Conversions - All Scenarios', () => {
                 recipe_steps: null,
                 video_url: null,
                 steps_count: 2,
+                slug: 'test-slug',
               },
               error: null,
             }),
@@ -329,6 +348,7 @@ describe('Recipe Conversions - All Scenarios', () => {
                 video_url: null,
                 premium_recipe: 'test-uuid',
                 steps_count: 2,
+                slug: 'test-slug',
               },
               error: null,
             }),

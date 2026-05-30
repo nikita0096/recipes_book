@@ -44,9 +44,19 @@ export const deleteFileByPath = async (
     return {success: false, error: 'Invalid path'};
   }
 
+  // If it's a full URL, extract the path first
+  let filePath = path;
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    const extracted = extractPathFromUrl(path, bucket);
+    if (!extracted) {
+      return {success: false, error: 'Could not extract path from URL'};
+    }
+    filePath = extracted;
+  }
+
   const {error} = await supabase.storage
     .from(bucket)
-    .remove([path]);
+    .remove([filePath]);
 
   if (error) {
     console.error(`Failed to delete file from ${bucket}:`, error.message);

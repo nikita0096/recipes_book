@@ -208,7 +208,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
             ) : (
               <>
                 <h1 className="font-serif text-3xl sm:text-4xl italic font-normal text-text">
-                  {user.name}
+                  {user.name || "Chef"}
                 </h1>
                 <button
                   onClick={handleStartEditName}

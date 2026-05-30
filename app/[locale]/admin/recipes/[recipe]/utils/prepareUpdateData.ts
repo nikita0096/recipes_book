@@ -160,6 +160,7 @@ export const prepareUpdateData = async ({
         preparingTime: formData.preparingTime,
         isPremium: true as const,
         stepsCount: processedSteps.length,
+        slug: formData.slug,
       };
 
       const premiumData: UpdateRecipeDataPremiumPart = {
@@ -192,6 +193,7 @@ export const prepareUpdateData = async ({
       preparingTime: formData.preparingTime,
       isPremium: false as const,
       stepsCount: processedSteps.length,
+      slug: formData.slug,
     };
 
     return {

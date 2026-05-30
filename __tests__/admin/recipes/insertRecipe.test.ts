@@ -33,6 +33,7 @@ const createMockPublicRecipe = (): IRecipeUploadPublic => ({
     { desc: { ua: 'Крок 1', en: 'Step 1' }, imgUrl: null, id: 'step-1' },
   ],
   stepsCount: 1,
+  slug: 'test-recipe',
 });
 
 const createMockPremiumRecipe = (): IRecipeUploadPremiumMain => ({
@@ -49,6 +50,7 @@ const createMockPremiumRecipe = (): IRecipeUploadPremiumMain => ({
   preparingTime: 60,
   premiumId: 'premium-123',
   stepsCount: 1,
+  slug: 'premium-recipe',
 });
 
 describe('insertRecipePublic', () => {
@@ -81,6 +83,7 @@ describe('insertRecipePublic', () => {
       video_url: mockRecipe.videoUrl,
       recipe_steps: mockRecipe.recipeSteps,
       steps_count: mockRecipe.recipeSteps.length,
+      slug: mockRecipe.slug,
     });
   });
 
@@ -151,6 +154,7 @@ describe('insertRecipePremiumMain', () => {
       recipe_steps: null,
       premium_recipe: mockRecipe.premiumId,
       steps_count: 3,
+      slug: mockRecipe.slug,
     });
   });
 

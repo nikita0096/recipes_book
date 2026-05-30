@@ -440,7 +440,7 @@ const Page = () => {
 
   const generateSlug = (str: string): string => {
     if(str.trim() !== '') {
-      return engTitle.toLowerCase().split(' ').join('-');
+      return engTitle.trim().toLowerCase().split(' ').join('-');
     }
 
     return '';
@@ -451,7 +451,6 @@ const Page = () => {
       const slug = generateSlug(engTitle);
 
       setValue('slug', slug);
-      console.log('render')
     }
   }, [engTitle, generateSlug]);
 

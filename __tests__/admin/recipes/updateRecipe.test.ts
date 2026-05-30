@@ -18,6 +18,20 @@ jest.mock('@/lib/supabase/ClientComponentClient', () => ({
   },
 }));
 
+// Mock getPublicImageUrl
+jest.mock('@/services/storage/getPublicImageUrl', () => ({
+  getPublicImageUrl: jest.fn((path: string | null) => {
+    if (!path) return null;
+    if (path.startsWith('http')) return path;
+    return `https://supabase.url/storage/v1/object/public/bucket/${path}`;
+  }),
+}));
+
+// Mock uuid
+jest.mock('uuid', () => ({
+  v4: jest.fn(() => 'test-uuid-123'),
+}));
+
 const mockSupabase = supabase as jest.Mocked<typeof supabase>;
 
 // Mock data factories
@@ -37,6 +51,7 @@ const createMockPublicUpdateData = (): UpdateRecipeDataPublic => ({
     { desc: { ua: 'Крок 1', en: 'Step 1' }, imgUrl: null, id: 'step-1' },
   ],
   stepsCount: 1,
+  slug: 'updated-recipe',
 });
 
 const createMockPremiumMainData = (): UpdateRecipeDataPremiumMain => ({
@@ -51,6 +66,7 @@ const createMockPremiumMainData = (): UpdateRecipeDataPremiumMain => ({
   isPremium: true,
   preparingTime: 90,
   stepsCount: 1,
+  slug: 'premium-recipe',
 });
 
 const createMockPremiumPartData = (): UpdateRecipeDataPremiumPart => ({
@@ -76,6 +92,7 @@ const createMockDbResponse = (id: string, isPremium: boolean) => ({
   recipe_steps: isPremium ? null : [],
   video_url: isPremium ? null : 'video-key-1',
   steps_count: 1,
+  slug: 'recipe-slug',
 });
 
 // Helper to setup supabase mock chain
@@ -119,6 +136,7 @@ describe('updateRecipePublic', () => {
     expect(updateCall).toHaveProperty('video_url', formData.videoUrl);
     expect(updateCall).toHaveProperty('recipe_steps', formData.recipeSteps);
     expect(updateCall).toHaveProperty('is_premium', false);
+    expect(updateCall).toHaveProperty('slug', formData.slug);
   });
 
   test('should return error when recipe not found', async () => {
@@ -302,7 +320,9 @@ describe('convertPublicToPremium', () => {
 
     await convertPublicToPremium(mainData, premiumData, 'recipe-123');
 
-    expect(mockInsert).toHaveBeenCalledWith({
+    // Check the first call (premium table insert)
+    expect(mockInsert).toHaveBeenNthCalledWith(1, {
+      id: 'test-uuid-123',
       recipe_id: 'recipe-123',
       recipe_steps: premiumData.recipeSteps,
       video_url: premiumData.videoUrl,
