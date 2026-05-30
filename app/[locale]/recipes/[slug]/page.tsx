@@ -2,11 +2,14 @@ import RecipePage from "@/components/recipes/recipe/RecipePage";
 import {createClient} from "@/lib/supabase/ServerComponentClient";
 
 interface PageProps {
-  params: Promise<{ recipe: string }>;
+  params: Promise<{ slug: string }>;
 }
 
 export default async function Page({params}: PageProps){
-  const {recipe: recipeId} = await params;
+  const {slug} = await params;
+
+  const recipeId = slug.split('-').pop();
+
   const supabase = await createClient();
 
   const {data: {user}} = await supabase.auth.getUser();
@@ -26,7 +29,7 @@ export default async function Page({params}: PageProps){
 
   return (
     <RecipePage
-      recipeId={recipeId}
+      recipeId={recipeId || slug}
       isLikedRecipe={isLiked}
     />
   );
