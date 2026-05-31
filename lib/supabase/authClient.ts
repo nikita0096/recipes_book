@@ -45,27 +45,21 @@ export const handleEmailLogin = async (email: string, password: string) => {
   return user;
 }
 
-export const handleSignUp = async (email: string, password: string) => {
-  const { data, error } = await supabase.auth.signUp({
+export const handleSignUp = async (email: string, password: string, pathname: string) => {
+  const url = new URL(window.location.origin + '/en/auth/callback');
+  url.searchParams.set('next', pathname);
+
+  const { data,  error } = await supabase.auth.signUp({
     email: email,
-    password: password
+    password: password,
+    options: {
+      emailRedirectTo: url.toString(),
+    }
   });
 
   if (error) throw error;
 
-  const {data: profile} = await supabase.auth.getUser();
-
-  const {user} = profile;
-
-  if (user) {
-    await upsertUserProfile(user.id, {
-      name: 'Chef',
-      avatar_url: '',
-      role: 'user',
-      created_at: new Date().toISOString(),
-      email: email,
-    })
-  }
+  return data;
 }
 
 export const logout = async () => {

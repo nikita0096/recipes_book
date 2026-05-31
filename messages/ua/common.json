@@ -27,15 +27,32 @@
     "password": "Пароль",
     "passwordPlaceholder": "Введіть пароль",
     "createPassword": "Створіть пароль",
+    "confirmPassword": "Підтвердіть пароль",
+    "confirmPasswordPlaceholder": "Введіть пароль ще раз",
+    "passwordRequirements": "Пароль повинен включати:",
+    "checkYourEmail": "Перевірте вашу пошту!",
+    "emailConfirmationSent": "Ми надіслали вам лист з підтвердженням на вказану електронну адресу. Будь ласка, перейдіть за посиланням у листі, щоб активувати акаунт.",
     "continueWithGoogle": "Продовжити з Google",
     "or": "або",
     "errors": {
+      "userExists" : "Ця електронна пошта вже зареєстрована. Спробуйте увійти",
       "invalidCredentials": "Невірний email або пароль",
       "emailNotConfirmed": "Будь ласка, підтвердіть вашу пошту",
       "userNotFound": "Користувача не знайдено",
       "emailAlreadyUsed": "Email вже зареєстрований",
       "weakPassword": "Пароль має бути не менше 6 символів",
-      "default": "Помилка авторизації. Спробуйте ще раз"
+      "default": "Помилка авторизації. Спробуйте ще раз",
+      "emailRequired": "Email обов'язковий",
+      "invalidEmail": "Невірний формат email",
+      "passwordRequired": "Пароль обов'язковий",
+      "passwordMinLength": "Мінімум 8 символів",
+      "passwordUpperCase": "Велика літера",
+      "passwordLowerCase": "Маленька літера",
+      "passwordNumber": "Цифра",
+      "confirmPasswordRequired": "Підтвердження паролю обов'язкове",
+      "passwordMismatch": "Паролі не співпадають",
+      "passwordsMatchIndicator": "Паролі співпадають",
+      "passwordRequirementsNotMet": "Будь ласка, виконайте всі вимоги до паролю"
     }
   },
   "navigation": {

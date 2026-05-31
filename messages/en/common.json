@@ -27,15 +27,32 @@
     "password": "Password",
     "passwordPlaceholder": "Enter your password",
     "createPassword": "Create a password",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordPlaceholder": "Enter password again",
+    "passwordRequirements": "Password must include:",
+    "checkYourEmail": "Check your email!",
+    "emailConfirmationSent": "We sent you a confirmation email. Please click the link in the email to activate your account.",
     "continueWithGoogle": "Continue with Google",
     "or": "or",
     "errors": {
+      "userExists" : "This email is already registered. Try signing in instead.",
       "invalidCredentials": "Invalid email or password",
       "emailNotConfirmed": "Please confirm your email first",
       "userNotFound": "User not found",
       "emailAlreadyUsed": "Email is already registered",
       "weakPassword": "Password must be at least 6 characters",
-      "default": "Authentication failed. Please try again"
+      "default": "Authentication failed. Please try again",
+      "emailRequired": "Email is required",
+      "invalidEmail": "Invalid email format",
+      "passwordRequired": "Password is required",
+      "passwordMinLength": "At least 8 characters",
+      "passwordUpperCase": "Uppercase letter",
+      "passwordLowerCase": "Lowercase letter",
+      "passwordNumber": "Number",
+      "confirmPasswordRequired": "Password confirmation is required",
+      "passwordMismatch": "Passwords do not match",
+      "passwordsMatchIndicator": "Passwords match",
+      "passwordRequirementsNotMet": "Please meet all password requirements"
     }
   },
   "navigation": {
