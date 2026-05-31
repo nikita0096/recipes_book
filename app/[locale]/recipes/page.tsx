@@ -8,11 +8,27 @@ import {useLocale, useTranslations} from "next-intl";
 import {useSearchRecipe} from "@/hooks/useSearchRecipe";
 import {usePathname, useRouter, useSearchParams} from "next/navigation";
 import LoadingCircle from "@/components/ui/LoadingCircle";
+import {useUserStore} from "@/store/useUserStore";
+import {getAllLikedRecipesByUser} from "@/services/db/recipe-likes/getAllLikedRecipesByUser";
+import {getAllPurchasesByUser} from "@/services/db/purchases/getAllPurchasesByUser";
+import {deleteLike} from "@/services/db/recipe-likes/deleteLike";
+import {useQueryClient, InfiniteData} from "@tanstack/react-query";
+import {IRecipe} from "@/types/recipe";
+
+type RecipesPageData = {
+  data: IRecipe[];
+  nextCursor?: number;
+};
 
 const Recipes = () => {
+  const [userLikedRecipes, setUserLikedRecipes] = useState<string[]>([]);
+  const [userPurchasedRecipes, setUserPurchasedRecipes] = useState<string[]>([]);
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const {user} = useUserStore();
+  const queryClient = useQueryClient();
 
   const [searchValue, setSearchValue] = useState(searchParams.get("search") ?? '');
 
@@ -25,7 +41,6 @@ const Recipes = () => {
 
   const {
     data,
-    error,
     fetchNextPage,
     hasNextPage,
     isFetching,
@@ -36,6 +51,21 @@ const Recipes = () => {
     const urlSearch = searchParams.get("search") ?? "";
     setSearchValue(urlSearch);
   }, [searchParams]);
+
+  useEffect(() => {
+    const userLikesAndPurchases = async (id: string) => {
+      const likes = await getAllLikedRecipesByUser(id);
+
+      if(likes) setUserLikedRecipes(likes.map(r => r.recipe_id));
+
+      const purchases = await getAllPurchasesByUser(id);
+      if(purchases) setUserPurchasedRecipes(purchases.map(r => r.recipe_id));
+    }
+
+    if(user) {
+      userLikesAndPurchases(user.id);
+    }
+  }, [user]);
 
 
   useEffect(() => {
@@ -69,7 +99,7 @@ const Recipes = () => {
     }
 
     return [[]];
-  }, [searchValue, searchResult, data]);
+  }, [searchValue, searchResult, data, userLikedRecipes]);
 
   const handleSearchChange = useCallback((value: string) => {
     const params = new URLSearchParams(searchParams);
@@ -94,6 +124,36 @@ const Recipes = () => {
 
     return () => window.clearTimeout(timeout);
   }, [searchValue, handleSearchChange, searchParams]);
+
+  const handleUnlikeRecipe = async (e: React.MouseEvent<HTMLButtonElement>, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if(!user) return;
+
+    // Optimistically update the recipe likes count in React Query cache
+    queryClient.setQueryData<InfiniteData<RecipesPageData>>(['recipes'], (oldData) => {
+      if (!oldData?.pages) return oldData;
+
+      return {
+        ...oldData,
+        pages: oldData.pages.map((page) => ({
+          ...page,
+          data: page.data.map((recipe) =>
+            recipe.id === id
+              ? { ...recipe, likes: Math.max(0, recipe.likes - 1) }
+              : recipe
+          )
+        }))
+      };
+    });
+
+    // Update local liked recipes state
+    setUserLikedRecipes(prev => prev.filter(rId => rId !== id));
+
+    // Call API to delete like
+    await deleteLike(id, user.id);
+  }
 
   return (
     <div className="min-h-screen bg-bg">
@@ -166,7 +226,11 @@ const Recipes = () => {
           {/* Cards Grid */}
           <div className="w-full px-4 sm:px-6 lg:px-10 pb-10 sm:pb-12 lg:pb-14">
             <RecipesList key={searchValue || 'all'}
-                         recipesList={recipesList}/>
+                         recipesList={recipesList}
+                         userLikes={userLikedRecipes}
+                         userPurchases={userPurchasedRecipes}
+                         handleUnlikeRecipe={handleUnlikeRecipe}
+            />
 
             {isFetching && hasNextPage && (
               <div className="pt-50 flex items-center justify-center">

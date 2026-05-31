@@ -10,9 +10,12 @@ import {useTypedLocale} from "@/hooks/useTypedLocale";
 interface RecipeItemProps {
   recipe: IRecipe;
   index?: number;
+  userLikes: string[];
+  userPurchases: string[];
+  handleUnlikeRecipe: (e: React.MouseEvent<HTMLButtonElement>, id: string) => void;
 }
 
-const RecipeItem: React.FC<RecipeItemProps> = ({recipe, index = 0}) => {
+const RecipeItem: React.FC<RecipeItemProps> = ({recipe, index = 0, userLikes, userPurchases, handleUnlikeRecipe}) => {
   const locale = useTypedLocale();
 
   const recipeRef = useRef(null);
@@ -21,6 +24,9 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe, index = 0}) => {
   const tRecipes = useTranslations('recipes');
 
   const animationDelay = 100;
+
+  const isPurchased = userPurchases.includes(recipe.id);
+  const isLiked  = userLikes.includes(recipe.id);
 
   return (
     <div data-id={`recipe-${recipe.id}`} className="bg-surface overflow-hidden animate-card-fade-in hover:scale-[1.02] transition-all duration-300"
@@ -50,6 +56,25 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe, index = 0}) => {
             {tRecipes('card.premium')}
           </span>
         )}
+        {isLiked && (
+          <button
+            className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-red-500/85 flex items-center justify-center text-white text-sm hover:bg-red-600 transition-colors"
+            onClick={(e) => handleUnlikeRecipe(e, recipe.id)}
+          >
+            ♥
+          </button>
+        )}
+
+        {isPurchased && (
+          <span className="absolute bottom-2.5 left-2.5 flex items-center justify-between gap-1 px-2.5 py-1.5 text-[#3AD080] bg-black/70 border border-[#3AD080] rounded-full text-xs tracking-wider">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                 stroke="#3ad07f" strokeWidth="3"
+                 strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12.5l4.2 4.2L19 6.5" />
+            </svg>
+            {tRecipes('card.purchased')}
+          </span>
+        )}
       </Link>
 
       {/* Content */}
@@ -58,7 +83,6 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe, index = 0}) => {
         <span className="block text-xs tracking-widest uppercase text-accent mb-2">
           {recipe.category[locale]}
         </span>
-
         {/* Title */}
         <h5 className="font-serif text-lg lg:text-xl text-text leading-tight mb-3 line-clamp-2">
           {recipe.title[locale]}

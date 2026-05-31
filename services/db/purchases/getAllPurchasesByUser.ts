@@ -1,11 +1,13 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 
-export const getAllLikedRecipesByUser = async (userId: string) => {
+export const getAllPurchasesByUser = async (userId: string) => {
   if (!userId) return;
   const { data } = await supabase
-    .from('recipe_likes')
+    .from('purchases')
     .select('recipe_id')
     .eq('user_id', userId);
 
-  return data;
+  if(data) return data;
+
+  return [];
 }
