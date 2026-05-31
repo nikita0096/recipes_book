@@ -14,6 +14,7 @@ import {SecureVideoPlayer} from "@/components/video/SecureVideoPlayer";
 import Footer from "@/components/footer/Footer";
 import {useRouter} from "next/navigation";
 import {RECIPE_PLACEHOLDER_IMAGE} from "@/constants/images";
+import LoadingPage from "@/components/ui/LoadingPage";
 
 
 interface RecipePageProps {
@@ -78,6 +79,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
   const [likes, setLikes] = useState(initialRecipe?.likes || 0);
   const [recipePrice, setRecipePrice] = useState<RecipePrice | null>(initialPrice);
   const [error, setError] = useState<Error | string | null>(initialError);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const locale = useTypedLocale();
   const t = useTranslations('recipes');
@@ -89,6 +91,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
     if (initialRecipe) return;
 
     const fetchData = async () => {
+      setLoading(true);
       const {data, totalPrice, error} = await fetchRecipe(recipeId);
 
       if (error) setError(error);
@@ -101,6 +104,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
       if (totalPrice) {
         setRecipePrice(totalPrice);
       }
+      setLoading(false);
     }
 
     fetchData();
@@ -118,6 +122,10 @@ const RecipePage: React.FC<RecipePageProps> = ({
         </div>
       </div>
     );
+  }
+
+  if(loading) {
+    return (<LoadingPage />)
   }
 
   if (!recipe) {

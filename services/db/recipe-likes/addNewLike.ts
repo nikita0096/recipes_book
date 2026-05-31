@@ -6,5 +6,5 @@ export const addNewLike = async (recipeId: string, userId: string) => {
     .insert({
       user_id : userId,
       recipe_id : recipeId,
-    })
+    });
 }

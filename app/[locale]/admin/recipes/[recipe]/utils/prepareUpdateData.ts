@@ -12,6 +12,24 @@ import {
 } from "@/types/recipe";
 import {deleteVideo} from "@/services/storage/deleteVideoR2Bucket";
 
+// Extract path from Supabase public URL
+const extractPathFromUrl = (urlOrPath: string, bucket: string): string => {
+  // If it's already a path (doesn't start with http), return as is
+  if (!urlOrPath.startsWith('http')) {
+    return urlOrPath;
+  }
+
+  // Parse URL to extract path
+  // Format: https://xxx.supabase.co/storage/v1/object/public/{bucket}/{path}
+  const urlParts = urlOrPath.split(`/public/${bucket}/`);
+  if (urlParts.length === 2) {
+    return urlParts[1];
+  }
+
+  // If parsing failed, return original (shouldn't happen)
+  return urlOrPath;
+};
+
 export interface PrepareUpdateDataParams {
   formData: EditingValues;
   recipe: IRecipe;
@@ -78,6 +96,9 @@ export const prepareUpdateData = async ({
         }
 
         imgPath = imagePath;
+      } else if (imgPath) {
+        // Extract path from URL if needed
+        imgPath = extractPathFromUrl(imgPath, 'steps');
       }
 
       processedSteps.push({
@@ -115,6 +136,9 @@ export const prepareUpdateData = async ({
       }
 
       heroImgPath = imagePath;
+    } else {
+      // Extract path from URL if needed
+      heroImgPath = extractPathFromUrl(formData.heroImg, 'hero-images');
     }
 
     // Process video if there's a new file
