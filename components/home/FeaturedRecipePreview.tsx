@@ -45,7 +45,7 @@ const FeaturedRecipePreview: React.FC<IFeaturedRecipePreviewProps> = ({recipe}) 
           </h3>
           <p className='text-muted text-xs lg:text-lg'>{recipe.description[locale]}</p>
           <Link
-            href={PAGES.RECIPE(recipe.slug + '--' + recipe.id)}
+            href={PAGES.RECIPE(recipe.slug + '-' + recipe.id)}
             className="text-sm border border-border text-text px-4 py-2 mt-5 hover:bg-surface transition-colors w-30 text-center"
           >
             {tRecipes("card.toRecipe")}

@@ -67,12 +67,12 @@ const UnlockIcon = ({size = 16, className = ''}: { size?: number; className?: st
 );
 
 const RecipePage: React.FC<RecipePageProps> = ({
-  recipeId,
-  isLikedRecipe,
-  initialRecipe = null,
-  initialPrice = null,
-  initialError = null
-}) => {
+                                                 recipeId,
+                                                 isLikedRecipe,
+                                                 initialRecipe = null,
+                                                 initialPrice = null,
+                                                 initialError = null
+                                               }) => {
   const [recipe, setRecipe] = useState<IRecipe | IRecipePremiumIncomplete | null>(initialRecipe);
   const [isLiked, setIsLiked] = useState(isLikedRecipe);
   const [likes, setLikes] = useState(initialRecipe?.likes || 0);
@@ -112,7 +112,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
         <div className="text-center">
           <p className="text-red-500 text-base mb-4">Not found</p>
           <button onClick={router.back}
-                className="text-sm text-muted hover:text-text">
+                  className="text-sm text-muted hover:text-text">
             ← {t('singlePage.backButton')}
           </button>
         </div>
@@ -226,7 +226,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
           {t('singlePage.keyIngredients')}
         </h2>
         <div
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px "
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-px "
         >
           {recipe.ingredients.map((item) => (
             <RecipeIngredient key={item.id}
@@ -350,7 +350,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
                    className="bg-bg">
                 {/* Mobile/Tablet: Image on top */}
                 {step.imgUrl && (
-                  <div className="lg:hidden">
+                  <div className="lg:hidden ">
                     <div className="relative w-full aspect-video">
                       <Image
                         src={step.imgUrl || RECIPE_PLACEHOLDER_IMAGE}
@@ -418,13 +418,14 @@ const RecipePage: React.FC<RecipePageProps> = ({
           <h2 className="text-sm tracking-widest uppercase text-accent mb-4 sm:mb-5 lg:mb-6">
             {t('singlePage.videoSection')}
           </h2>
-
-          <div className="relative aspect-video bg-[#0d0d0a] overflow-hidden">
-            <SecureVideoPlayer
-              recipeId={recipeId}
-              videoKey={recipe.videoUrl}
-              className="w-full h-full object-contain"
-            />
+          <div className='flex items-center justify-center pt-4'>
+            <div className="relative w-full lg:w-3/4 aspect-video bg-[#0d0d0a] overflow-hidden">
+              <SecureVideoPlayer
+                recipeId={recipeId}
+                videoKey={recipe.videoUrl}
+                className="w-full h-full object-contain"
+              />
+            </div>
           </div>
         </section>
       )}

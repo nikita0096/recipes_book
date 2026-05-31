@@ -7,6 +7,7 @@ import {useRouter} from "@/i18n/navigation";
 import {useLocale, useTranslations} from "next-intl";
 import {Controller, SubmitHandler, useFieldArray, useForm} from "react-hook-form";
 import {v4 as uuidv4} from 'uuid';
+import {ulid} from "ulid";
 import {insertRecipePublic, insertRecipePremiumMain} from "@/services/db/admin/insertRecipeToDatabase";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {MdDeleteForever} from "react-icons/md";
@@ -356,7 +357,7 @@ const Page = () => {
 
     try {
       // Generate recipe ID before upload - used as folder name in storage
-      const recipeId = uuidv4();
+      const recipeId = ulid();
       const premiumRecipeId = uuidv4();
 
       const recipeData = await handleFormData(formData, recipeId);

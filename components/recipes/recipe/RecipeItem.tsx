@@ -30,7 +30,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe, index = 0}) => {
       ref={recipeRef}
     >
       {/* Image */}
-      <Link href={PAGES.RECIPE(recipe.slug + '--' + recipe.id)} className="block relative overflow-hidden">
+      <Link href={PAGES.RECIPE(recipe.slug + '-' + recipe.id)} className="block relative overflow-hidden">
         <div className='relative w-full aspect-4/3'>
           <Image
             fill
@@ -73,7 +73,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe, index = 0}) => {
 
           {/* View Recipe Button */}
           <Link
-            href={PAGES.RECIPE(recipe.slug + '--' + recipe.id)}
+            href={PAGES.RECIPE(recipe.slug + '-' + recipe.id)}
             className="text-sm border border-border text-text px-4 py-2 hover:bg-surface transition-colors"
           >
             {tCommon('buttons.viewRecipe')}

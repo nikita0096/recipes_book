@@ -262,11 +262,11 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
               {displayedPurchasedRecipes.map((purchase) => (
                 <Link
                   key={purchase.id}
-                  href={PAGES.RECIPE(purchase.recipe.slug + '--' + purchase.recipe.id)}
+                  href={PAGES.RECIPE(purchase.recipe.slug + '-' + purchase.recipe.id)}
                   className="group bg-bg"
                 >
                   {/* Recipe image */}
-                  <div className="relative h-40 overflow-hidden">
+                  <div className="relative h-50 md:h-60 overflow-hidden">
                     <Image
                       src={purchase.recipe.heroImg}
                       alt={purchase.recipe.title[locale]}
@@ -349,11 +349,11 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
             {displayedLikedRecipes.map((item) => (
               <Link
                 key={item.id}
-                href={PAGES.RECIPE(item.recipe.slug + '--' + item.recipe.id)}
+                href={PAGES.RECIPE(item.recipe.slug + '-' + item.recipe.id)}
                 className="group bg-bg"
               >
                 {/* Recipe image */}
-                <div className="relative h-36 overflow-hidden">
+                <div className="relative h-50 md:h-60 overflow-hidden">
                   <Image
                     src={item.recipe.heroImg}
                     alt={item.recipe.title[locale]}

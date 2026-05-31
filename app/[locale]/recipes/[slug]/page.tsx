@@ -8,7 +8,7 @@ interface PageProps {
 export default async function Page({params}: PageProps){
   const {slug} = await params;
 
-  const recipeId = slug.split('--').pop();
+  const recipeId = slug.split('-').pop();
 
 
   const supabase = await createClient();
