@@ -18,6 +18,7 @@ interface RecipeRow {
   video_url: string | null;
   steps_count: number;
   created_at: string;
+  slug: string;
 }
 
 // Возвращает рецепты из main table
@@ -53,6 +54,7 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
         recipeSteps: item.recipe_steps!,
         videoUrl: item.video_url!,
         stepsCount: item.steps_count,
+        slug: item.slug,
       };
     }
 
@@ -69,6 +71,7 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
       recipeSteps: item.recipe_steps ?? null,
       videoUrl: item.video_url ?? null,
       stepsCount: item.steps_count,
+      slug: item.slug,
     };
   });
 }
