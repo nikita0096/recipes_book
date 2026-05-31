@@ -39,6 +39,7 @@ export const fetchRecipeAdmin = async (id: string): Promise<IRecipe> => {
       recipeSteps,
       videoUrl: data.video_url,
       stepsCount: data.steps_count,
+      slug: data.slug,
     } satisfies IRecipePublic;
   }
 
@@ -79,5 +80,6 @@ export const fetchRecipeAdmin = async (id: string): Promise<IRecipe> => {
     recipeSteps,
     videoUrl: premiumData.video_url,
     stepsCount: data.steps_count,
+    slug: data.slug,
   } satisfies IRecipePremiumFull;
 }
