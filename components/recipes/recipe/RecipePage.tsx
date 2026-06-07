@@ -431,7 +431,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
               <SecureVideoPlayer
                 recipeId={recipeId}
                 videoKey={recipe.videoUrl}
-                className="w-full h-full object-contain p-10"
+                className="w-full h-full p-5"
               />
             </div>
           </div>

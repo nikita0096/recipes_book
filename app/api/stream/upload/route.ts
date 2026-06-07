@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/ServerComponentClient';
-import {
-  initiateStreamUpload,
-  updateStreamVideo,
-} from '@/lib/cloudflare-stream/client';
+import { createDirectUploadUrl } from '@/lib/cloudflare-stream/client';
 
 /**
  * POST /api/stream/upload
  *
- * Upload video to Cloudflare Stream with signed URL protection
+ * Create a Direct Creator Upload URL for Cloudflare Stream
+ * Client will upload the video directly to Cloudflare
  *
- * Body (FormData):
- * - videoFile: File (video file)
- * - isPremium: 'true' | 'false' (whether this is a premium recipe)
+ * Body (JSON):
+ * - isPremium: boolean (whether this is a premium recipe)
  * - recipeId: string (recipe ID for metadata)
  *
  * Returns:
+ * - uploadUrl: string (URL to upload video directly to Cloudflare)
  * - videoUid: string (Cloudflare Stream video UID to store in database)
  */
 export async function POST(request: NextRequest) {
@@ -44,18 +42,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse form data
-    const formData = await request.formData();
-    const videoFile = formData.get('videoFile') as File;
-    const isPremium = formData.get('isPremium') === 'true';
-    const recipeId = formData.get('recipeId') as string;
-
-    if (!videoFile) {
-      return NextResponse.json(
-        { error: 'Missing video file' },
-        { status: 400 }
-      );
-    }
+    // Parse JSON body
+    const { isPremium, recipeId } = await request.json();
 
     if (!recipeId) {
       return NextResponse.json(
@@ -64,34 +52,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Upload video to Cloudflare Stream
-    const { uid: videoUid } = await initiateStreamUpload(videoFile, {
+    // Create Direct Upload URL with metadata
+    const { uploadUrl, uid: videoUid } = await createDirectUploadUrl({
       recipeId,
-      isPremium: isPremium.toString(),
+      isPremium: String(isPremium ?? false),
       uploadedBy: user.id,
       uploadedAt: new Date().toISOString(),
     });
 
-    // IMPORTANT: Enable signed URLs for ALL videos (both public and premium)
-    // This provides unified security model and allows us to:
-    // - Track all video views
-    // - Control access programmatically
-    // - Add analytics
-    // - Rate limit if needed
-    await updateStreamVideo(videoUid, {
-      requireSignedURLs: true,
-    });
-
     return NextResponse.json({
+      uploadUrl,
       videoUid,
-      message: 'Video uploaded successfully',
+      message: 'Upload URL created successfully',
     });
   } catch (error) {
     console.error('Stream upload error:', error);
     return NextResponse.json(
       {
         error:
-          error instanceof Error ? error.message : 'Failed to upload video',
+          error instanceof Error ? error.message : 'Failed to create upload URL',
       },
       { status: 500 }
     );

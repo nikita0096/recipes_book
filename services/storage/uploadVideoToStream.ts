@@ -1,8 +1,10 @@
 /**
- * Upload video to Cloudflare Stream
+ * Upload video to Cloudflare Stream using Direct Creator Upload
  *
- * This service handles uploading videos to Cloudflare Stream via our API endpoint.
- * All videos are uploaded with requireSignedURLs enabled for unified security.
+ * Flow:
+ * 1. Get upload URL from our API (which creates it via Cloudflare)
+ * 2. Upload video directly to Cloudflare Stream
+ * 3. Return video UID to store in database
  */
 
 interface IVideoUploadProps {
@@ -24,14 +26,24 @@ export const uploadVideoToStream = async ({
   onProgress,
 }: IVideoUploadProps): Promise<UploadResult> => {
   try {
-    // Create FormData for video upload
-    const formData = new FormData();
-    formData.append('videoFile', videoFile);
-    formData.append('recipeId', recipeId);
-    formData.append('isPremium', isPremium.toString());
+    // Step 1: Get Direct Upload URL from our API
+    const urlResponse = await fetch('/api/stream/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ recipeId, isPremium }),
+    });
 
-    // Upload to our API endpoint which handles Stream upload
-    // Note: XMLHttpRequest is used for progress tracking
+    if (!urlResponse.ok) {
+      const errorData = await urlResponse.json();
+      return {
+        videoUrl: '',
+        error: errorData.error || 'Failed to get upload URL',
+      };
+    }
+
+    const { uploadUrl, videoUid } = await urlResponse.json();
+
+    // Step 2: Upload video directly to Cloudflare Stream
     return new Promise((resolve) => {
       const xhr = new XMLHttpRequest();
 
@@ -46,31 +58,15 @@ export const uploadVideoToStream = async ({
       // Upload complete
       xhr.addEventListener('load', () => {
         if (xhr.status >= 200 && xhr.status < 300) {
-          try {
-            const response = JSON.parse(xhr.responseText);
-            resolve({
-              videoUrl: response.videoUid, // Stream video UID
-              error: '',
-            });
-          } catch (err) {
-            resolve({
-              videoUrl: '',
-              error: 'Invalid response from server',
-            });
-          }
+          resolve({
+            videoUrl: videoUid, // Return the video UID
+            error: '',
+          });
         } else {
-          try {
-            const errorData = JSON.parse(xhr.responseText);
-            resolve({
-              videoUrl: '',
-              error: errorData.error || `Upload failed with status ${xhr.status}`,
-            });
-          } catch {
-            resolve({
-              videoUrl: '',
-              error: `Upload failed with status ${xhr.status}`,
-            });
-          }
+          resolve({
+            videoUrl: '',
+            error: `Upload failed with status ${xhr.status}`,
+          });
         }
       });
 
@@ -84,8 +80,12 @@ export const uploadVideoToStream = async ({
         resolve({ videoUrl: '', error: 'Upload cancelled' });
       });
 
-      // Start upload
-      xhr.open('POST', '/api/stream/upload');
+      // Create FormData for direct upload
+      const formData = new FormData();
+      formData.append('file', videoFile);
+
+      // Start upload directly to Cloudflare
+      xhr.open('POST', uploadUrl);
       xhr.send(formData);
     });
   } catch (error) {

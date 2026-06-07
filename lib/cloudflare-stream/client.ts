@@ -44,40 +44,37 @@ export function getStreamJsonHeaders(): HeadersInit {
 }
 
 /**
- * Upload video to Cloudflare Stream using TUS protocol
+ * Create a Direct Creator Upload URL
+ * Client will upload directly to this URL
  *
- * @param file - Video file to upload
  * @param metadata - Video metadata (recipeId, isPremium, etc.)
+ * @param maxDurationSeconds - Maximum video duration (default 3600 = 1 hour)
  * @returns Upload URL and video UID
  */
-export async function initiateStreamUpload(
-  file: File,
-  metadata: Record<string, string>
+export async function createDirectUploadUrl(
+  metadata: Record<string, string>,
+  maxDurationSeconds: number = 3600
 ): Promise<{ uploadUrl: string; uid: string }> {
-  const formData = new FormData();
-  formData.append('file', file);
-
-  // Add metadata
-  Object.entries(metadata).forEach(([key, value]) => {
-    formData.append(`meta[${key}]`, value);
-  });
-
-  // By default, requireSignedURLs is false, we'll enable it after upload
-  const response = await fetch(STREAM_API_BASE_URL, {
+  const response = await fetch(`${STREAM_API_BASE_URL}/direct_upload`, {
     method: 'POST',
-    headers: getStreamHeaders(),
-    body: formData,
+    headers: getStreamJsonHeaders(),
+    body: JSON.stringify({
+      maxDurationSeconds,
+      meta: metadata,
+      requireSignedURLs: true, // Enable signed URLs by default
+    }),
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'Upload failed' }));
-    throw new Error(error.message || 'Failed to upload video to Stream');
+    const error = await response.json().catch(() => ({ errors: [{ message: 'Upload failed' }] }));
+    const errorMessage = error.errors?.[0]?.message || 'Failed to create upload URL';
+    throw new Error(errorMessage);
   }
 
   const data = await response.json();
 
   return {
-    uploadUrl: data.result.preview || '',
+    uploadUrl: data.result.uploadURL,
     uid: data.result.uid,
   };
 }
