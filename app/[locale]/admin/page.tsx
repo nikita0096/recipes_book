@@ -15,7 +15,7 @@ import {Spinner} from "@/components/ui/spinner";
 import {units} from "@/constants/units";
 import {categories} from "@/constants/categories";
 import {IFormValues, Ingredient, Locale} from "@/types/forms";
-import {uploadVideoToStorage} from "@/services/storage/uploadVideoToStorage";
+import {uploadVideoToStream} from "@/services/storage/uploadVideoToStream";
 import {insertPremiumRecipePart} from "@/services/db/admin/insertPremiumRecipeToDb";
 import {
   IRecipeUploadPublic,
@@ -271,9 +271,10 @@ const Page = () => {
 
     try {
       setIsVideoUploading(true);
-      const {videoUrl: videoKey, error} = await uploadVideoToStorage({
+      const {videoUrl: videoKey, error} = await uploadVideoToStream({
         videoFile: data.videoFile,
-        folder: folder,
+        recipeId: folder, // folder is actually recipeId
+        isPremium: data.isPremium,
         onProgress: (percentage) => setVideoUploadProgress(percentage)
       });
 

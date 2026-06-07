@@ -1,6 +1,6 @@
 import {v4 as uuidv4} from "uuid";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
-import {uploadVideoToStorage} from "@/services/storage/uploadVideoToStorage";
+import {uploadVideoToStream} from "@/services/storage/uploadVideoToStream";
 import {deleteFileByPath} from "@/services/storage/deleteImageFromStorage";
 import {EditingValues} from "../page";
 import {
@@ -10,7 +10,7 @@ import {
   UpdateRecipeDataPremiumMain,
   UpdateRecipeDataPremiumPart,
 } from "@/types/recipe";
-import {deleteVideo} from "@/services/storage/deleteVideoR2Bucket";
+import {deleteVideoFromStream} from "@/services/storage/deleteVideoFromStream";
 
 // Extract path from Supabase public URL
 const extractPathFromUrl = (urlOrPath: string, bucket: string): string => {
@@ -148,12 +148,13 @@ export const prepareUpdateData = async ({
     if (formData.videoFile) {
       // Delete old video before uploading new one
       if (recipe.videoUrl) {
-        await deleteVideo(recipe.videoUrl);
+        await deleteVideoFromStream(recipe.videoUrl);
       }
 
-      const {videoUrl: newVideoUrl, error: videoError} = await uploadVideoToStorage({
+      const {videoUrl: newVideoUrl, error: videoError} = await uploadVideoToStream({
         videoFile: formData.videoFile,
-        folder: folder,
+        recipeId: folder, // folder is actually recipe.id
+        isPremium: formData.isPremium,
       });
 
       if (videoError) {

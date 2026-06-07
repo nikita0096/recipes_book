@@ -1,5 +1,5 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
-import {deleteVideo} from "@/services/storage/deleteVideoR2Bucket";
+import {deleteVideoFromStream} from "@/services/storage/deleteVideoFromStream";
 
 export const deleteRecipe = async ({ id, videoKey }: { id: string; videoKey: string | null }) => {
   // Если videoKey не передан, пробуем получить из premium таблицы (до удаления рецепта!)
@@ -73,9 +73,9 @@ export const deleteRecipe = async ({ id, videoKey }: { id: string; videoKey: str
 
 
   if (finalVideoKey) {
-    const res = await deleteVideo(finalVideoKey);
+    const res = await deleteVideoFromStream(finalVideoKey);
 
-    if (res.error) {
+    if (!res.success && res.error) {
       return { error: res.error };
     }
   }
