@@ -24,7 +24,7 @@ if (!SIGNING_KEY_ID || !PRIVATE_KEY) {
 
 interface GenerateTokenOptions {
   videoId: string;
-  expiresIn?: number; // seconds, default 2 hours
+  expiresIn?: number; // seconds, default 30 minutes
   userId?: string; // optional user ID for analytics
 }
 
@@ -35,16 +35,16 @@ interface GenerateTokenOptions {
  * @returns Signed JWT token
  *
  * @example
- * ```typescript
+ * ```TypeScript
  * const token = generateStreamToken({
  *   videoId: 'abc123xyz',
- *   expiresIn: 7200, // 2 hours
+ *   expiresIn: 1800, // 30 minutes
  *   userId: 'user_123'
  * });
  * ```
  */
 export function generateStreamToken(options: GenerateTokenOptions): string {
-  const { videoId, expiresIn = 7200, userId } = options;
+  const { videoId, expiresIn = 1800, userId } = options;
 
   if (!SIGNING_KEY_ID || !PRIVATE_KEY) {
     throw new Error('Cloudflare Stream signing credentials not configured');
@@ -73,9 +73,7 @@ export function generateStreamToken(options: GenerateTokenOptions): string {
   try {
     return jwt.sign(payload, privateKey, {
       algorithm: 'RS256',
-      header: {
-        kid: SIGNING_KEY_ID,
-      },
+      keyid: SIGNING_KEY_ID,
     });
   } catch (error) {
     console.error('Error signing token:', error);
@@ -88,7 +86,7 @@ export function generateStreamToken(options: GenerateTokenOptions): string {
  *
  * @param videoId - Cloudflare Stream video UID
  * @param customerCode - Customer code from Stream dashboard
- * @param expiresIn - Token expiration in seconds (default 2 hours)
+ * @param expiresIn - Token expiration in seconds (default 30 minutes)
  * @param userId - Optional user ID for analytics
  * @returns Full embed URL with signed token
  *
@@ -97,7 +95,7 @@ export function generateStreamToken(options: GenerateTokenOptions): string {
  * const embedUrl = generateSignedEmbedUrl(
  *   'abc123xyz',
  *   'my-customer-code',
- *   7200,
+ *   1800,
  *   'user_123'
  * );
  * // Returns: https://customer-my-customer-code.cloudflarestream.com/abc123xyz/iframe?token=eyJ...
@@ -106,7 +104,7 @@ export function generateStreamToken(options: GenerateTokenOptions): string {
 export function generateSignedEmbedUrl(
   videoId: string,
   customerCode: string,
-  expiresIn: number = 7200,
+  expiresIn: number = 1800,
   userId?: string
 ): string {
   const token = generateStreamToken({ videoId, expiresIn, userId });

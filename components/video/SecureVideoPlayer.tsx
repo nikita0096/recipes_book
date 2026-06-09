@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react';
 import { Stream } from '@cloudflare/stream-react';
 import { Spinner } from '@/components/ui/spinner';
+import { useTranslations } from 'next-intl';
 
 interface SecureVideoPlayerProps {
   videoKey: string; // Cloudflare Stream video UID (or R2 key for backward compatibility)
   recipeId: string;
   className?: string;
+  thumbnail: string;
 }
 
 /**
@@ -23,7 +25,9 @@ export const SecureVideoPlayer = ({
   videoKey,
   recipeId,
   className = '',
+  thumbnail,
 }: SecureVideoPlayerProps) => {
+  const t = useTranslations('common.video');
   const [signedToken, setSignedToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -130,7 +134,18 @@ export const SecureVideoPlayer = ({
   }
 
   if (!videoKey || !signedToken) {
-    return null;
+    return (
+      <div
+        className={`flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl p-8 ${className}`}
+      >
+        <p className="text-gray-600 dark:text-gray-300 text-center font-medium">
+          {t('comingSoon')}
+        </p>
+        <p className="text-gray-400 dark:text-gray-500 text-center text-sm mt-2">
+          {t('tryReload')}
+        </p>
+      </div>
+    );
   }
 
   // Legacy R2 video: use regular video element
@@ -154,6 +169,7 @@ export const SecureVideoPlayer = ({
         responsive={true}
         // Additional Stream player options
         preload="metadata"
+        poster={thumbnail}
         // Disable ads (if you have Stream Pro)
         // ad-url=""
       />

@@ -48,21 +48,33 @@ export function getStreamJsonHeaders(): HeadersInit {
  * Client will upload directly to this URL
  *
  * @param metadata - Video metadata (recipeId, isPremium, etc.)
- * @param maxDurationSeconds - Maximum video duration (default 3600 = 1 hour)
+ * @param options - Additional options (maxDurationSeconds, watermarkUid)
  * @returns Upload URL and video UID
  */
 export async function createDirectUploadUrl(
   metadata: Record<string, string>,
-  maxDurationSeconds: number = 3600
+  options: { maxDurationSeconds?: number; watermarkUid?: string } = {}
 ): Promise<{ uploadUrl: string; uid: string }> {
+  const { maxDurationSeconds = 3600, watermarkUid } = options;
+
+  // Separate watermark from metadata if passed there (backwards compatibility)
+  const { watermark: _watermark, ...cleanMetadata } = metadata;
+
+  const body: Record<string, unknown> = {
+    maxDurationSeconds,
+    meta: cleanMetadata,
+    requireSignedURLs: true,
+  };
+
+  // Add watermark at top level (Cloudflare API requirement)
+  if (watermarkUid) {
+    body.watermark = { uid: watermarkUid };
+  }
+
   const response = await fetch(`${STREAM_API_BASE_URL}/direct_upload`, {
     method: 'POST',
     headers: getStreamJsonHeaders(),
-    body: JSON.stringify({
-      maxDurationSeconds,
-      meta: metadata,
-      requireSignedURLs: true, // Enable signed URLs by default
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!response.ok) {

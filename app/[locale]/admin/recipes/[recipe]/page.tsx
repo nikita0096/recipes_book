@@ -91,6 +91,8 @@ const Page = () => {
   const [isEditingIngredient, setIsEditingIngredient] = useState<Record<string, boolean>>({});
   const [editingIngredientsData, setEditingIngredientsData] = useState<Record<string, Ingredient>>({});
   const [isEditingStep, setIsEditingStep] = useState<Record<string, boolean>>({});
+  const [isVideoProcessing, setIsVideoProcessing] = useState<boolean>(false);
+  const [videoProcessingProgress, setVideoProcessingProgress] = useState<number>(0);
 
   const locale = useTypedLocale();
 
@@ -194,25 +196,100 @@ const Page = () => {
   }, [params.recipe]);
 
   useEffect(() => {
-    if(!recipe) return;
+    if(!recipe || !recipe.videoUrl) return;
+
+    // Check if this is a Cloudflare Stream video (no '/' in the key)
+    const isStreamVideo = !recipe.videoUrl.includes('/');
+
+    let pollInterval: NodeJS.Timeout | null = null;
+
+    const checkVideoStatus = async (): Promise<boolean> => {
+      try {
+        const response = await fetch('/api/stream/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ videoUid: recipe.videoUrl }),
+        });
+
+        if (!response.ok) {
+          return false;
+        }
+
+        const { readyToStream, status } = await response.json();
+        setVideoProcessingProgress(status?.pctComplete ? Math.round(status.pctComplete) : 0);
+        return readyToStream;
+      } catch {
+        return false;
+      }
+    };
+
     const fetchVideoUrl = async () => {
       try {
         setIsLoading(true);
         setError(null);
 
-        const response = await fetch('/api/video/view-url', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ videoKey: recipe.videoUrl, recipeId: recipe.id }),
-        });
+        if (isStreamVideo) {
+          // First check if video is ready
+          const isReady = await checkVideoStatus();
 
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || 'Failed to load video');
+          if (!isReady) {
+            // Video is still processing, start polling
+            setIsVideoProcessing(true);
+            setIsLoading(false);
+
+            pollInterval = setInterval(async () => {
+              const ready = await checkVideoStatus();
+              if (ready) {
+                setIsVideoProcessing(false);
+                if (pollInterval) clearInterval(pollInterval);
+
+                // Now fetch the token
+                const response = await fetch('/api/stream/view-url', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ videoKey: recipe.videoUrl, recipeId: recipe.id }),
+                });
+
+                if (response.ok) {
+                  const { token } = await response.json();
+                  setVideoSrc(token);
+                }
+              }
+            }, 3000); // Poll every 3 seconds
+
+            return;
+          }
+
+          // Video is ready, fetch the token
+          const response = await fetch('/api/stream/view-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ videoKey: recipe.videoUrl, recipeId: recipe.id }),
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Failed to load video');
+          }
+
+          const { token } = await response.json();
+          setVideoSrc(token);
+        } else {
+          // For legacy R2 videos, use the R2 API
+          const response = await fetch('/api/video/view-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ videoKey: recipe.videoUrl, recipeId: recipe.id }),
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Failed to load video');
+          }
+
+          const { viewUrl } = await response.json();
+          setVideoSrc(viewUrl);
         }
-
-        const { viewUrl } = await response.json();
-        setVideoSrc(viewUrl);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load video');
       } finally {
@@ -220,9 +297,12 @@ const Page = () => {
       }
     };
 
-    if (recipe) {
-      fetchVideoUrl();
-    }
+    fetchVideoUrl();
+
+    // Cleanup interval on unmount or when recipe changes
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
   }, [recipe?.videoUrl, recipe?.id]);
 
 
@@ -1290,22 +1370,33 @@ const Page = () => {
         </h2>
 
         {isEditing ? (
-          <div className="relative aspect-video bg-surface border border-border overflow-hidden">
+          <div className="relative bg-surface border border-border overflow-hidden">
             {watch('videoUrl') ? (
               <>
-                <video
-                  className="w-full h-full object-contain"
-                  src={watch('videoUrl')}
-                  controls
-                />
+                {/* For new files (blob URLs), use regular video element */}
+                {/* For existing videos, use SecureVideoPlayer */}
+                {watch('videoUrl').startsWith('blob:') ? (
+                  <video
+                    className="w-full h-full object-contain"
+                    src={watch('videoUrl')}
+                    controls
+                  />
+                ) : recipe?.videoUrl ? (
+                  <SecureVideoPlayer
+                    recipeId={recipe.id}
+                    videoKey={recipe.videoUrl}
+                    className="w-full h-full"
+                    thumbnail={recipe.heroImg}
+                  />
+                ) : null}
                 <button
                   type="button"
                   onClick={removeVideoFile}
-                  className="absolute top-2 right-2 p-2 bg-red-500 text-white hover:bg-red-600 transition-colors"
+                  className="absolute top-2 right-2 p-2 bg-red-500 text-white hover:bg-red-600 transition-colors z-10"
                 >
                   <MdDeleteForever className="text-lg"/>
                 </button>
-                <label className="absolute bottom-2 right-2 cursor-pointer px-3 py-1.5 bg-white/80 text-accent text-xs tracking-wide hover:bg-white transition-colors">
+                <label className="absolute bottom-2 right-2 cursor-pointer px-3 py-1.5 bg-white/80 text-accent text-xs tracking-wide hover:bg-white transition-colors z-10">
                   <input
                     type="file"
                     hidden
@@ -1333,12 +1424,23 @@ const Page = () => {
               </div>
             )}
           </div>
+        ) : isVideoProcessing ? (
+          <div className="relative aspect-video bg-surface border border-border overflow-hidden flex flex-col items-center justify-center gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-accent border-t-transparent"></div>
+            <div className="text-center">
+              <p className="text-sm text-text mb-2">{tCommon('video.processing')}</p>
+              {videoProcessingProgress > 0 && (
+                <p className="text-xs text-muted">{videoProcessingProgress}%</p>
+              )}
+            </div>
+          </div>
         ) : recipe?.videoUrl ? (
-          <div className="relative aspect-video bg-[#0d0d0a] overflow-hidden">
+          <div className="relative bg-[#0d0d0a] overflow-hidden">
             <SecureVideoPlayer
               recipeId={recipe.id}
               videoKey={recipe.videoUrl}
-              className="w-full h-full object-contain"
+              className="w-full h-full"
+              thumbnail={recipe.heroImg}
             />
           </div>
         ) : (

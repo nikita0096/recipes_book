@@ -83,5 +83,10 @@
     "tryAgainLater": "Please reload the page or try again later",
     "error": "Error",
     "recipeNotFound": "Recipe not found"
+  },
+  "video": {
+    "comingSoon": "Video is coming soon",
+    "tryReload": "Try reloading the page",
+    "processing": "Video is being processed..."
   }
 }

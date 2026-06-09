@@ -52,13 +52,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create Direct Upload URL with metadata
-    const { uploadUrl, uid: videoUid } = await createDirectUploadUrl({
-      recipeId,
-      isPremium: String(isPremium ?? false),
-      uploadedBy: user.id,
-      uploadedAt: new Date().toISOString(),
-    });
+    // Create Direct Upload URL with metadata and watermark
+    const { uploadUrl, uid: videoUid } = await createDirectUploadUrl(
+      {
+        recipeId,
+        isPremium: String(isPremium ?? false),
+        uploadedBy: user.id,
+        uploadedAt: new Date().toISOString(),
+      },
+      {
+        watermarkUid: 'd9b4afd0610f47504532987942029f9a',
+      }
+    );
 
     return NextResponse.json({
       uploadUrl,
