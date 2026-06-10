@@ -162,7 +162,7 @@ export const SecureVideoPlayer = ({
 
   // Stream video: use Cloudflare Stream React component
   return (
-    <div className={`rounded-xl overflow-hidden ${className}`}>
+    <div className={`overflow-hidden ${className}`}>
       <Stream
         controls
         src={signedToken}

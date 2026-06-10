@@ -73,7 +73,9 @@ export const prepareUpdateData = async ({
 
     // Process steps - upload new images if needed
     const processedSteps: RecipeStep[] = [];
-    for (const step of formData.recipeSteps) {
+    const filteredSteps = formData.recipeSteps.filter(step => step.desc.en && step.desc.ua);
+
+    for (const step of filteredSteps) {
       let imgPath = step.imgUrl;
 
       // If there's a new image file, upload it
@@ -155,6 +157,7 @@ export const prepareUpdateData = async ({
         videoFile: formData.videoFile,
         recipeId: folder, // folder is actually recipe.id
         isPremium: formData.isPremium,
+        name: formData.title.en
       });
 
       if (videoError) {

@@ -275,7 +275,8 @@ const Page = () => {
         videoFile: data.videoFile,
         recipeId: folder, // folder is actually recipeId
         isPremium: data.isPremium,
-        onProgress: (percentage) => setVideoUploadProgress(percentage)
+        name: data.title.en,
+        onProgress: (percentage) => setVideoUploadProgress(percentage),
       });
 
       if(error) throw new Error(error);

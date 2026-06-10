@@ -1,16 +1,19 @@
 /**
- * Upload video to Cloudflare Stream using Direct Creator Upload
+ * Upload video to Cloudflare Stream using tus protocol (chunked upload)
  *
  * Flow:
  * 1. Get upload URL from our API (which creates it via Cloudflare)
- * 2. Upload video directly to Cloudflare Stream
+ * 2. Upload video using tus protocol for resumable chunked uploads
  * 3. Return video UID to store in database
  */
+
+import * as tus from 'tus-js-client';
 
 interface IVideoUploadProps {
   videoFile: File;
   recipeId: string;
   isPremium: boolean;
+  name: string;
   onProgress?: (percentage: number) => void;
 }
 
@@ -23,6 +26,7 @@ export const uploadVideoToStream = async ({
   videoFile,
   recipeId,
   isPremium,
+  name,
   onProgress,
 }: IVideoUploadProps): Promise<UploadResult> => {
   try {
@@ -30,7 +34,7 @@ export const uploadVideoToStream = async ({
     const urlResponse = await fetch('/api/stream/upload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ recipeId, isPremium }),
+      body: JSON.stringify({ recipeId, isPremium, size: videoFile.size, name: name }),
     });
 
     if (!urlResponse.ok) {
@@ -43,50 +47,46 @@ export const uploadVideoToStream = async ({
 
     const { uploadUrl, videoUid } = await urlResponse.json();
 
-    // Step 2: Upload video directly to Cloudflare Stream
-    return new Promise((resolve) => {
-      const xhr = new XMLHttpRequest();
-
-      // Track upload progress
-      xhr.upload.addEventListener('progress', (event) => {
-        if (event.lengthComputable) {
-          const percentage = Math.round((event.loaded / event.total) * 100);
-          onProgress?.(percentage);
-        }
-      });
-
-      // Upload complete
-      xhr.addEventListener('load', () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve({
-            videoUrl: videoUid, // Return the video UID
-            error: '',
-          });
-        } else {
+    // Step 2: Upload video using tus protocol (chunked, resumable)
+    // For Cloudflare Direct Creator Upload with tus:
+    // - The uploadUrl IS the tus endpoint (upload already created by API)
+    // - Don't send metadata (already set via API)
+    return new Promise( async (resolve) => {
+      const upload = new tus.Upload(videoFile, {
+        endpoint: uploadUrl,
+        uploadSize: videoFile.size,
+        retryDelays: [0, 3000, 5000, 10000, 20000],
+        chunkSize: 50 * 1024 * 1024, // 50MB chunks
+        metadata: {
+          filename: videoFile.name,
+          filetype: videoFile.type,
+        },
+        onError: (error) => {
+          console.error('Tus upload error:', error);
           resolve({
             videoUrl: '',
-            error: `Upload failed with status ${xhr.status}`,
+            error: error.message || 'Upload failed',
           });
-        }
+        },
+        onProgress: (bytesUploaded, bytesTotal) => {
+          const percentage = Math.round((bytesUploaded / bytesTotal) * 100);
+          onProgress?.(percentage);
+        },
+        onSuccess: () => {
+          resolve({
+            videoUrl: videoUid,
+            error: '',
+          });
+        },
       });
 
-      // Network error
-      xhr.addEventListener('error', () => {
-        resolve({ videoUrl: '', error: 'Network error during upload' });
-      });
+      const previousUploads = await upload.findPreviousUploads();
 
-      // Upload cancelled
-      xhr.addEventListener('abort', () => {
-        resolve({ videoUrl: '', error: 'Upload cancelled' });
-      });
+      if (previousUploads.length) {
+        upload.resumeFromPreviousUpload(previousUploads[0]);
+      }
 
-      // Create FormData for direct upload
-      const formData = new FormData();
-      formData.append('file', videoFile);
-
-      // Start upload directly to Cloudflare
-      xhr.open('POST', uploadUrl);
-      xhr.send(formData);
+      upload.start();
     });
   } catch (error) {
     console.error('Upload error:', error);

@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse JSON body
-    const { isPremium, recipeId } = await request.json();
+    const { isPremium, recipeId, size, name } = await request.json();
 
     if (!recipeId) {
       return NextResponse.json(
@@ -52,14 +52,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create Direct Upload URL with metadata and watermark
+    const metadata = {
+      recipeId,
+      isPremium: String(isPremium ?? false),
+      uploadedBy: user.id,
+      uploadedAt: new Date().toISOString(),
+    };
+
+    // Create Direct Upload URL with metadata
     const { uploadUrl, uid: videoUid } = await createDirectUploadUrl(
-      {
-        recipeId,
-        isPremium: String(isPremium ?? false),
-        uploadedBy: user.id,
-        uploadedAt: new Date().toISOString(),
-      },
+      metadata,
+      size,
+      name,
       {
         watermarkUid: 'd9b4afd0610f47504532987942029f9a',
       }

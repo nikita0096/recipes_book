@@ -40,6 +40,7 @@ export function getStreamJsonHeaders(): HeadersInit {
   return {
     ...getStreamHeaders(),
     'Content-Type': 'application/json',
+    'Tus-Resumable': '1.0.0'
   };
 }
 
@@ -48,46 +49,62 @@ export function getStreamJsonHeaders(): HeadersInit {
  * Client will upload directly to this URL
  *
  * @param metadata - Video metadata (recipeId, isPremium, etc.)
+ * @param size - Upload length
+ * @param name - Video file name
  * @param options - Additional options (maxDurationSeconds, watermarkUid)
  * @returns Upload URL and video UID
  */
 export async function createDirectUploadUrl(
   metadata: Record<string, string>,
+  size: number,
+  name: string,
   options: { maxDurationSeconds?: number; watermarkUid?: string } = {}
 ): Promise<{ uploadUrl: string; uid: string }> {
   const { maxDurationSeconds = 3600, watermarkUid } = options;
 
-  // Separate watermark from metadata if passed there (backwards compatibility)
-  const { watermark: _watermark, ...cleanMetadata } = metadata;
+  // Allow CORS for browser uploads (required for tus protocol)
+  // Include all environments: localhost, staging, production
+  const allowedOrigins = [
+    'localhost:3000',
+    process.env.NEXT_PUBLIC_STAGING_URL?.replace(/^https?:\/\//, ''),
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, ''),
+  ].filter(Boolean).join(',');
 
-  const body: Record<string, unknown> = {
-    maxDurationSeconds,
-    meta: cleanMetadata,
-    requireSignedURLs: true,
-  };
+  const uploadMetadata = [
+    `name ${Buffer.from(name).toString('base64')}`,
+    `allowedorigins ${Buffer.from(allowedOrigins).toString('base64')}`,
+    `maxDurationSeconds ${Buffer.from(String(maxDurationSeconds)).toString('base64')}`,
+    `requiresignedurls`,
+  ];
 
-  // Add watermark at top level (Cloudflare API requirement)
   if (watermarkUid) {
-    body.watermark = { uid: watermarkUid };
+    uploadMetadata.push(`watermark ${Buffer.from(watermarkUid).toString('base64')}`);
   }
 
-  const response = await fetch(`${STREAM_API_BASE_URL}/direct_upload`, {
+  // Add custom metadata
+  for (const [key, value] of Object.entries(metadata)) {
+    uploadMetadata.push(`${key} ${Buffer.from(value).toString('base64')}`);
+  }
+
+  const response = await fetch(`${STREAM_API_BASE_URL}/?direct_user=true`, {
     method: 'POST',
-    headers: getStreamJsonHeaders(),
-    body: JSON.stringify(body),
+    headers: {
+      ...getStreamJsonHeaders(),
+      "Upload-Length": String(size),
+      "Upload-Metadata": uploadMetadata.join(','),
+    },
   });
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ errors: [{ message: 'Upload failed' }] }));
+    console.error('Cloudflare Stream API error:', JSON.stringify(error, null, 2));
     const errorMessage = error.errors?.[0]?.message || 'Failed to create upload URL';
     throw new Error(errorMessage);
   }
 
-  const data = await response.json();
-
   return {
-    uploadUrl: data.result.uploadURL,
-    uid: data.result.uid,
+    uploadUrl: response.headers.get('Location') || '',
+    uid: response.headers.get('stream-media-id') || '',
   };
 }
 
