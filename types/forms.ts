@@ -13,6 +13,24 @@ export interface Ingredient {
   id: string;
 }
 
+export interface IngredientGroup {
+  id: string;
+  title: LocalizedText;
+  ingredients: Ingredient[];
+}
+
+// Draft inputs for adding a new ingredient inside a group form
+export interface IngredientDraft {
+  ua: string;
+  en: string;
+  quantity: string;
+  unit: UnitValue;
+}
+
+export interface IngredientGroupFormValues extends IngredientGroup {
+  draft: IngredientDraft;
+}
+
 export interface IFormValues {
   title: { en: string; ua: string };
   description: { en: string; ua: string };
@@ -21,12 +39,8 @@ export interface IFormValues {
   price: { en: number; ua: number };
   discount: number;
   recipeSteps: { desc: { en: string; ua: string }; image: File | null }[];
-  ingredientEn: string;
-  ingredientUa: string;
-  ingredients: Ingredient[];
+  ingredientGroups: IngredientGroupFormValues[];
   heroImg: File | null;
-  ingredientQuantity: string | null;
-  ingredientUnit: UnitValue;
   isPremium: boolean;
   preparingTime: number;
   weight: number | null;

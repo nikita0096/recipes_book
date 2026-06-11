@@ -1,6 +1,6 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {IRecipe, IRecipePublic, IRecipePremiumFull, RecipeStep, RecipePrice} from "@/types/recipe";
-import {Ingredient, LocalizedText} from "@/types";
+import {IngredientGroup, LocalizedText} from "@/types";
 import {getPublicImageUrl, batchGetPublicUrls} from "@/services/storage/getPublicImageUrl";
 import {fetchRecipePrice} from "@/services/db/public/fetchRecipePrice";
 
@@ -10,7 +10,7 @@ interface FetchRecipe {
   description: LocalizedText;
   likes: number;
   category: LocalizedText;
-  ingredients: Ingredient[];
+  ingredients: IngredientGroup[];
   hero_img: string;
   is_premium: boolean;
   preparing_time: number;

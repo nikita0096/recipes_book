@@ -1,6 +1,6 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {IRecipePublic, IRecipePremiumIncomplete, RecipeStep} from "@/types/recipe";
-import {Ingredient, LocalizedText} from "@/types/forms";
+import {IngredientGroup, LocalizedText} from "@/types/forms";
 import {batchGetPublicUrls} from "@/services/storage/getPublicImageUrl";
 
 // Database row type
@@ -10,7 +10,7 @@ interface RecipeRow {
   description: LocalizedText;
   likes: number;
   category: LocalizedText;
-  ingredients: Ingredient[];
+  ingredients: IngredientGroup[];
   hero_img: string;
   is_premium: boolean;
   preparing_time: number;

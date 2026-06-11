@@ -11,21 +11,22 @@ interface RecipeMetaProps {
   calories?: number | null;
 }
 
-interface MetaCardProps {
+interface MetaChipProps {
   value: number;
   unit?: string;
   label: string;
 }
 
-const MetaCard: React.FC<MetaCardProps> = ({ value, unit, label }) => (
-  <div className="flex flex-col gap-1.5">
-    <div
-      className="text-2xl sm:text-3xl leading-none text-text whitespace-nowrap"
+const MetaChip: React.FC<MetaChipProps> = ({ value, unit, label }) => (
+  <div className="flex items-baseline gap-2.5 py-2 sm:gap-2 sm:py-1 sm:border-r sm:border-border sm:pr-5 sm:mr-5 sm:last:pr-0 sm:last:mr-0 sm:last:border-r-0">
+    <span className="text-sm text-text sm:text-xs sm:text-muted">{label}</span>
+    <span aria-hidden="true" className="flex-1 border-b border-dotted border-border -translate-y-1 sm:hidden"/>
+    <span
+      className="text-base sm:text-lg leading-none text-text whitespace-nowrap"
       style={{ fontFamily: 'var(--font-dm-serif), Georgia, serif' }}
     >
-      {value}{unit && <span className="font-sans text-xs text-muted ml-1">{unit}</span>}
-    </div>
-    <div className="text-xs tracking-widest uppercase text-accent">{label}</div>
+      {value}{unit && <span className="font-sans text-xs text-muted"> {unit}</span>}
+    </span>
   </div>
 );
 
@@ -38,7 +39,7 @@ const RecipeMeta: React.FC<RecipeMetaProps> = ({
 }) => {
   const t = useTranslations('recipes');
 
-  const cards: MetaCardProps[] = [
+  const cards: MetaChipProps[] = [
     {
       value: preparingTime,
       unit: t('singlePage.meta.minUnit'),
@@ -76,10 +77,13 @@ const RecipeMeta: React.FC<RecipeMetaProps> = ({
   }
 
   return (
-    <section className="px-4 sm:px-6 lg:px-10 py-5 sm:py-6 lg:py-8 border-b border-border">
-      <div className="flex flex-wrap gap-5 sm:gap-7 lg:gap-9 py-5">
+    <section className="px-4 sm:px-6 lg:px-10 py-5 sm:py-6 lg:py-7 border-b border-border">
+      <h2 className="text-xs tracking-widest uppercase text-accent mb-5">
+        {t('singlePage.details')}
+      </h2>
+      <div className="sm:flex sm:flex-wrap sm:gap-y-2.5">
         {cards.map((card, index) => (
-          <MetaCard key={index} {...card} />
+          <MetaChip key={index} {...card} />
         ))}
       </div>
     </section>

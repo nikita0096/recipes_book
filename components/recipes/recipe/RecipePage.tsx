@@ -204,7 +204,10 @@ const RecipePage: React.FC<RecipePageProps> = ({
           </span>
 
           {/* Title */}
-          <h1 className="font-serif text-[clamp(28px,5vw,48px)] italic font-normal text-white leading-[1.1] mb-3.5">
+          <h1
+            className="text-[clamp(28px,5vw,48px)] italic font-normal text-white leading-[1.1] mb-1"
+            style={{ fontFamily: 'var(--font-dm-serif), Georgia, serif' }}
+          >
             {recipe.title[locale]}
           </h1>
         </div>
@@ -236,9 +239,31 @@ const RecipePage: React.FC<RecipePageProps> = ({
         <h2 className="text-xs tracking-widest uppercase text-accent mb-5">
           {t('singlePage.keyIngredients')}
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
-          {recipe.ingredients.map((item) => (
-            <RecipeIngredient key={item.id} ingredient={item}/>
+        <div>
+          {recipe.ingredients.map((group) => (
+            <div
+              key={group.id}
+              className="mt-6 pt-6 border-t border-border first:mt-0 first:pt-0 first:border-t-0"
+            >
+              {group.title[locale] && (
+                <div className="flex items-baseline gap-2.5 mb-3">
+                  <h3
+                    className="text-lg italic text-text"
+                    style={{ fontFamily: 'var(--font-dm-serif), Georgia, serif' }}
+                  >
+                    {group.title[locale]}
+                  </h3>
+                  <span className="text-xs tracking-widest uppercase text-muted whitespace-nowrap">
+                    {t('singlePage.ingredientsCount', {count: group.ingredients.length})}
+                  </span>
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10">
+                {group.ingredients.map((item) => (
+                  <RecipeIngredient key={item.id} ingredient={item}/>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </section>

@@ -22,6 +22,8 @@
     "likes": "likes",
     "minutes": "min",
     "keyIngredients": "Key Ingredients",
+    "details": "Details",
+    "ingredientsCount": "{count, plural, one {# item} other {# items}}",
     "preparationSteps": "Preparation Steps",
     "step": "Step",
     "videoSection": "Video Tutorial",

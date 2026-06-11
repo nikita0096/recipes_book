@@ -30,6 +30,10 @@
       "ingredientPlaceholder": "Введіть інгредієнт",
       "ingredientPlaceholderUa": "Інгредієнт (UA)",
       "ingredientPlaceholderEn": "Ingredient (EN)",
+      "group": "Група",
+      "groupTitle": "Назва групи",
+      "groupTitlePlaceholderUa": "Назва групи (UA), напр. Тісто",
+      "groupTitlePlaceholderEn": "Group title (EN), e.g. Dough",
       "quantity": "Кількість",
       "step": "Крок",
       "stepDescLabel": "Опис кроку",
@@ -56,6 +60,7 @@
       "changeVideo": "Змінити відео",
       "deleteStep": "Видалити крок",
       "addNewStep": "Додати новий крок",
+      "addGroup": "Додати групу інгредієнтів",
       "create": "Створити рецепт",
       "addVideo": "Додати відео"
     },
@@ -74,6 +79,8 @@
       "reloadHeroImage": "Перезавантажте головне зображення",
       "recipeNotUploaded": "Рецепт не завантажено, спробуйте ще раз",
       "addAtLeastOneIngredient": "Додайте хоча б один інгредієнт",
+      "addAtLeastOneIngredientInGroup": "Додайте хоча б один інгредієнт у кожну групу",
+      "enterGroupTitleBothLanguages": "Введіть назви груп на обох мовах",
       "addAtLeastOneStep": "Додайте хоча б один крок",
       "enterCategory": "Додайте категорiю",
       "videoUploadingError": "Щось пішло не так із завантаженням. Видаліть відео та завантажте його знову, а потім створіть новий рецепт."

@@ -41,8 +41,14 @@ const createMockRecipePublic = (): IRecipePublic => ({
     {desc: {ua: 'Крок 2', en: 'Step 2'}, imgUrl: null, id: 'step-2'},
   ],
   ingredients: [
-    {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '100', unit: 'g'},
-    {id: 'ing-2', value: {ua: 'Борошно', en: 'Flour'}, quantity: '200', unit: 'g'},
+    {
+      id: 'group-1',
+      title: {ua: 'Основа', en: 'Base'},
+      ingredients: [
+        {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '100', unit: 'g'},
+        {id: 'ing-2', value: {ua: 'Борошно', en: 'Flour'}, quantity: '200', unit: 'g'},
+      ],
+    },
   ],
   heroImg: '1/hero-img-1.jpg',
   isPremium: false,
@@ -65,7 +71,13 @@ const createMockRecipePremium = (): IRecipePremiumFull => ({
     {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: '2/step-img-1.jpg', id: 'step-1'},
   ],
   ingredients: [
-    {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '100', unit: 'g'},
+    {
+      id: 'group-1',
+      title: {ua: 'Основа', en: 'Base'},
+      ingredients: [
+        {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '100', unit: 'g'},
+      ],
+    },
   ],
   heroImg: '2/hero-img-2.jpg',
   isPremium: true,
@@ -84,19 +96,22 @@ const createMockFormData = (overrides?: Partial<EditingValues>): EditingValues =
   category: {ua: 'Десерти', en: 'Desserts'},
   title: {ua: 'Тестовий рецепт', en: 'Test Recipe'},
   description: {ua: 'Тестовий опис', en: 'Test Description'},
-  ingredients: [
-    {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '100', unit: 'g'},
-    {id: 'ing-2', value: {ua: 'Борошно', en: 'Flour'}, quantity: '200', unit: 'g'},
+  ingredientGroups: [
+    {
+      id: 'group-1',
+      title: {ua: 'Основа', en: 'Base'},
+      ingredients: [
+        {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '100', unit: 'g'},
+        {id: 'ing-2', value: {ua: 'Борошно', en: 'Flour'}, quantity: '200', unit: 'g'},
+      ],
+      draft: {ua: '', en: '', quantity: '', unit: 'g'},
+    },
   ],
   recipeSteps: [
     {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: '1/step-img-1.jpg', imgFile: null, id: 'step-1'},
     {desc: {ua: 'Крок 2', en: 'Step 2'}, imgUrl: null, imgFile: null, id: 'step-2'},
   ],
   likes: 10,
-  ingredientEn: '',
-  ingredientUa: '',
-  ingredientQuantity: '',
-  ingredientUnit: 'g',
   videoUrl: 'video-key-1',
   videoFile: null,
   preparingTime: 30,
@@ -272,10 +287,17 @@ describe('prepareUpdateData - Public recipes', () => {
   test('should handle ingredients change correctly', async () => {
     const recipe = createMockRecipePublic();
     const formData = createMockFormData({
-      ingredients: [
-        {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '150', unit: 'g'},
-        {id: 'ing-2', value: {ua: 'Борошно', en: 'Flour'}, quantity: '200', unit: 'g'},
-        {id: 'ing-3', value: {ua: 'Яйця', en: 'Eggs'}, quantity: '3', unit: 'pcs'},
+      ingredientGroups: [
+        {
+          id: 'group-1',
+          title: {ua: 'Основа', en: 'Base'},
+          ingredients: [
+            {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '150', unit: 'g'},
+            {id: 'ing-2', value: {ua: 'Борошно', en: 'Flour'}, quantity: '200', unit: 'g'},
+            {id: 'ing-3', value: {ua: 'Яйця', en: 'Eggs'}, quantity: '3', unit: 'pcs'},
+          ],
+          draft: {ua: '', en: '', quantity: '', unit: 'g'},
+        },
       ],
     });
 
@@ -286,9 +308,11 @@ describe('prepareUpdateData - Public recipes', () => {
 
     expect(result.success).toBe(true);
     if (isPublicResult(result)) {
-      expect(result.data.ingredients).toHaveLength(3);
-      expect(result.data.ingredients[0].quantity).toBe('150');
-      expect(result.data.ingredients[2].value.en).toBe('Eggs');
+      expect(result.data.ingredients).toHaveLength(1);
+      expect(result.data.ingredients[0].title.en).toBe('Base');
+      expect(result.data.ingredients[0].ingredients).toHaveLength(3);
+      expect(result.data.ingredients[0].ingredients[0].quantity).toBe('150');
+      expect(result.data.ingredients[0].ingredients[2].value.en).toBe('Eggs');
     }
   });
 
@@ -308,8 +332,15 @@ describe('prepareUpdateData - Public recipes', () => {
       recipeSteps: [
         {desc: {ua: 'Новий крок', en: 'New Step'}, imgUrl: 'blob:new-step', imgFile: mockFile, id: 'step-new'},
       ],
-      ingredients: [
-        {id: 'ing-new', value: {ua: 'Новий інгредієнт', en: 'New Ingredient'}, quantity: '500', unit: 'ml'},
+      ingredientGroups: [
+        {
+          id: 'group-new',
+          title: {ua: 'Нова група', en: 'New Group'},
+          ingredients: [
+            {id: 'ing-new', value: {ua: 'Новий інгредієнт', en: 'New Ingredient'}, quantity: '500', unit: 'ml'},
+          ],
+          draft: {ua: '', en: '', quantity: '', unit: 'g'},
+        },
       ],
     });
 
@@ -370,8 +401,15 @@ describe('prepareUpdateData - Premium recipes', () => {
       recipeSteps: [
         {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: '1/step-img-1.jpg', imgFile: null, id: 'step-1'},
       ],
-      ingredients: [
-        {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '100', unit: 'g'},
+      ingredientGroups: [
+        {
+          id: 'group-1',
+          title: {ua: 'Основа', en: 'Base'},
+          ingredients: [
+            {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '100', unit: 'g'},
+          ],
+          draft: {ua: '', en: '', quantity: '', unit: 'g'},
+        },
       ],
     });
 
@@ -409,8 +447,15 @@ describe('prepareUpdateData - Premium recipes', () => {
       recipeSteps: [
         {desc: {ua: 'Крок 1', en: 'Step 1'}, imgUrl: '1/step-img-1.jpg', imgFile: null, id: 'step-1'},
       ],
-      ingredients: [
-        {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '100', unit: 'g'},
+      ingredientGroups: [
+        {
+          id: 'group-1',
+          title: {ua: 'Основа', en: 'Base'},
+          ingredients: [
+            {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '100', unit: 'g'},
+          ],
+          draft: {ua: '', en: '', quantity: '', unit: 'g'},
+        },
       ],
     });
 
@@ -523,9 +568,16 @@ describe('hasDataChanged', () => {
   test('should return true when ingredient changed', () => {
     const recipe = createMockRecipePublic();
     const formData = createMockFormData({
-      ingredients: [
-        {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '999', unit: 'g'},
-        {id: 'ing-2', value: {ua: 'Борошно', en: 'Flour'}, quantity: '200', unit: 'g'},
+      ingredientGroups: [
+        {
+          id: 'group-1',
+          title: {ua: 'Основа', en: 'Base'},
+          ingredients: [
+            {id: 'ing-1', value: {ua: 'Цукор', en: 'Sugar'}, quantity: '999', unit: 'g'},
+            {id: 'ing-2', value: {ua: 'Борошно', en: 'Flour'}, quantity: '200', unit: 'g'},
+          ],
+          draft: {ua: '', en: '', quantity: '', unit: 'g'},
+        },
       ],
     });
 

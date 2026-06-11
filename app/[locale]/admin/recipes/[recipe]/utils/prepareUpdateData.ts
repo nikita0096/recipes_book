@@ -167,12 +167,16 @@ export const prepareUpdateData = async ({
       videoUrl = newVideoUrl;
     }
 
-    // Prepare ingredients
-    const ingredients = formData.ingredients.map(ing => ({
-      id: ing.id,
-      value: ing.value,
-      quantity: ing.quantity,
-      unit: ing.unit
+    // Prepare ingredient groups (drop draft input values)
+    const ingredients = formData.ingredientGroups.map(group => ({
+      id: group.id,
+      title: group.title,
+      ingredients: group.ingredients.map(ing => ({
+        id: ing.id,
+        value: ing.value,
+        quantity: ing.quantity,
+        unit: ing.unit
+      }))
     }));
 
     // Return different structure based on target isPremium
@@ -319,23 +323,39 @@ export const hasDataChanged = (formData: EditingValues, recipe: IRecipe): boolea
     }
   }
 
-  // Check ingredients count
-  if (formData.ingredients.length !== recipe.ingredients.length) {
+  // Check ingredient groups count
+  if (formData.ingredientGroups.length !== recipe.ingredients.length) {
     return true;
   }
 
-  // Check each ingredient
-  for (let i = 0; i < formData.ingredients.length; i++) {
-    const formIng = formData.ingredients[i];
-    const recipeIng = recipe.ingredients[i];
+  // Check each group
+  for (let g = 0; g < formData.ingredientGroups.length; g++) {
+    const formGroup = formData.ingredientGroups[g];
+    const recipeGroup = recipe.ingredients[g];
 
     if (
-      formIng.value.ua !== recipeIng.value.ua ||
-      formIng.value.en !== recipeIng.value.en ||
-      formIng.quantity !== recipeIng.quantity ||
-      formIng.unit !== recipeIng.unit
+      formGroup.title.ua !== recipeGroup.title.ua ||
+      formGroup.title.en !== recipeGroup.title.en
     ) {
       return true;
+    }
+
+    if (formGroup.ingredients.length !== recipeGroup.ingredients.length) {
+      return true;
+    }
+
+    for (let i = 0; i < formGroup.ingredients.length; i++) {
+      const formIng = formGroup.ingredients[i];
+      const recipeIng = recipeGroup.ingredients[i];
+
+      if (
+        formIng.value.ua !== recipeIng.value.ua ||
+        formIng.value.en !== recipeIng.value.en ||
+        formIng.quantity !== recipeIng.quantity ||
+        formIng.unit !== recipeIng.unit
+      ) {
+        return true;
+      }
     }
   }
 

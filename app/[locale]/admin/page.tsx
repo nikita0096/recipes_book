@@ -6,6 +6,23 @@ import {useUserStore} from "@/store/useUserStore";
 import {useRouter} from "@/i18n/navigation";
 import {useLocale, useTranslations} from "next-intl";
 import {Controller, SubmitHandler, useFieldArray, useForm} from "react-hook-form";
+import {
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy
+} from "@dnd-kit/sortable";
+import SortableItem from "@/components/admin/SortableItem";
 import {v4 as uuidv4} from 'uuid';
 import {ulid} from "ulid";
 import {insertRecipePublic, insertRecipePremiumMain} from "@/services/db/admin/insertRecipeToDatabase";
@@ -14,7 +31,7 @@ import {MdDeleteForever} from "react-icons/md";
 import {Spinner} from "@/components/ui/spinner";
 import {units} from "@/constants/units";
 import {categories} from "@/constants/categories";
-import {IFormValues, Ingredient, Locale} from "@/types/forms";
+import {IFormValues, IngredientGroupFormValues, Locale} from "@/types/forms";
 import {uploadVideoToStream} from "@/services/storage/uploadVideoToStream";
 import {insertPremiumRecipePart} from "@/services/db/admin/insertPremiumRecipeToDb";
 import {
@@ -23,6 +40,13 @@ import {
   IRecipePremiumUpload,
   RecipeStep,
 } from "@/types/recipe";
+
+const createEmptyGroup = (): IngredientGroupFormValues => ({
+  id: uuidv4(),
+  title: {en: '', ua: ''},
+  ingredients: [],
+  draft: {ua: '', en: '', quantity: '', unit: units[0].value},
+});
 
 const Page = () => {
   const [mounted, setMounted] = useState<boolean>(false);
@@ -49,7 +73,6 @@ const Page = () => {
     reset,
     control,
     setValue,
-    resetField,
     getValues,
     watch,
     formState: {errors}
@@ -62,11 +85,7 @@ const Page = () => {
       category: categories.find(cat => cat.en === 'Desserts')?.en,
       price: { en: 0, ua: 0 },
       discount: 0,
-      ingredientEn: '',
-      ingredientUa: '',
-      ingredientQuantity: '',
-      ingredientUnit: units[0].value,
-      ingredients: [],
+      ingredientGroups: [createEmptyGroup()],
       heroImg: null,
       isPremium: true,
       preparingTime: 0,
@@ -79,13 +98,20 @@ const Page = () => {
   });
 
   const {
-    fields: ingredientFields,
-    append: appendIngredient,
-    remove: removeIngredient,
+    fields: groupFields,
+    append: appendGroup,
+    remove: removeGroup,
+    move: moveGroup,
   } = useFieldArray({
     control,
-    name: 'ingredients',
+    name: 'ingredientGroups',
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {activationConstraint: {distance: 6}}),
+    useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates}),
+    useSensor(TouchSensor, {activationConstraint: {distance: 8}}),
+  );
 
   const {
     fields: stepFields,
@@ -110,29 +136,65 @@ const Page = () => {
     }
   }, [user, router]);
 
-  const handleIngredientsForm = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleIngredientsForm = (e: React.MouseEvent<HTMLButtonElement>, groupIndex: number) => {
     e.preventDefault();
-    const ingredientUa = getValues('ingredientUa')?.trim();
-    const ingredientEn = getValues('ingredientEn')?.trim();
-    const quantity = getValues('ingredientQuantity')?.trim();
-    const unit = getValues('ingredientUnit');
+    const draft = getValues(`ingredientGroups.${groupIndex}.draft`);
+    const ingredientUa = draft.ua?.trim();
+    const ingredientEn = draft.en?.trim();
+    const quantity = draft.quantity?.trim();
+    const unit = draft.unit;
 
     if (!ingredientUa || !ingredientEn || !quantity || !unit) {
       setValidationErrorIngredients(t('form.validation.fillAllIngredientFields'));
       return;
     }
 
-    appendIngredient({
-      value: {en: ingredientEn, ua: ingredientUa},
-      quantity: quantity,
-      unit: unit,
-      id: uuidv4()
-    });
-    resetField('ingredientUa');
-    resetField('ingredientEn');
-    resetField('ingredientQuantity');
-    resetField('ingredientUnit');
+    const ingredients = getValues(`ingredientGroups.${groupIndex}.ingredients`);
+    setValue(`ingredientGroups.${groupIndex}.ingredients`, [
+      ...ingredients,
+      {
+        value: {en: ingredientEn, ua: ingredientUa},
+        quantity: quantity,
+        unit: unit,
+        id: uuidv4()
+      }
+    ]);
+    setValue(`ingredientGroups.${groupIndex}.draft`, {ua: '', en: '', quantity: '', unit: units[0].value});
     setValidationErrorIngredients('');
+  };
+
+  const removeIngredientFromGroup = (groupIndex: number, ingredientId: string) => {
+    const ingredients = getValues(`ingredientGroups.${groupIndex}.ingredients`);
+    setValue(
+      `ingredientGroups.${groupIndex}.ingredients`,
+      ingredients.filter((ingredient) => ingredient.id !== ingredientId)
+    );
+  };
+
+  const handleGroupDragEnd = (event: DragEndEvent) => {
+    const {active, over} = event;
+    if (!over || active.id === over.id) return;
+
+    const groups = getValues('ingredientGroups');
+    const oldIndex = groups.findIndex((group) => group.id === active.id);
+    const newIndex = groups.findIndex((group) => group.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    moveGroup(oldIndex, newIndex);
+  };
+
+  const handleIngredientDragEnd = (event: DragEndEvent, groupIndex: number) => {
+    const {active, over} = event;
+    if (!over || active.id === over.id) return;
+
+    const ingredients = getValues(`ingredientGroups.${groupIndex}.ingredients`);
+    const oldIndex = ingredients.findIndex((item) => item.id === active.id);
+    const newIndex = ingredients.findIndex((item) => item.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    setValue(`ingredientGroups.${groupIndex}.ingredients`, arrayMove(ingredients, oldIndex, newIndex));
   };
 
   const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -159,15 +221,23 @@ const Page = () => {
     }
   };
 
-  type TranslateInputs = 'title.ua' | 'description.ua' | 'ingredientUa' | `recipeSteps.${number}.desc.ua`;
+  type TranslateInputs =
+    | 'title.ua'
+    | 'description.ua'
+    | `ingredientGroups.${number}.draft.ua`
+    | `ingredientGroups.${number}.title.ua`
+    | `recipeSteps.${number}.desc.ua`;
 
   const handleTranslateText = async (e: React.MouseEvent<HTMLButtonElement>, flag: string, index?: number) => {
     e.preventDefault();
     const inputFields: Record<string, TranslateInputs> = {
       title: 'title.ua',
       description: 'description.ua',
-      ingredient: 'ingredientUa',
-      ...(index !== undefined && {stepDescription: `recipeSteps.${index}.desc.ua`})
+      ...(index !== undefined && {
+        ingredient: `ingredientGroups.${index}.draft.ua`,
+        groupTitle: `ingredientGroups.${index}.title.ua`,
+        stepDescription: `recipeSteps.${index}.desc.ua`
+      })
     }
 
     const textUa = getValues(inputFields[flag]);
@@ -189,7 +259,14 @@ const Page = () => {
         setValue('description.en', translated);
         break;
       case 'ingredient':
-        setValue('ingredientEn', translated);
+        if (index !== undefined) {
+          setValue(`ingredientGroups.${index}.draft.en`, translated);
+        }
+        break;
+      case 'groupTitle':
+        if (index !== undefined) {
+          setValue(`ingredientGroups.${index}.title.en`, translated);
+        }
         break;
       case 'stepDescription':
         if (index !== undefined) {
@@ -230,9 +307,26 @@ const Page = () => {
   const handleFormData = async (data: IFormValues, folder: string) => {
     setError(null);
 
-    if (data.ingredients.length === 0 || data.heroImg === null || data.recipeSteps.length === 0) {
+    if (data.ingredientGroups.length === 0 || data.heroImg === null || data.recipeSteps.length === 0) {
       setError(t('form.validation.fillAllFields'));
       return null;
+    }
+
+    for (const group of data.ingredientGroups) {
+      if (group.ingredients.length === 0) {
+        setError(t('form.validation.addAtLeastOneIngredientInGroup'));
+        return null;
+      }
+    }
+
+    // Group titles are required only when there is more than one group
+    if (data.ingredientGroups.length > 1) {
+      for (const group of data.ingredientGroups) {
+        if (!group.title.en.trim() || !group.title.ua.trim()) {
+          setError(t('form.validation.enterGroupTitleBothLanguages'));
+          return null;
+        }
+      }
     }
 
     if (!data.title.en || !data.title.ua) {
@@ -348,7 +442,7 @@ const Page = () => {
       discount: data.discount ? data.discount : null,
       likes: data.likes,
       recipeSteps: steps as RecipeStep[],
-      ingredients: data.ingredients,
+      ingredients: data.ingredientGroups.map(({id, title, ingredients}) => ({id, title, ingredients})),
       heroImg: heroImgPath,
       preparingTime: data.preparingTime,
       weight: data.weight || null,
@@ -450,6 +544,8 @@ const Page = () => {
   };
 
   const isPremium = watch('isPremium');
+
+  const watchedGroups = watch('ingredientGroups');
 
   const engTitle = watch('title.en');
 
@@ -680,28 +776,77 @@ const Page = () => {
             <span className="font-serif text-xl text-text">{t('form.sections.ingredients')}</span>
           </div>
 
-          <div className="space-y-3 mb-4">
-            <Controller
-              name='ingredients'
-              control={control}
-              rules={{required: 'Ingredients are required'}}
-              render={() => (
-                <div className="space-y-3">
-                  {/* Ingredient name inputs for both languages */}
+          <DndContext
+            id="ingredient-groups"
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleGroupDragEnd}
+          >
+          <SortableContext items={watchedGroups?.map(group => group.id) ?? []} strategy={verticalListSortingStrategy}>
+          <div className="space-y-5">
+            {groupFields.map((groupField, groupIndex) => (
+              <SortableItem
+                key={groupField.id}
+                itemId={watchedGroups?.[groupIndex]?.id ?? groupField.id}
+                className="border border-border p-4 sm:p-5 bg-bg"
+              >
+                {(dragHandle) => (
+                <>
+                {/* Group header */}
+                <div className="grid grid-cols-[auto_32px_1fr_auto] gap-3.5 items-center mb-4">
+                  {dragHandle}
+                  <span className="text-[11px] text-accent font-semibold">
+                    {String(groupIndex + 1).padStart(2, '0')}
+                  </span>
+                  <span className="text-sm text-muted italic truncate">
+                    {watchedGroups?.[groupIndex]?.title.ua || t('form.fields.group') + ' ' + (groupIndex + 1)}
+                  </span>
+                  <button
+                    type="button"
+                    className="p-1 text-muted hover:text-red-500 transition-colors"
+                    onClick={() => removeGroup(groupIndex)}
+                  >
+                    <MdDeleteForever className="text-lg"/>
+                  </button>
+                </div>
+
+                {/* Group title inputs */}
+                <div className="space-y-3 mb-5">
+                  <div>
+                    <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                      {t('form.fields.groupTitle')}
+                    </label>
+                    <input {...register(`ingredientGroups.${groupIndex}.title.ua`)}
+                           className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                           type="text"
+                           placeholder={t('form.fields.groupTitlePlaceholderUa')}/>
+                  </div>
+                  <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
+                          onClick={(e) => handleTranslateText(e, 'groupTitle', groupIndex)}>
+                    Translate to English →
+                  </button>
+                  <input {...register(`ingredientGroups.${groupIndex}.title.en`)}
+                         className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                         type="text"
+                         placeholder={t('form.fields.groupTitlePlaceholderEn')}/>
+                </div>
+
+                {/* Ingredient inputs */}
+                <div className="space-y-3 mb-4">
                   <div className="grid grid-cols-1 gap-3">
-                    <input {...register('ingredientUa')}
-                           className={`w-full px-3.5 py-2.5 bg-bg border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
-                             error !== null && getValues('ingredients').length === 0 ? 'border-red-400' : 'border-border'
+                    <input {...register(`ingredientGroups.${groupIndex}.draft.ua`)}
+                           className={`w-full px-3.5 py-2.5 bg-surface border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
+                             error !== null && watchedGroups?.[groupIndex]?.ingredients.length === 0 ? 'border-red-400' : 'border-border'
                            }`}
                            type="text"
                            placeholder={t('form.fields.ingredientPlaceholder')}/>
-                    <button className="self-start px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
-                            onClick={(e) => handleTranslateText(e, 'ingredient')}>
+                    <button className="self-start px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
+                            onClick={(e) => handleTranslateText(e, 'ingredient', groupIndex)}>
                       Translate to EN →
                     </button>
-                    <input {...register('ingredientEn')}
-                           className={`w-full px-3.5 py-2.5 bg-bg border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
-                             error !== null && getValues('ingredients').length === 0 ? 'border-red-400' : 'border-border'
+                    <input {...register(`ingredientGroups.${groupIndex}.draft.en`)}
+                           className={`w-full px-3.5 py-2.5 bg-surface border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
+                             error !== null && watchedGroups?.[groupIndex]?.ingredients.length === 0 ? 'border-red-400' : 'border-border'
                            }`}
                            type="text"
                            placeholder={t('form.fields.ingredientPlaceholderEn')}/>
@@ -711,9 +856,9 @@ const Page = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2.5 items-end">
                     <div>
                       <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">{t('form.fields.quantity')}</label>
-                      <input {...register('ingredientQuantity')}
-                             className={`w-full px-3.5 py-2.5 bg-bg border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
-                               error !== null && getValues('ingredients').length === 0 ? 'border-red-400' : 'border-border'
+                      <input {...register(`ingredientGroups.${groupIndex}.draft.quantity`)}
+                             className={`w-full px-3.5 py-2.5 bg-surface border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
+                               error !== null && watchedGroups?.[groupIndex]?.ingredients.length === 0 ? 'border-red-400' : 'border-border'
                              }`}
                              type="number"
                              placeholder={t('form.fields.quantity')}/>
@@ -721,8 +866,8 @@ const Page = () => {
                     <div>
                       <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">Unit</label>
                       <select
-                        {...register('ingredientUnit')}
-                        className="w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text focus:outline-none focus:border-accent transition-colors cursor-pointer appearance-none"
+                        {...register(`ingredientGroups.${groupIndex}.draft.unit`)}
+                        className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text focus:outline-none focus:border-accent transition-colors cursor-pointer appearance-none"
                       >
                         {units.map((unit) => (
                           <option key={unit.value}
@@ -734,39 +879,67 @@ const Page = () => {
                     </div>
                     <button
                       className="px-4 py-2.5 bg-text border border-text text-bg text-[11px] tracking-[0.06em] uppercase whitespace-nowrap hover:opacity-90 transition-opacity"
-                      onClick={(e) => handleIngredientsForm(e)}
+                      onClick={(e) => handleIngredientsForm(e, groupIndex)}
                     >
                       + {t('form.buttons.add')}
                     </button>
                   </div>
                 </div>
-              )}
-            />
-            {errors.ingredients && <p className="text-red-500 text-sm">{t('form.validation.addAtLeastOneIngredient')}</p>}
-          </div>
 
-          {validationErrorIngredients && (
-            <div className="pb-4 text-red-500 text-sm">{validationErrorIngredients}</div>
-          )}
-
-          <div className="flex items-center justify-start gap-2 flex-wrap">
-            {ingredientFields.map((item, index) => (
-              <div
-                className="flex flex-row items-center gap-2 px-3 py-1.5 border border-border bg-bg text-sm text-text"
-                key={item.id}
-              >
-                <span>{item.value.ua}</span>
-                <span className="text-muted">|</span>
-                <span className="text-muted">{item.value.en}</span>
-                <span className="text-accent">-</span>
-                <span>{item.quantity} {item.unit}</span>
-                <MdDeleteForever
-                  className="text-red-500 cursor-pointer hover:text-red-600 transition-colors"
-                  onClick={() => removeIngredient(index)}
-                />
-              </div>
+                {/* Added ingredients */}
+                <DndContext
+                  id={`group-ingredients-${groupIndex}`}
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={(e) => handleIngredientDragEnd(e, groupIndex)}
+                >
+                  <SortableContext items={watchedGroups?.[groupIndex]?.ingredients.map(item => item.id) ?? []}>
+                    <div className="flex items-center justify-start gap-2 flex-wrap">
+                      {watchedGroups?.[groupIndex]?.ingredients.map((item) => (
+                        <SortableItem
+                          key={item.id}
+                          itemId={item.id}
+                          className="flex flex-row items-center gap-2 px-3 py-1.5 border border-border bg-surface text-sm text-text"
+                        >
+                          {(ingredientDragHandle) => (
+                            <>
+                              {ingredientDragHandle}
+                              <span>{item.value.ua}</span>
+                              <span className="text-muted">|</span>
+                              <span className="text-muted">{item.value.en}</span>
+                              <span className="text-accent">-</span>
+                              <span>{item.quantity} {item.unit}</span>
+                              <MdDeleteForever
+                                className="text-red-500 cursor-pointer hover:text-red-600 transition-colors"
+                                onClick={() => removeIngredientFromGroup(groupIndex, item.id)}
+                              />
+                            </>
+                          )}
+                        </SortableItem>
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+                </>
+                )}
+              </SortableItem>
             ))}
+
+            {validationErrorIngredients && (
+              <div className="text-red-500 text-sm">{validationErrorIngredients}</div>
+            )}
+
+            {/* Add new group button */}
+            <button
+              className="w-full py-5 border border-dashed border-border flex items-center justify-center gap-2.5 text-[11px] tracking-[0.06em] text-accent hover:bg-bg transition-colors"
+              type="button"
+              onClick={() => appendGroup(createEmptyGroup())}
+            >
+              + {t('form.buttons.addGroup')}
+            </button>
           </div>
+          </SortableContext>
+          </DndContext>
         </div>
 
         {/*Hero Image section*/}

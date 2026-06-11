@@ -1,4 +1,4 @@
-import { Ingredient, LocalizedText } from './forms';
+import { IngredientGroup, LocalizedText } from './forms';
 
 // ===== БАЗОВЫЕ ТИПЫ =====
 
@@ -15,7 +15,7 @@ interface IRecipeBase {
   description: LocalizedText;
   likes: number;
   category: LocalizedText;
-  ingredients: Ingredient[];
+  ingredients: IngredientGroup[];
   heroImg: string;
   preparingTime: number;
   weight: number | null;
@@ -101,7 +101,7 @@ interface UpdateRecipeBase {
   description: LocalizedText;
   category: LocalizedText;
   likes: number;
-  ingredients: Ingredient[];
+  ingredients: IngredientGroup[];
   heroImg: string;
   preparingTime: number;
   weight: number | null;

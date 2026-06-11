@@ -22,6 +22,7 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
+  arrayMove,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy
 } from "@dnd-kit/sortable";
@@ -31,10 +32,11 @@ import {MdDelete, MdDeleteForever} from "react-icons/md";
 import {categories} from "@/constants/categories";
 import {IoCheckmark, IoClose} from "react-icons/io5";
 import {units} from "@/constants/units";
-import {Ingredient, LocalizedText, UnitValue} from "@/types/forms";
+import {Ingredient, IngredientGroupFormValues, LocalizedText} from "@/types/forms";
 import {SubmitHandler, useFieldArray, useForm} from "react-hook-form";
 import {v4 as uuidv4} from "uuid";
 import SortableIngredient from "@/components/admin/SortableIngredient";
+import SortableItem from "@/components/admin/SortableItem";
 import {
   updateRecipePublic,
   updateRecipePremium,
@@ -49,6 +51,15 @@ import {getPublicImageUrl} from "@/services/storage/getPublicImageUrl";
 
 type StepFields = { desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string }
 
+const createEmptyDraft = () => ({ua: '', en: '', quantity: '', unit: units[0].value});
+
+const createEmptyGroup = (): IngredientGroupFormValues => ({
+  id: uuidv4(),
+  title: {en: '', ua: ''},
+  ingredients: [],
+  draft: createEmptyDraft(),
+});
+
 type EditingSteps = {desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string ;fieldId: string};
 
 export interface EditingValues {
@@ -57,15 +68,11 @@ export interface EditingValues {
   category: { ua: string; en: string };
   title: { ua: string; en: string };
   description: { ua: string; en: string };
-  ingredients: Ingredient[];
+  ingredientGroups: IngredientGroupFormValues[];
   recipeSteps: StepFields[];
   price: { en: number; ua: number },
   discount: number,
   likes: number;
-  ingredientEn: string;
-  ingredientUa: string;
-  ingredientQuantity: string | null;
-  ingredientUnit: UnitValue;
   videoUrl: string;
   videoFile: File | null;
   preparingTime: number;
@@ -109,7 +116,6 @@ const Page = () => {
     reset,
     control,
     setValue,
-    resetField,
     getValues,
     watch,
     formState: {errors}
@@ -122,13 +128,9 @@ const Page = () => {
       description: {ua: '', en: ''},
       price: { en: 0, ua: 0 },
       discount: 0,
-      ingredients: [],
+      ingredientGroups: [],
       recipeSteps: [],
       likes: 0,
-      ingredientEn: '',
-      ingredientUa: '',
-      ingredientQuantity: '',
-      ingredientUnit: units[0].value,
       videoUrl: '',
       videoFile: null,
       preparingTime: 0,
@@ -141,14 +143,13 @@ const Page = () => {
   });
 
   const {
-    fields: ingredientFields,
-    append: appendIngredient,
-    remove: removeIngredient,
-    move: moveIngredient,
-    update: updateIngredient,
+    fields: groupFields,
+    append: appendGroup,
+    remove: removeGroup,
+    move: moveGroup,
   } = useFieldArray({
     control,
-    name: 'ingredients',
+    name: 'ingredientGroups',
   });
 
   const {
@@ -162,6 +163,7 @@ const Page = () => {
   });
 
   const watchedSteps = watch('recipeSteps');
+  const watchedGroups = watch('ingredientGroups');
   const mainImage = watch('heroImg');
   const isPremium = watch('isPremium');
   const isVideoChanged = watch('videoFile');
@@ -348,14 +350,22 @@ const Page = () => {
   if(!recipe) return null;
 
   // Translation function
-  type TranslateInputs = 'title.ua' | 'description.ua' | 'ingredientUa' | `recipeSteps.${number}.desc.ua`;
+  type TranslateInputs =
+    | 'title.ua'
+    | 'description.ua'
+    | `ingredientGroups.${number}.draft.ua`
+    | `ingredientGroups.${number}.title.ua`
+    | `recipeSteps.${number}.desc.ua`;
 
   const handleTranslateText = async (flag: string, index?: number) => {
     const inputFields: Record<string, TranslateInputs> = {
       title: 'title.ua',
       description: 'description.ua',
-      ingredient: 'ingredientUa',
-      ...(index !== undefined && {stepDescription: `recipeSteps.${index}.desc.ua`})
+      ...(index !== undefined && {
+        ingredient: `ingredientGroups.${index}.draft.ua`,
+        groupTitle: `ingredientGroups.${index}.title.ua`,
+        stepDescription: `recipeSteps.${index}.desc.ua`
+      })
     }
 
     const textUa = getValues(inputFields[flag]);
@@ -377,7 +387,14 @@ const Page = () => {
         setValue('description.en', translated);
         break;
       case 'ingredient':
-        setValue('ingredientEn', translated);
+        if (index !== undefined) {
+          setValue(`ingredientGroups.${index}.draft.en`, translated);
+        }
+        break;
+      case 'groupTitle':
+        if (index !== undefined) {
+          setValue(`ingredientGroups.${index}.title.en`, translated);
+        }
         break;
       case 'stepDescription':
         if (index !== undefined) {
@@ -393,7 +410,7 @@ const Page = () => {
       setValue('description', recipe.description);
       setValue('heroImg', recipe.heroImg);
       setValue('category', recipe.category);
-      setValue('ingredients', recipe.ingredients);
+      setValue('ingredientGroups', recipe.ingredients.map(group => ({...group, draft: createEmptyDraft()})));
       setValue('recipeSteps', recipe.recipeSteps.map(step => ({...step, imgFile: null})));
       setValue('likes', recipe.likes);
       setValue('videoUrl', videoSrc ?? '');
@@ -462,11 +479,12 @@ const Page = () => {
     setValue('videoUrl', recipe?.videoUrl ?? '');
   }
 
-  const addNewIngredient = () => {
-    const ingredientUa = getValues('ingredientUa')?.trim();
-    const ingredientEn = getValues('ingredientEn')?.trim();
-    const quantity = getValues('ingredientQuantity')?.trim();
-    const unit = getValues('ingredientUnit');
+  const addNewIngredient = (groupIndex: number) => {
+    const draft = getValues(`ingredientGroups.${groupIndex}.draft`);
+    const ingredientUa = draft.ua?.trim();
+    const ingredientEn = draft.en?.trim();
+    const quantity = draft.quantity?.trim();
+    const unit = draft.unit;
 
     if (!ingredientUa || !ingredientEn || !quantity || !unit) {
       return;
@@ -479,12 +497,17 @@ const Page = () => {
       id: uuidv4()
     };
 
-    appendIngredient(newIngredient);
+    const ingredients = getValues(`ingredientGroups.${groupIndex}.ingredients`);
+    setValue(`ingredientGroups.${groupIndex}.ingredients`, [...ingredients, newIngredient]);
+    setValue(`ingredientGroups.${groupIndex}.draft`, createEmptyDraft());
+  }
 
-    resetField('ingredientUa');
-    resetField('ingredientEn');
-    resetField('ingredientQuantity');
-    resetField('ingredientUnit');
+  const removeIngredientFromGroup = (groupIndex: number, ingredientId: string) => {
+    const ingredients = getValues(`ingredientGroups.${groupIndex}.ingredients`);
+    setValue(
+      `ingredientGroups.${groupIndex}.ingredients`,
+      ingredients.filter((ingredient) => ingredient.id !== ingredientId)
+    );
   }
 
   const startEditingIngredient = (ingredient: Ingredient) => {
@@ -534,10 +557,15 @@ const Page = () => {
   const saveIngredientsChanges = (id: string) => {
     const updatedIngredient = {...editingIngredientsData[id]}
 
-    const index = ingredientFields.findIndex(item => item.id === id);
-    if (index !== -1) {
-      updateIngredient(index, updatedIngredient);
-    }
+    const groups = getValues('ingredientGroups');
+    groups.forEach((group, groupIndex) => {
+      const index = group.ingredients.findIndex(item => item.id === id);
+      if (index !== -1) {
+        const ingredients = [...group.ingredients];
+        ingredients[index] = updatedIngredient;
+        setValue(`ingredientGroups.${groupIndex}.ingredients`, ingredients);
+      }
+    });
 
     cancelIngredientsEditing(id);
   }
@@ -599,21 +627,45 @@ const Page = () => {
     } else setStepFieldError(locale === 'ua' ? "Додайте хоча б опис" : "Add at least description");
   };
 
-  const handleDragEnd = (event: DragEndEvent, fields: StepFields[] | Ingredient[], type: 'steps' | 'ingredients') => {
+  const handleDragEnd = (event: DragEndEvent) => {
     if (!isEditing) return;
     const {active, over} = event;
     if (!over || active.id === over.id) return;
 
-    const oldIndex = fields.findIndex((step) => step.id === active.id);
-    const newIndex = fields.findIndex((step) => step.id === over.id);
+    const oldIndex = stepFields.findIndex((step) => step.id === active.id);
+    const newIndex = stepFields.findIndex((step) => step.id === over.id);
 
     if (oldIndex === -1 || newIndex === -1) return;
 
-    if (type === 'ingredients') {
-      moveIngredient(oldIndex, newIndex);
-    } else {
-      moveStep(oldIndex, newIndex);
-    }
+    moveStep(oldIndex, newIndex);
+  };
+
+  const handleIngredientDragEnd = (event: DragEndEvent, groupIndex: number) => {
+    if (!isEditing) return;
+    const {active, over} = event;
+    if (!over || active.id === over.id) return;
+
+    const ingredients = getValues(`ingredientGroups.${groupIndex}.ingredients`);
+    const oldIndex = ingredients.findIndex((item) => item.id === active.id);
+    const newIndex = ingredients.findIndex((item) => item.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    setValue(`ingredientGroups.${groupIndex}.ingredients`, arrayMove(ingredients, oldIndex, newIndex));
+  };
+
+  const handleGroupDragEnd = (event: DragEndEvent) => {
+    if (!isEditing) return;
+    const {active, over} = event;
+    if (!over || active.id === over.id) return;
+
+    const groups = getValues('ingredientGroups');
+    const oldIndex = groups.findIndex((group) => group.id === active.id);
+    const newIndex = groups.findIndex((group) => group.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    moveGroup(oldIndex, newIndex);
   };
 
 
@@ -1179,146 +1231,251 @@ const Page = () => {
           {tRecipes('singlePage.keyIngredients')}
         </h2>
 
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={(e) => handleDragEnd(e, ingredientFields, 'ingredients')}
-        >
-          <SortableContext items={ingredientFields.map(f => f.id)}>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px bg-border">
-              {(!isEditing ? recipe.ingredients : ingredientFields).map((ingredient, i) => (
-                <div key={ingredient.id}>
-                  {isEditingIngredient[ingredient.id] ? (
-                    <div className="bg-surface p-3 sm:p-4 space-y-2">
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          name='value.ua'
-                          onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
-                          value={editingIngredientsData[ingredient.id].value.ua}
-                          placeholder="UA"
-                          className="w-full px-2 py-1.5 text-sm bg-bg border border-border focus:outline-none focus:border-accent"
-                        />
-                        <input
-                          type="text"
-                          name='value.en'
-                          onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
-                          value={editingIngredientsData[ingredient.id].value.en}
-                          placeholder="EN"
-                          className="w-full px-2 py-1.5 text-sm bg-bg border border-border focus:outline-none focus:border-accent"
-                        />
-                        <div className="flex gap-1">
-                          <input
-                            type="text"
-                            name='quantity'
-                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
-                            value={editingIngredientsData[ingredient.id].quantity}
-                            placeholder="Qty"
-                            className="w-12 px-2 py-1.5 text-sm bg-bg border border-border focus:outline-none focus:border-accent"
-                          />
-                          <select
-                            name='unit'
-                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
-                            value={editingIngredientsData[ingredient.id].unit}
-                            className="flex-1 px-1 py-1.5 text-xs bg-bg border border-border focus:outline-none focus:border-accent"
-                          >
-                            {units.map((u) => (
-                              <option key={u.value} value={u.value}>{u.label[locale]}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 justify-end">
-                        <button
-                          onClick={() => saveIngredientsChanges(ingredient.id)}
-                          className="p-1.5 bg-green-500 text-white hover:bg-green-600 transition-colors"
-                        >
-                          <IoCheckmark className="text-sm"/>
-                        </button>
-                        <button
-                          onClick={() => cancelIngredientsEditing(ingredient.id)}
-                          className="p-1.5 bg-red-500 text-white hover:bg-red-600 transition-colors"
-                        >
-                          <IoClose className="text-sm"/>
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <SortableIngredient
+        {!isEditing ? (
+          <div className="space-y-6">
+            {recipe.ingredients.map((group) => (
+              <div key={group.id}>
+                {group.title[locale] && (
+                  <h3 className="font-serif text-lg italic text-text mb-3">
+                    {group.title[locale]}
+                  </h3>
+                )}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px bg-border">
+                  {group.ingredients.map((ingredient) => (
+                    <div
                       key={ingredient.id}
-                      ingredient={ingredient}
-                      ingredientId={ingredient.id}
-                      index={i}
-                      isEditing={isEditing}
-                      startEditingIngredient={startEditingIngredient}
-                      removeIngredient={removeIngredient}
-                    />
-                  )}
+                      className="relative bg-bg p-3 sm:p-4 flex justify-between items-start gap-3"
+                    >
+                      <span className="text-sm sm:text-base text-text">
+                        {ingredient.value[locale]}
+                      </span>
+                      <span className="text-sm text-accent font-medium whitespace-nowrap">
+                        {ingredient.quantity} {units.find((u) => u.value === ingredient.unit)?.label[locale]}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-
-        {/* Add new ingredient form */}
-        {isEditing && (
-          <div className="mt-6 p-4 sm:p-5 bg-surface border border-border">
-            <h3 className="text-sm tracking-widest uppercase text-muted mb-4">{tAdmin('form.sections.addIngredient')}</h3>
-            <div className="space-y-3">
-              <div className="grid grid-cols-1 gap-3">
-                <input
-                  {...register('ingredientUa')}
-                  className="w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
-                  type="text"
-                  placeholder={tAdmin('form.fields.ingredientPlaceholderUa')}
-                />
-                <button
-                  type="button"
-                  onClick={() => handleTranslateText('ingredient')}
-                  className="self-start px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
-                >
-                  Translate to EN →
-                </button>
-                <input
-                  {...register('ingredientEn')}
-                  className="w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
-                  type="text"
-                  placeholder={tAdmin('form.fields.ingredientPlaceholderEn')}
-                />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2.5 items-end">
-                <div>
-                  <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">{tAdmin('form.fields.quantity')}</label>
-                  <input
-                    {...register('ingredientQuantity')}
-                    className="w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
-                    type="text"
-                    placeholder={tAdmin('form.fields.quantity')}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">Unit</label>
-                  <select
-                    {...register('ingredientUnit')}
-                    className="w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text focus:outline-none focus:border-accent transition-colors cursor-pointer"
-                  >
-                    {units.map((unit) => (
-                      <option key={unit.value} value={unit.value}>
-                        {unit.label.ua} / {unit.label.en}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <button
-                  type="button"
-                  className="px-4 py-2.5 bg-text text-bg text-[11px] tracking-[0.06em] uppercase whitespace-nowrap hover:opacity-90 transition-opacity"
-                  onClick={addNewIngredient}
-                >
-                  + {tAdmin('form.buttons.add')}
-                </button>
-              </div>
-            </div>
+            ))}
           </div>
+        ) : (
+          <DndContext
+            id="ingredient-groups"
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleGroupDragEnd}
+          >
+            <SortableContext items={watchedGroups.map(group => group.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-6">
+                {groupFields.map((groupField, groupIndex) => {
+                  const group = watchedGroups[groupIndex];
+                  if (!group) return null;
+
+                  return (
+                    <SortableItem
+                      key={groupField.id}
+                      itemId={group.id}
+                      className="border border-border p-4 sm:p-5 bg-surface"
+                    >
+                      {(dragHandle) => (
+                        <>
+                          {/* Group header */}
+                          <div className="flex items-center justify-between gap-3 mb-4">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {dragHandle}
+                              <span className="text-sm text-muted italic truncate">
+                                {group.title[locale] || `${tAdmin('form.fields.group')} ${groupIndex + 1}`}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className="p-1 text-muted hover:text-red-500 transition-colors"
+                              onClick={() => removeGroup(groupIndex)}
+                            >
+                              <MdDeleteForever className="text-lg"/>
+                            </button>
+                          </div>
+
+                          {/* Group title inputs */}
+                          <div className="space-y-3 mb-5 max-w-2xl">
+                            <input
+                              {...register(`ingredientGroups.${groupIndex}.title.ua`)}
+                              className="w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                              type="text"
+                              placeholder={tAdmin('form.fields.groupTitlePlaceholderUa')}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleTranslateText('groupTitle', groupIndex)}
+                              className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
+                            >
+                              Translate to English →
+                            </button>
+                            <input
+                              {...register(`ingredientGroups.${groupIndex}.title.en`)}
+                              className="w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                              type="text"
+                              placeholder={tAdmin('form.fields.groupTitlePlaceholderEn')}
+                            />
+                          </div>
+
+                          <DndContext
+                            id={`group-ingredients-${groupIndex}`}
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={(e) => handleIngredientDragEnd(e, groupIndex)}
+                          >
+                            <SortableContext items={group.ingredients.map(ingredient => ingredient.id)}>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px bg-border">
+                                {group.ingredients.map((ingredient, i) => (
+                                  <div key={ingredient.id}>
+                                    {isEditingIngredient[ingredient.id] ? (
+                                      <div className="bg-surface p-3 sm:p-4 space-y-2">
+                                        <div className="space-y-2">
+                                          <input
+                                            type="text"
+                                            name='value.ua'
+                                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                                            value={editingIngredientsData[ingredient.id].value.ua}
+                                            placeholder="UA"
+                                            className="w-full px-2 py-1.5 text-sm bg-bg border border-border focus:outline-none focus:border-accent"
+                                          />
+                                          <input
+                                            type="text"
+                                            name='value.en'
+                                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                                            value={editingIngredientsData[ingredient.id].value.en}
+                                            placeholder="EN"
+                                            className="w-full px-2 py-1.5 text-sm bg-bg border border-border focus:outline-none focus:border-accent"
+                                          />
+                                          <div className="flex gap-1">
+                                            <input
+                                              type="text"
+                                              name='quantity'
+                                              onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                                              value={editingIngredientsData[ingredient.id].quantity}
+                                              placeholder="Qty"
+                                              className="w-12 px-2 py-1.5 text-sm bg-bg border border-border focus:outline-none focus:border-accent"
+                                            />
+                                            <select
+                                              name='unit'
+                                              onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                                              value={editingIngredientsData[ingredient.id].unit}
+                                              className="flex-1 px-1 py-1.5 text-xs bg-bg border border-border focus:outline-none focus:border-accent"
+                                            >
+                                              {units.map((u) => (
+                                                <option key={u.value} value={u.value}>{u.label[locale]}</option>
+                                              ))}
+                                            </select>
+                                          </div>
+                                        </div>
+                                        <div className="flex gap-2 justify-end">
+                                          <button
+                                            onClick={() => saveIngredientsChanges(ingredient.id)}
+                                            className="p-1.5 bg-green-500 text-white hover:bg-green-600 transition-colors"
+                                          >
+                                            <IoCheckmark className="text-sm"/>
+                                          </button>
+                                          <button
+                                            onClick={() => cancelIngredientsEditing(ingredient.id)}
+                                            className="p-1.5 bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                          >
+                                            <IoClose className="text-sm"/>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <SortableIngredient
+                                        key={ingredient.id}
+                                        ingredient={ingredient}
+                                        ingredientId={ingredient.id}
+                                        index={i}
+                                        isEditing={isEditing}
+                                        startEditingIngredient={startEditingIngredient}
+                                        removeIngredient={() => removeIngredientFromGroup(groupIndex, ingredient.id)}
+                                      />
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </SortableContext>
+                          </DndContext>
+
+                          {/* Add new ingredient form */}
+                          <div className="mt-6 p-4 sm:p-5 bg-bg border border-border">
+                            <h3 className="text-sm tracking-widest uppercase text-muted mb-4">{tAdmin('form.sections.addIngredient')}</h3>
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-1 gap-3">
+                                <input
+                                  {...register(`ingredientGroups.${groupIndex}.draft.ua`)}
+                                  className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                                  type="text"
+                                  placeholder={tAdmin('form.fields.ingredientPlaceholderUa')}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleTranslateText('ingredient', groupIndex)}
+                                  className="self-start px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
+                                >
+                                  Translate to EN →
+                                </button>
+                                <input
+                                  {...register(`ingredientGroups.${groupIndex}.draft.en`)}
+                                  className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                                  type="text"
+                                  placeholder={tAdmin('form.fields.ingredientPlaceholderEn')}
+                                />
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2.5 items-end">
+                                <div>
+                                  <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">{tAdmin('form.fields.quantity')}</label>
+                                  <input
+                                    {...register(`ingredientGroups.${groupIndex}.draft.quantity`)}
+                                    className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                                    type="text"
+                                    placeholder={tAdmin('form.fields.quantity')}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">Unit</label>
+                                  <select
+                                    {...register(`ingredientGroups.${groupIndex}.draft.unit`)}
+                                    className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text focus:outline-none focus:border-accent transition-colors cursor-pointer"
+                                  >
+                                    {units.map((unit) => (
+                                      <option key={unit.value} value={unit.value}>
+                                        {unit.label.ua} / {unit.label.en}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <button
+                                  type="button"
+                                  className="px-4 py-2.5 bg-text text-bg text-[11px] tracking-[0.06em] uppercase whitespace-nowrap hover:opacity-90 transition-opacity"
+                                  onClick={() => addNewIngredient(groupIndex)}
+                                >
+                                  + {tAdmin('form.buttons.add')}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </SortableItem>
+                  );
+                })}
+
+                {/* Add new group button */}
+                <button
+                  className="w-full py-5 border border-dashed border-border flex items-center justify-center gap-2.5 text-[11px] tracking-[0.06em] text-accent hover:bg-surface transition-colors"
+                  type="button"
+                  onClick={() => appendGroup(createEmptyGroup())}
+                >
+                  + {tAdmin('form.buttons.addGroup')}
+                </button>
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </section>
 
@@ -1332,7 +1489,7 @@ const Page = () => {
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
-            onDragEnd={(e) => handleDragEnd(e, stepFields, 'steps')}
+            onDragEnd={handleDragEnd}
           >
             <SortableContext items={stepIds} strategy={verticalListSortingStrategy}>
               <div className="flex flex-col gap-px bg-border">

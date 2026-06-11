@@ -30,6 +30,10 @@
       "ingredientPlaceholder": "Enter ingredient",
       "ingredientPlaceholderUa": "Ingredient (UA)",
       "ingredientPlaceholderEn": "Ingredient (EN)",
+      "group": "Group",
+      "groupTitle": "Group title",
+      "groupTitlePlaceholderUa": "Group title (UA), e.g. Dough",
+      "groupTitlePlaceholderEn": "Group title (EN), e.g. Dough",
       "quantity": "Quantity",
       "step": "Step",
       "stepDescLabel": "Step description",
@@ -56,6 +60,7 @@
       "changeVideo": "Change video",
       "deleteStep": "Delete step",
       "addNewStep": "Add new step",
+      "addGroup": "Add ingredients group",
       "create": "Create Recipe",
       "addVideo": "Add video"
     },
@@ -74,6 +79,8 @@
       "reloadHeroImage": "Reload the main image",
       "recipeNotUploaded": "Recipe was not uploaded, try again",
       "addAtLeastOneIngredient": "Add at least one ingredient",
+      "addAtLeastOneIngredientInGroup": "Add at least one ingredient to each group",
+      "enterGroupTitleBothLanguages": "Enter group titles in both languages",
       "addAtLeastOneStep": "Add at least one step",
       "enterCategory": "Enter a category",
       "videoUploadingError": "Something went wrong with uploading. Remove and upload the video again and create new recipe."

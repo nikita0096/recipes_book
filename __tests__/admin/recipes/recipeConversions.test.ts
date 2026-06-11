@@ -40,7 +40,13 @@ const createMockPublicData = (): UpdateRecipeDataPublic => ({
   category: { ua: 'Десерти', en: 'Desserts' },
   likes: 10,
   ingredients: [
-    { id: 'ing-1', value: { ua: 'Цукор', en: 'Sugar' }, quantity: '100', unit: 'g' },
+    {
+      id: 'group-1',
+      title: { ua: 'Основа', en: 'Base' },
+      ingredients: [
+        { id: 'ing-1', value: { ua: 'Цукор', en: 'Sugar' }, quantity: '100', unit: 'g' },
+      ],
+    },
   ],
   heroImg: 'recipe-1/hero.jpg',
   preparingTime: 30,
@@ -62,7 +68,13 @@ const createMockPremiumMainData = (): UpdateRecipeDataPremiumMain => ({
   category: { ua: 'Торти', en: 'Cakes' },
   likes: 50,
   ingredients: [
-    { id: 'ing-1', value: { ua: 'Борошно', en: 'Flour' }, quantity: '200', unit: 'g' },
+    {
+      id: 'group-1',
+      title: { ua: 'Основа', en: 'Base' },
+      ingredients: [
+        { id: 'ing-1', value: { ua: 'Борошно', en: 'Flour' }, quantity: '200', unit: 'g' },
+      ],
+    },
   ],
   heroImg: 'recipe-2/hero.jpg',
   preparingTime: 60,

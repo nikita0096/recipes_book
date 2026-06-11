@@ -22,6 +22,8 @@
     "likes": "вподобань",
     "minutes": "хв",
     "keyIngredients": "Основні інгредієнти",
+    "details": "Деталі",
+    "ingredientsCount": "{count, plural, one {# інгредієнт} few {# інгредієнти} many {# інгредієнтів} other {# інгредієнта}}",
     "preparationSteps": "Кроки приготування",
     "step": "Крок",
     "videoSection": "Відео рецепт",
