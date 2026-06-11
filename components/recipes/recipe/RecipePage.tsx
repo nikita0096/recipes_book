@@ -5,6 +5,7 @@ import Image from "next/image";
 import {IRecipe, IRecipePremiumIncomplete, RecipePrice} from "@/types/recipe";
 import {useTranslations} from "next-intl";
 import RecipeIngredient from "@/components/recipes/recipe/RecipeIngredient";
+import RecipeMeta from "@/components/recipes/recipe/RecipeMeta";
 import {useTypedLocale} from "@/hooks/useTypedLocale";
 import {useUserStore} from "@/store/useUserStore";
 import {addNewLike} from "@/services/db/recipe-likes/addNewLike";
@@ -155,22 +156,25 @@ const RecipePage: React.FC<RecipePageProps> = ({
   return (
     <div className="min-h-screen bg-bg">
       {/* Hero Section */}
-      <section className="relative h-[400px] sm:h-[470px] lg:h-[530px] 2xl:h-[800px] w-full">
+      <section className="relative w-full" style={{height: 'min(52vw, 460px)'}}>
         <Image
           src={recipe.heroImg || RECIPE_PLACEHOLDER_IMAGE}
           alt={recipe.title[locale]}
           fill
-          sizes="100vh"
+          sizes="100vw"
           className="object-cover"
           priority
         />
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent pointer-events-none"/>
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.08) 55%, transparent 100%)'}}
+        />
 
         {/* Back link */}
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-4 sm:left-6 lg:left-10 text-smtracking-widez-10 cursor-pointer text-black/50"
+          className="absolute top-[18px] left-5 sm:left-8 text-xs tracking-[0.06em] text-white/65 hover:text-white/90 transition-colors z-10 cursor-pointer"
         >
           ← {t('singlePage.backButton')}
         </button>
@@ -179,66 +183,62 @@ const RecipePage: React.FC<RecipePageProps> = ({
         <button
           type="button"
           onClick={handleLike}
-          className={`absolute top-4 right-4 sm:right-6 lg:right-10 z-10 w-12 h-12 lg:w-14 lg:h-14 rounded-full flex flex-col items-center justify-center gap-0.5 border transition-all cursor-pointer select-none hover:scale-105 active:scale-95 ${
+          className={`absolute top-[18px] right-6 z-10 w-[46px] h-[46px] rounded-full flex flex-col items-center justify-center gap-px transition-all cursor-pointer select-none hover:scale-105 active:scale-95 ${
             isLiked
-              ? 'bg-red-500/80 border-red-500 text-white'
-              : 'bg-white/20 border-red-300/50  text-white'
-          }`}
-          style={{WebkitBackdropFilter: 'blur(4px)', backdropFilter: 'blur(4px)'}}
+              ? 'bg-accent border-accent'
+              : 'bg-white/12 border-white/40'
+          } border`}
+          style={{WebkitBackdropFilter: 'blur(8px)', backdropFilter: 'blur(8px)'}}
         >
-          <span className={`text-lg lg:text-xl leading-none ${isLiked ? 'text-white' : 'text-red-400/70'}`}>
+          <span className="text-lg leading-none text-white">
             {isLiked ? '♥' : '♡'}
           </span>
-          <span className={`text-xs ${isLiked ? "text-white/70" : "text-red-400/80"}`}>{likes}</span>
+          <span className="text-[9px] text-white/85 font-sans">{likes}</span>
         </button>
 
         {/* Hero content */}
-        <div className="absolute bottom-6 left-4 sm:left-6 lg:left-10 right-16 sm:right-20 lg:right-24">
+        <div className="absolute bottom-7 left-5 sm:left-8 right-20">
           {/* Category */}
-          <span className="inline-block text-xs tracking-widest uppercase text-accent border border-accent bg-white/15 px-3 py-1 mb-3 ">
+          <span className="inline-block text-[10px] tracking-[0.12em] uppercase text-accent border border-accent px-2.5 py-[3px] mb-3">
             {recipe.category && recipe.category[locale]}
           </span>
 
           {/* Title */}
-          <h1 className="font-serif text-2xl sm:text-3xl lg:text-5xl italic font-normal text-white leading-tight mb-3">
+          <h1 className="font-serif text-[clamp(28px,5vw,48px)] italic font-normal text-white leading-[1.1] mb-3.5">
             {recipe.title[locale]}
           </h1>
-
-          {/* Stats */}
-          <div className="flex gap-5">
-            <span className="text-sm text-white/60">
-              ◷ {recipe.preparingTime} {t('singlePage.minutes')}
-            </span>
-            <span className="text-sm text-white/60">
-              ☰ {t('singlePage.steps', {count: recipe.stepsCount})}
-            </span>
-          </div>
         </div>
       </section>
 
+      {/* Recipe Meta Stats */}
+      <RecipeMeta
+        preparingTime={recipe.preparingTime}
+        stepsCount={recipe.stepsCount}
+        weight={recipe.weight}
+        diameter={recipe.diameter}
+        calories={recipe.calories}
+      />
+
       {/* Description Section */}
       {recipe.description && recipe.description[locale] && (
-        <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-6 sm:py-7 lg:py-8">
-          <h2 className="text-sm tracking-widest uppercase text-accent mb-4 sm:mb-5 lg:mb-6">
+        <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
+          <h2 className="text-xs tracking-widest uppercase text-accent mb-4">
             {t('singlePage.description')}
           </h2>
-          <p className="text-base text-text leading-relaxed">
+          <p className="text-sm sm:text-base text-text leading-relaxed max-w-2xl text-pretty">
             {recipe.description[locale]}
           </p>
         </section>
       )}
 
       {/* Key Ingredients Section */}
-      <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-6 sm:py-7 lg:py-8">
-        <h2 className="text-sm tracking-widest uppercase text-accent mb-4 sm:mb-5 lg:mb-6">
+      <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-6 sm:py-7">
+        <h2 className="text-xs tracking-widest uppercase text-accent mb-5">
           {t('singlePage.keyIngredients')}
         </h2>
-        <div
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-px "
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-border">
           {recipe.ingredients.map((item) => (
-            <RecipeIngredient key={item.id}
-                              ingredient={item}/>
+            <RecipeIngredient key={item.id} ingredient={item}/>
           ))}
         </div>
       </section>

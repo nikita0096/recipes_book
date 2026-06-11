@@ -46,6 +46,9 @@ const createMockPublicUpdateData = (): UpdateRecipeDataPublic => ({
   heroImg: 'recipe-123/hero-img-1.jpg',
   isPremium: false,
   preparingTime: 45,
+  weight: null,
+  diameter: null,
+  calories: null,
   videoUrl: 'video-key-1',
   recipeSteps: [
     { desc: { ua: 'Крок 1', en: 'Step 1' }, imgUrl: null, id: 'step-1' },
@@ -65,6 +68,9 @@ const createMockPremiumMainData = (): UpdateRecipeDataPremiumMain => ({
   heroImg: 'recipe-123/hero-img-1.jpg',
   isPremium: true,
   preparingTime: 90,
+  weight: null,
+  diameter: null,
+  calories: null,
   stepsCount: 1,
   slug: 'premium-recipe',
 });

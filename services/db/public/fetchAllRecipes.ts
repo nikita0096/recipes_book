@@ -14,6 +14,9 @@ interface RecipeRow {
   hero_img: string;
   is_premium: boolean;
   preparing_time: number;
+  weight: number | null;
+  diameter: number | null;
+  calories: number | null;
   recipe_steps: RecipeStep[] | null;
   video_url: string | null;
   steps_count: number;
@@ -51,6 +54,9 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
         heroImg,
         isPremium: false as const,
         preparingTime: item.preparing_time,
+        weight: item.weight,
+        diameter: item.diameter,
+        calories: item.calories,
         recipeSteps: item.recipe_steps!,
         videoUrl: item.video_url!,
         stepsCount: item.steps_count,
@@ -68,6 +74,9 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
       heroImg,
       isPremium: true as const,
       preparingTime: item.preparing_time,
+      weight: item.weight,
+      diameter: item.diameter,
+      calories: item.calories,
       recipeSteps: item.recipe_steps ?? null,
       videoUrl: item.video_url ?? null,
       stepsCount: item.steps_count,

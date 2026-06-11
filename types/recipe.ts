@@ -18,6 +18,9 @@ interface IRecipeBase {
   ingredients: Ingredient[];
   heroImg: string;
   preparingTime: number;
+  weight: number | null;
+  diameter: number | null;
+  calories: number | null;
   stepsCount: number;
   slug: string;
 }
@@ -101,6 +104,9 @@ interface UpdateRecipeBase {
   ingredients: Ingredient[];
   heroImg: string;
   preparingTime: number;
+  weight: number | null;
+  diameter: number | null;
+  calories: number | null;
   stepsCount: number;
   slug: string;
 }

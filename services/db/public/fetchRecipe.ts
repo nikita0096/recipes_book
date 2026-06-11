@@ -14,6 +14,9 @@ interface FetchRecipe {
   hero_img: string;
   is_premium: boolean;
   preparing_time: number;
+  weight: number | null;
+  diameter: number | null;
+  calories: number | null;
   recipe_steps: RecipeStep[];
   video_url: string;
   steps_count: number;
@@ -109,6 +112,9 @@ export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, t
       heroImg,
       isPremium: true as const,
       preparingTime: data.preparing_time,
+      weight: data.weight,
+      diameter: data.diameter,
+      calories: data.calories,
       recipeSteps,
       videoUrl: premiumData.video_url,
       stepsCount: data.steps_count,
@@ -143,6 +149,9 @@ const mapToPublic = (data: FetchRecipe): IRecipePublic => {
     heroImg,
     isPremium: false as const,
     preparingTime: data.preparing_time,
+    weight: data.weight,
+    diameter: data.diameter,
+    calories: data.calories,
     recipeSteps,
     videoUrl: data.video_url,
     stepsCount: data.steps_count,

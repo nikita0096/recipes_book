@@ -42,6 +42,9 @@
       "descriptionEn": "Description (English)",
       "premiumContent": "Premium content",
       "preparingTime": "Preparing time",
+      "weight": "Weight",
+      "diameter": "Diameter",
+      "calories": "Calories",
       "minutes": "Minutes",
       "videoUrl": "Video",
       "noVideo": "No video available"

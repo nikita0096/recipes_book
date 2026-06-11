@@ -42,6 +42,9 @@
       "descriptionEn": "Опис (Англійська)",
       "premiumContent": "Платний контент",
       "preparingTime": "Час приготування",
+      "weight": "Вага",
+      "diameter": "Діаметр",
+      "calories": "Калорії",
       "minutes": "Хвилин",
       "videoUrl": "Відео",
       "noVideo": "Відео недоступне"

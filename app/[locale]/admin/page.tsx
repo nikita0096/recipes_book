@@ -70,6 +70,9 @@ const Page = () => {
       heroImg: null,
       isPremium: true,
       preparingTime: 0,
+      weight: null,
+      diameter: null,
+      calories: null,
       videoFile: null,
       slug: ''
     }
@@ -348,6 +351,9 @@ const Page = () => {
       ingredients: data.ingredients,
       heroImg: heroImgPath,
       preparingTime: data.preparingTime,
+      weight: data.weight || null,
+      diameter: data.diameter || null,
+      calories: data.calories || null,
       videoUrl: videoUrl,  // R2 key stored as videoUrl
       slug: data.slug,
     };
@@ -383,6 +389,9 @@ const Page = () => {
           heroImg: recipeData.heroImg,
           isPremium: true as const,
           preparingTime: recipeData.preparingTime,
+          weight: recipeData.weight,
+          diameter: recipeData.diameter,
+          calories: recipeData.calories,
           premiumId: premiumRecipeId,
           slug: recipeData.slug,
           stepsCount,
@@ -412,6 +421,9 @@ const Page = () => {
           heroImg: recipeData.heroImg,
           isPremium: false as const,
           preparingTime: recipeData.preparingTime,
+          weight: recipeData.weight,
+          diameter: recipeData.diameter,
+          calories: recipeData.calories,
           recipeSteps: recipeData.recipeSteps,
           videoUrl: recipeData.videoUrl,
           stepsCount: recipeData.recipeSteps.length,
@@ -560,7 +572,7 @@ const Page = () => {
                     {t('form.fields.price')} (UAH)
                   </label>
                   <div className="relative">
-                    <input {...register('price.ua', {required: true, min: 1, max: 100000, valueAsNumber: true})}
+                    <input {...register('price.ua', {required: false, min: 1, max: 100000, valueAsNumber: true})}
                            name="price.ua"
                            aria-invalid={errors.price?.ua ? "true" : "false"}
                            className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
@@ -617,6 +629,42 @@ const Page = () => {
                        className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                        type="number"/>
                 <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">{t('form.fields.minutes')}</span>
+              </div>
+            </div>
+
+            <div className="mt-3.5 grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                  {t('form.fields.weight')}
+                </label>
+                <div className="relative">
+                  <input {...register('weight', {min: 0})}
+                         className="w-full px-3.5 py-2.5 pr-10 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                         type="number"/>
+                  <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">g</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                  {t('form.fields.diameter')}
+                </label>
+                <div className="relative">
+                  <input {...register('diameter', {min: 0})}
+                         className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                         type="number"/>
+                  <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">cm</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                  {t('form.fields.calories')}
+                </label>
+                <div className="relative">
+                  <input {...register('calories', {min: 0})}
+                         className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                         type="number"/>
+                  <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">kcal</span>
+                </div>
               </div>
             </div>
           </div>

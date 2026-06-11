@@ -69,6 +69,9 @@ export interface EditingValues {
   videoUrl: string;
   videoFile: File | null;
   preparingTime: number;
+  weight: number | null;
+  diameter: number | null;
+  calories: number | null;
   isPremium: boolean;
   slug: string;
 }
@@ -129,6 +132,9 @@ const Page = () => {
       videoUrl: '',
       videoFile: null,
       preparingTime: 0,
+      weight: null,
+      diameter: null,
+      calories: null,
       isPremium: false,
       slug: ''
     }
@@ -392,6 +398,9 @@ const Page = () => {
       setValue('likes', recipe.likes);
       setValue('videoUrl', videoSrc ?? '');
       setValue('preparingTime', recipe.preparingTime);
+      setValue('weight', recipe.weight);
+      setValue('diameter', recipe.diameter);
+      setValue('calories', recipe.calories);
       setValue('isPremium', recipe.isPremium);
       setValue('price', recipePrice?.price || { en: 0, ua: 0 });
       setValue('discount', recipePrice?.discount || 0);
@@ -829,7 +838,7 @@ const Page = () => {
             </h1>
           )}
 
-          {/* Stats */}
+          {/* Stats - simplified in hero */}
           <div className="flex gap-5 flex-wrap">
             {isEditing ? (
               <>
@@ -842,15 +851,6 @@ const Page = () => {
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-white/60">◷</span>
-                  <input
-                    {...register('preparingTime', {required: true, min: 1, max: 1000})}
-                    type="number"
-                    className="w-16 px-2 py-1 text-sm text-white bg-white/20 border border-white/30 focus:outline-none focus:border-accent"
-                  />
-                  <span className="text-sm text-white/60">{tRecipes('singlePage.minutes')}</span>
-                </div>
-                <div className="flex items-center gap-2">
                   <span className="text-sm text-white/60">Premium:</span>
                   <input
                     type="checkbox"
@@ -861,12 +861,6 @@ const Page = () => {
               </>
             ) : (
               <>
-                <span className="text-sm text-white/60">
-                  ◷ {recipe.preparingTime} {tRecipes('singlePage.minutes')}
-                </span>
-                <span className="text-sm text-white/60">
-                  ☰ {tRecipes('singlePage.steps', {count: recipe.stepsCount})}
-                </span>
                 <span className="text-sm text-white/60">
                   ♡ {recipe.likes}
                 </span>
@@ -908,6 +902,149 @@ const Page = () => {
         </div>
       </section>
 
+      {/* Recipe Meta Section */}
+      <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-5 sm:py-6 lg:py-8">
+        {isEditing ? (
+          /* Edit mode - input fields in grid */
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-border border border-border">
+            {/* Time */}
+            <div className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
+              <span className="text-base text-accent leading-none" style={{ fontFamily: 'sans-serif' }}>◷</span>
+              <div className="flex items-baseline gap-2">
+                <input
+                  {...register('preparingTime', {required: true, min: 1, max: 1000, valueAsNumber: true})}
+                  type="number"
+                  className="w-20 px-2 py-1 font-serif text-xl sm:text-2xl lg:text-3xl text-text bg-surface border border-border focus:outline-none focus:border-accent"
+                />
+                <span className="font-sans text-sm sm:text-base text-muted">{tRecipes('singlePage.meta.minUnit')}</span>
+              </div>
+              <div className="text-[10px] sm:text-xs tracking-widest uppercase text-muted">{tRecipes('singlePage.meta.time')}</div>
+            </div>
+
+            {/* Steps (display only, calculated) */}
+            <div className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
+              <span className="text-base text-accent leading-none" style={{ fontFamily: 'sans-serif' }}>☰</span>
+              <div className="font-serif text-xl sm:text-2xl lg:text-3xl text-text leading-none">
+                {stepFields.length} <span className="font-sans text-sm sm:text-base text-muted">{stepFields.length === 1 ? tRecipes('singlePage.meta.stepUnit') : tRecipes('singlePage.meta.stepsUnit')}</span>
+              </div>
+              <div className="text-[10px] sm:text-xs tracking-widest uppercase text-muted">{tRecipes('singlePage.meta.preparation')}</div>
+            </div>
+
+            {/* Weight */}
+            <div className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
+              <span className="text-base text-accent leading-none" style={{ fontFamily: 'sans-serif' }}>⚖︎</span>
+              <div className="flex items-baseline gap-2">
+                <input
+                  {...register('weight', {min: 0, valueAsNumber: true})}
+                  type="number"
+                  placeholder="—"
+                  className="w-20 px-2 py-1 font-serif text-xl sm:text-2xl lg:text-3xl text-text bg-surface border border-border focus:outline-none focus:border-accent"
+                />
+                <span className="font-sans text-sm sm:text-base text-muted">{tRecipes('singlePage.meta.gramUnit')}</span>
+              </div>
+              <div className="text-[10px] sm:text-xs tracking-widest uppercase text-muted">{tRecipes('singlePage.meta.weight')}</div>
+            </div>
+
+            {/* Diameter */}
+            <div className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
+              <span className="text-base text-accent leading-none" style={{ fontFamily: 'sans-serif' }}>⌀</span>
+              <div className="flex items-baseline gap-2">
+                <input
+                  {...register('diameter', {min: 0, valueAsNumber: true})}
+                  type="number"
+                  placeholder="—"
+                  className="w-20 px-2 py-1 font-serif text-xl sm:text-2xl lg:text-3xl text-text bg-surface border border-border focus:outline-none focus:border-accent"
+                />
+                <span className="font-sans text-sm sm:text-base text-muted">{tRecipes('singlePage.meta.cmUnit')}</span>
+              </div>
+              <div className="text-[10px] sm:text-xs tracking-widest uppercase text-muted">{tRecipes('singlePage.meta.diameter')}</div>
+            </div>
+
+            {/* Calories */}
+            <div className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
+              <span className="text-base text-accent leading-none" style={{ fontFamily: 'sans-serif' }}>◉</span>
+              <div className="flex items-baseline gap-2">
+                <input
+                  {...register('calories', {min: 0, valueAsNumber: true})}
+                  type="number"
+                  placeholder="—"
+                  className="w-20 px-2 py-1 font-serif text-xl sm:text-2xl lg:text-3xl text-text bg-surface border border-border focus:outline-none focus:border-accent"
+                />
+                <span className="font-sans text-sm sm:text-base text-muted">{tRecipes('singlePage.meta.kcalUnit')}</span>
+              </div>
+              <div className="text-[10px] sm:text-xs tracking-widest uppercase text-muted">{tRecipes('singlePage.meta.perServing')}</div>
+            </div>
+          </div>
+        ) : (
+          /* View mode - display cards like RecipeMeta */
+          (() => {
+            const metaCards: Array<{icon: string; value: number; unit: string; label: string}> = [
+              {
+                icon: '◷',
+                value: recipe.preparingTime,
+                unit: tRecipes('singlePage.meta.minUnit'),
+                label: tRecipes('singlePage.meta.time'),
+              },
+              {
+                icon: '☰',
+                value: recipe.stepsCount,
+                unit: recipe.stepsCount === 1 ? tRecipes('singlePage.meta.stepUnit') : tRecipes('singlePage.meta.stepsUnit'),
+                label: tRecipes('singlePage.meta.preparation'),
+              },
+            ];
+
+            if (recipe.weight) {
+              metaCards.push({
+                icon: '⚖︎',
+                value: recipe.weight,
+                unit: tRecipes('singlePage.meta.gramUnit'),
+                label: tRecipes('singlePage.meta.weight'),
+              });
+            }
+
+            if (recipe.diameter) {
+              metaCards.push({
+                icon: '⌀',
+                value: recipe.diameter,
+                unit: tRecipes('singlePage.meta.cmUnit'),
+                label: tRecipes('singlePage.meta.diameter'),
+              });
+            }
+
+            if (recipe.calories) {
+              metaCards.push({
+                icon: '◉',
+                value: recipe.calories,
+                unit: tRecipes('singlePage.meta.kcalUnit'),
+                label: tRecipes('singlePage.meta.perServing'),
+              });
+            }
+
+            const gridColsClass = metaCards.length <= 2
+              ? 'grid-cols-2'
+              : metaCards.length === 3
+                ? 'grid-cols-2 sm:grid-cols-3'
+                : metaCards.length === 4
+                  ? 'grid-cols-2 sm:grid-cols-4'
+                  : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5';
+
+            return (
+              <div className={`grid ${gridColsClass} gap-px bg-border border border-border`}>
+                {metaCards.map((card, index) => (
+                  <div key={index} className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
+                    <span className="text-base text-accent leading-none" style={{ fontFamily: 'sans-serif' }}>{card.icon}</span>
+                    <div className="font-serif text-xl sm:text-2xl lg:text-3xl text-text leading-none">
+                      {card.value} <span className="font-sans text-sm sm:text-base text-muted">{card.unit}</span>
+                    </div>
+                    <div className="text-[10px] sm:text-xs tracking-widest uppercase text-muted">{card.label}</div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()
+        )}
+      </section>
+
       {/* Title, Price, Description Section (Edit Mode) */}
       {isEditing && (
         <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-6 sm:py-7 lg:py-8">
@@ -935,7 +1072,7 @@ const Page = () => {
                   {tAdmin('form.fields.price')} (UAH)
                 </label>
                 <div className="relative">
-                  <input {...register('price.ua', {required: true, min: 1, max: 100000, valueAsNumber: true})}
+                  <input {...register('price.ua', {required: false, min: 1, max: 100000, valueAsNumber: true})}
                          name="price.ua"
                          aria-invalid={errors.price?.ua ? "true" : "false"}
                          className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"

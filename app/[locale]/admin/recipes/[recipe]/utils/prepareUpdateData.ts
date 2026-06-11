@@ -186,6 +186,9 @@ export const prepareUpdateData = async ({
         ingredients,
         heroImg: heroImgPath,
         preparingTime: formData.preparingTime,
+        weight: formData.weight || null,
+        diameter: formData.diameter || null,
+        calories: formData.calories || null,
         isPremium: true as const,
         stepsCount: processedSteps.length,
         slug: formData.slug,
@@ -219,6 +222,9 @@ export const prepareUpdateData = async ({
       heroImg: heroImgPath,
       videoUrl: videoUrl,
       preparingTime: formData.preparingTime,
+      weight: formData.weight || null,
+      diameter: formData.diameter || null,
+      calories: formData.calories || null,
       isPremium: false as const,
       stepsCount: processedSteps.length,
       slug: formData.slug,
@@ -257,6 +263,31 @@ export const hasDataChanged = (formData: EditingValues, recipe: IRecipe): boolea
 
   // Check likes
   if (Number(formData.likes) !== recipe.likes) {
+    return true;
+  }
+
+  // Check preparingTime
+  if (formData.preparingTime !== recipe.preparingTime) {
+    return true;
+  }
+
+  // Check weight
+  if ((formData.weight || null) !== recipe.weight) {
+    return true;
+  }
+
+  // Check diameter
+  if ((formData.diameter || null) !== recipe.diameter) {
+    return true;
+  }
+
+  // Check calories
+  if ((formData.calories || null) !== recipe.calories) {
+    return true;
+  }
+
+  // Check slug
+  if (formData.slug !== recipe.slug) {
     return true;
   }
 

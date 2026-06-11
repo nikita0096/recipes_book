@@ -29,6 +29,9 @@ export interface IFormValues {
   ingredientUnit: UnitValue;
   isPremium: boolean;
   preparingTime: number;
+  weight: number | null;
+  diameter: number | null;
+  calories: number | null;
   videoFile: File | null;
   slug: string;
 }

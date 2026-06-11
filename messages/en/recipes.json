@@ -32,6 +32,19 @@
       "description": "Get step-by-step instructions, detailed guidance and the full video tutorial. Pay once, access forever.",
       "buyButton": "Buy recipe",
       "footer": "Secure checkout · instant access"
+    },
+    "meta": {
+      "time": "Time",
+      "preparation": "Preparation",
+      "weight": "Weight",
+      "diameter": "Diameter",
+      "perServing": "Per serving",
+      "minUnit": "min",
+      "stepUnit": "step",
+      "stepsUnit": "steps",
+      "gramUnit": "g",
+      "cmUnit": "cm",
+      "kcalUnit": "kcal"
     }
   },
   "card": {
