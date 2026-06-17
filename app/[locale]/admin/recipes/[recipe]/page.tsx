@@ -10,7 +10,7 @@ import {useTranslations} from "next-intl";
 import {useQueryClient} from "@tanstack/react-query";
 import {deleteRecipe} from "@/services/db/admin/deleteRecipe";
 import {useRouter} from "next/navigation";
-import {SortableStep} from "@/components/admin";
+import {SortableStep, PublishToggle} from "@/components/admin";
 import {
   DndContext,
   DragEndEvent,
@@ -60,7 +60,7 @@ const createEmptyGroup = (): IngredientGroupFormValues => ({
   draft: createEmptyDraft(),
 });
 
-type EditingSteps = {desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string ;fieldId: string};
+type EditingSteps = { desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string; fieldId: string };
 
 export interface EditingValues {
   heroImg: string;
@@ -126,7 +126,7 @@ const Page = () => {
       category: {ua: '', en: ''},
       title: {ua: '', en: ''},
       description: {ua: '', en: ''},
-      price: { en: 0, ua: 0 },
+      price: {en: 0, ua: 0},
       discount: 0,
       ingredientGroups: [],
       recipeSteps: [],
@@ -182,7 +182,7 @@ const Page = () => {
         setError(null);
         const data = await fetchRecipeAdmin(params.recipe);
 
-        if(data.isPremium) {
+        if (data.isPremium) {
           const price = await fetchRecipePrice(params.recipe);
           setRecipePrice(price);
         }
@@ -204,7 +204,7 @@ const Page = () => {
   }, [params.recipe]);
 
   useEffect(() => {
-    if(!recipe || !recipe.videoUrl) return;
+    if (!recipe || !recipe.videoUrl) return;
 
     // Check if this is a Cloudflare Stream video (no '/' in the key)
     const isStreamVideo = !recipe.videoUrl.includes('/');
@@ -215,15 +215,15 @@ const Page = () => {
       try {
         const response = await fetch('/api/stream/status', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ videoUid: recipe.videoUrl }),
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({videoUid: recipe.videoUrl}),
         });
 
         if (!response.ok) {
           return false;
         }
 
-        const { readyToStream, status } = await response.json();
+        const {readyToStream, status} = await response.json();
         setVideoProcessingProgress(status?.pctComplete ? Math.round(status.pctComplete) : 0);
         return readyToStream;
       } catch {
@@ -254,12 +254,12 @@ const Page = () => {
                 // Now fetch the token
                 const response = await fetch('/api/stream/view-url', {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ videoKey: recipe.videoUrl, recipeId: recipe.id }),
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({videoKey: recipe.videoUrl, recipeId: recipe.id}),
                 });
 
                 if (response.ok) {
-                  const { token } = await response.json();
+                  const {token} = await response.json();
                   setVideoSrc(token);
                 }
               }
@@ -271,8 +271,8 @@ const Page = () => {
           // Video is ready, fetch the token
           const response = await fetch('/api/stream/view-url', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ videoKey: recipe.videoUrl, recipeId: recipe.id }),
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({videoKey: recipe.videoUrl, recipeId: recipe.id}),
           });
 
           if (!response.ok) {
@@ -280,14 +280,14 @@ const Page = () => {
             throw new Error(data.error || 'Failed to load video');
           }
 
-          const { token } = await response.json();
+          const {token} = await response.json();
           setVideoSrc(token);
         } else {
           // For legacy R2 videos, use the R2 API
           const response = await fetch('/api/video/view-url', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ videoKey: recipe.videoUrl, recipeId: recipe.id }),
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({videoKey: recipe.videoUrl, recipeId: recipe.id}),
           });
 
           if (!response.ok) {
@@ -295,7 +295,7 @@ const Page = () => {
             throw new Error(data.error || 'Failed to load video');
           }
 
-          const { viewUrl } = await response.json();
+          const {viewUrl} = await response.json();
           setVideoSrc(viewUrl);
         }
       } catch (err) {
@@ -328,7 +328,7 @@ const Page = () => {
     : recipe?.recipeSteps.map(step => step.id) || [];
 
   const generateSlug = (str: string): string => {
-    if(str.trim() !== '') {
+    if (str.trim() !== '') {
       return engTitle.trim().toLowerCase().split(' ').join('-');
     }
 
@@ -336,7 +336,7 @@ const Page = () => {
   };
 
   useEffect(() => {
-    if(engTitle.trim()) {
+    if (engTitle.trim()) {
       const slug = generateSlug(engTitle);
 
       setValue('slug', slug);
@@ -347,7 +347,7 @@ const Page = () => {
 
   const queryClient = useQueryClient();
 
-  if(!recipe) return null;
+  if (!recipe) return null;
 
   // Translation function
   type TranslateInputs =
@@ -419,7 +419,7 @@ const Page = () => {
       setValue('diameter', recipe.diameter);
       setValue('calories', recipe.calories);
       setValue('isPremium', recipe.isPremium);
-      setValue('price', recipePrice?.price || { en: 0, ua: 0 });
+      setValue('price', recipePrice?.price || {en: 0, ua: 0});
       setValue('discount', recipePrice?.discount || 0);
       setValue('slug', recipe.slug)
     }
@@ -436,14 +436,14 @@ const Page = () => {
 
   const handleDeleteRecipe = async (id: string) => {
     try {
-      const result = await deleteRecipe({ id, videoKey: recipe.videoUrl });
+      const result = await deleteRecipe({id, videoKey: recipe.videoUrl});
 
       if (result.error) {
         setSaveError(typeof result.error === 'string' ? result.error : 'Failed to delete recipe');
         return;
       }
 
-      await queryClient.invalidateQueries({ queryKey: ["recipes"] });
+      await queryClient.invalidateQueries({queryKey: ["recipes"]});
       router.push(`/admin/recipes`);
     } catch (err) {
       setSaveError('Failed to delete recipe');
@@ -621,7 +621,7 @@ const Page = () => {
   };
 
   const saveStepChanges = (id: string, i: number) => {
-    if(stepFields[i].desc.en && stepFields[i].desc.ua) {
+    if (stepFields[i].desc.en && stepFields[i].desc.ua) {
       handleCloseStepEditing(id);
       setStepFieldError(null);
     } else setStepFieldError(locale === 'ua' ? "Додайте хоча б опис" : "Add at least description");
@@ -678,7 +678,8 @@ const Page = () => {
       <div className="min-h-screen bg-bg flex items-center justify-center px-4">
         <div className="text-center">
           <p className="text-red-500 text-base mb-4">{error || tCommon('errors.recipeNotFound')}</p>
-          <Link href="/admin/recipes" className="text-sm text-muted hover:text-text">
+          <Link href="/admin/recipes"
+                className="text-sm text-muted hover:text-text">
             ← {tRecipes("singlePage.backButton")}
           </Link>
         </div>
@@ -827,18 +828,24 @@ const Page = () => {
             </>
           ) : (
             <>
-              <button
-                className='px-4 py-2 bg-green-400/90 hover:bg-green-600/80 text-white text-sm tracking-wide transition-colors'
-                onClick={toggleEditButton}
-              >
-                <CiEdit className="inline-block mr-1.5 text-lg"/> {tAdmin('list.edit')}
-              </button>
-              <button
-                className='px-4 py-2 bg-red-500/90 hover:bg-red-600 text-white text-sm tracking-wide transition-colors'
-                onClick={() => handleDeleteRecipe(recipe.id)}
-              >
-                <MdDelete className="inline-block mr-1.5 text-lg"/> {tAdmin('list.delete')}
-              </button>
+              <div>
+                <button
+                  className='px-4 py-2 bg-green-400/90 hover:bg-green-600/80 text-white text-sm tracking-wide transition-colors'
+                  onClick={toggleEditButton}
+                >
+                  <CiEdit className="inline-block mr-1.5 text-lg"/> {tAdmin('list.edit')}
+                </button>
+                <button
+                  className='px-4 py-2 bg-red-500/90 hover:bg-red-600 text-white text-sm tracking-wide transition-colors'
+                  onClick={() => handleDeleteRecipe(recipe.id)}
+                >
+                  <MdDelete className="inline-block mr-1.5 text-lg"/> {tAdmin('list.delete')}
+                </button>
+                <div className="px-3 py-2 bg-black/40 backdrop-blur-sm">
+                  <PublishToggle recipeId={recipe.id}
+                                 isPublished={recipe.isPublished}/>
+                </div>
+              </div>
             </>
           )}
         </div>
@@ -872,7 +879,8 @@ const Page = () => {
               className="inline-block text-xs tracking-widest uppercase text-accent border border-accent px-3 py-1 mb-3 bg-bg/80 focus:outline-none cursor-pointer"
             >
               {categories.filter(cat => cat.en !== 'All recipes').map((category) => (
-                <option key={category.en} value={category.en}>
+                <option key={category.en}
+                        value={category.en}>
                   {category[locale]}
                 </option>
               ))}
@@ -961,7 +969,8 @@ const Page = () => {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-border border border-border">
             {/* Time */}
             <div className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
-              <span className="text-base text-accent leading-none" style={{ fontFamily: 'sans-serif' }}>◷</span>
+              <span className="text-base text-accent leading-none"
+                    style={{fontFamily: 'sans-serif'}}>◷</span>
               <div className="flex items-baseline gap-2">
                 <input
                   {...register('preparingTime', {required: true, min: 1, max: 1000, valueAsNumber: true})}
@@ -975,16 +984,19 @@ const Page = () => {
 
             {/* Steps (display only, calculated) */}
             <div className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
-              <span className="text-base text-accent leading-none" style={{ fontFamily: 'sans-serif' }}>☰</span>
+              <span className="text-base text-accent leading-none"
+                    style={{fontFamily: 'sans-serif'}}>☰</span>
               <div className="font-serif text-xl sm:text-2xl lg:text-3xl text-text leading-none">
-                {stepFields.length} <span className="font-sans text-sm sm:text-base text-muted">{stepFields.length === 1 ? tRecipes('singlePage.meta.stepUnit') : tRecipes('singlePage.meta.stepsUnit')}</span>
+                {stepFields.length}
+                <span className="font-sans text-sm sm:text-base text-muted">{stepFields.length === 1 ? tRecipes('singlePage.meta.stepUnit') : tRecipes('singlePage.meta.stepsUnit')}</span>
               </div>
               <div className="text-[10px] sm:text-xs tracking-widest uppercase text-muted">{tRecipes('singlePage.meta.preparation')}</div>
             </div>
 
             {/* Weight */}
             <div className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
-              <span className="text-base text-accent leading-none" style={{ fontFamily: 'sans-serif' }}>⚖︎</span>
+              <span className="text-base text-accent leading-none"
+                    style={{fontFamily: 'sans-serif'}}>⚖︎</span>
               <div className="flex items-baseline gap-2">
                 <input
                   {...register('weight', {min: 0, valueAsNumber: true})}
@@ -999,7 +1011,8 @@ const Page = () => {
 
             {/* Diameter */}
             <div className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
-              <span className="text-base text-accent leading-none" style={{ fontFamily: 'sans-serif' }}>⌀</span>
+              <span className="text-base text-accent leading-none"
+                    style={{fontFamily: 'sans-serif'}}>⌀</span>
               <div className="flex items-baseline gap-2">
                 <input
                   {...register('diameter', {min: 0, valueAsNumber: true})}
@@ -1014,7 +1027,8 @@ const Page = () => {
 
             {/* Calories */}
             <div className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
-              <span className="text-base text-accent leading-none" style={{ fontFamily: 'sans-serif' }}>◉</span>
+              <span className="text-base text-accent leading-none"
+                    style={{fontFamily: 'sans-serif'}}>◉</span>
               <div className="flex items-baseline gap-2">
                 <input
                   {...register('calories', {min: 0, valueAsNumber: true})}
@@ -1030,7 +1044,7 @@ const Page = () => {
         ) : (
           /* View mode - display cards like RecipeMeta */
           (() => {
-            const metaCards: Array<{icon: string; value: number; unit: string; label: string}> = [
+            const metaCards: Array<{ icon: string; value: number; unit: string; label: string }> = [
               {
                 icon: '◷',
                 value: recipe.preparingTime,
@@ -1083,8 +1097,10 @@ const Page = () => {
             return (
               <div className={`grid ${gridColsClass} gap-px bg-border border border-border`}>
                 {metaCards.map((card, index) => (
-                  <div key={index} className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
-                    <span className="text-base text-accent leading-none" style={{ fontFamily: 'sans-serif' }}>{card.icon}</span>
+                  <div key={index}
+                       className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
+                    <span className="text-base text-accent leading-none"
+                          style={{fontFamily: 'sans-serif'}}>{card.icon}</span>
                     <div className="font-serif text-xl sm:text-2xl lg:text-3xl text-text leading-none">
                       {card.value} <span className="font-sans text-sm sm:text-base text-muted">{card.unit}</span>
                     </div>
@@ -1265,7 +1281,8 @@ const Page = () => {
             collisionDetection={closestCenter}
             onDragEnd={handleGroupDragEnd}
           >
-            <SortableContext items={watchedGroups.map(group => group.id)} strategy={verticalListSortingStrategy}>
+            <SortableContext items={watchedGroups.map(group => group.id)}
+                             strategy={verticalListSortingStrategy}>
               <div className="space-y-6">
                 {groupFields.map((groupField, groupIndex) => {
                   const group = watchedGroups[groupIndex];
@@ -1364,7 +1381,8 @@ const Page = () => {
                                               className="flex-1 px-1 py-1.5 text-xs bg-bg border border-border focus:outline-none focus:border-accent"
                                             >
                                               {units.map((u) => (
-                                                <option key={u.value} value={u.value}>{u.label[locale]}</option>
+                                                <option key={u.value}
+                                                        value={u.value}>{u.label[locale]}</option>
                                               ))}
                                             </select>
                                           </div>
@@ -1443,7 +1461,8 @@ const Page = () => {
                                     className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text focus:outline-none focus:border-accent transition-colors cursor-pointer"
                                   >
                                     {units.map((unit) => (
-                                      <option key={unit.value} value={unit.value}>
+                                      <option key={unit.value}
+                                              value={unit.value}>
                                         {unit.label.ua} / {unit.label.en}
                                       </option>
                                     ))}
@@ -1491,124 +1510,126 @@ const Page = () => {
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext items={stepIds} strategy={verticalListSortingStrategy}>
+            <SortableContext items={stepIds}
+                             strategy={verticalListSortingStrategy}>
               <div className="flex flex-col gap-px bg-border">
                 {editingSteps.map((step, i) => (
-                  <div key={step.fieldId} className="bg-bg">
+                  <div key={step.fieldId}
+                       className="bg-bg">
                     {isEditingStep[step.id] ? (
-                    // Edit mode for step
-                    <div className=" p-4 sm:p-5 lg:p-6 border border-accent">
+                      // Edit mode for step
+                      <div className=" p-4 sm:p-5 lg:p-6 border border-accent">
 
-                      {/* Step image */}
-                      <div className="w-full">
-                        {step.imgUrl ? (
-                          <div className="relative w-full mb-4">
-                            <div className="relative w-full aspect-video">
-                              <Image
-                                src={step.imgUrl}
-                                alt={`Step ${i + 1}`}
-                                fill
-                                className="object-cover"
+                        {/* Step image */}
+                        <div className="w-full">
+                          {step.imgUrl ? (
+                            <div className="relative w-full mb-4">
+                              <div className="relative w-full aspect-video">
+                                <Image
+                                  src={step.imgUrl}
+                                  alt={`Step ${i + 1}`}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => deleteStepImage(step.id)}
+                                className="absolute top-2 right-2 p-2 bg-red-500 text-white hover:bg-red-600 transition-colors"
+                              >
+                                <MdDeleteForever className="text-lg"/>
+                              </button>
+                              <label className="absolute bottom-2 right-2 cursor-pointer px-3 py-1.5 bg-white/80 text-accent text-xs tracking-wide hover:bg-white transition-colors">
+                                <input
+                                  type="file"
+                                  hidden
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleStepImageChange(step.id, file);
+                                  }}
+                                />
+                                {tAdmin('form.buttons.changeImage')}
+                              </label>
+                            </div>
+                          ) : (
+                            <div className="w-full py-8 flex items-center justify-center border border-dashed border-border">
+                              <label className="cursor-pointer text-xs tracking-[0.06em] uppercase text-muted hover:text-text transition-colors">
+                                <input
+                                  type="file"
+                                  hidden
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleStepImageChange(step.id, file);
+                                  }}
+                                />
+                                {tAdmin('form.buttons.addPicture')}
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Step description with translation */}
+                        <div>
+                          <div className="space-y-3 p-3">
+                            <div>
+                              <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                                {tAdmin('form.fields.descriptionUa')}
+                              </label>
+                              <textarea
+                                value={typeof step.desc === 'string' ? '' : step.desc.ua}
+                                onChange={(e) => handleStepChange(step.id, 'ua', e.target.value)}
+                                rows={3}
+                                required={true}
+                                className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
                               />
                             </div>
                             <button
                               type="button"
-                              onClick={() => deleteStepImage(step.id)}
-                              className="absolute top-2 right-2 p-2 bg-red-500 text-white hover:bg-red-600 transition-colors"
+                              onClick={() => handleTranslateText('stepDescription', i)}
+                              className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
                             >
-                              <MdDeleteForever className="text-lg"/>
+                              Translate to English →
                             </button>
-                            <label className="absolute bottom-2 right-2 cursor-pointer px-3 py-1.5 bg-white/80 text-accent text-xs tracking-wide hover:bg-white transition-colors">
-                              <input
-                                type="file"
-                                hidden
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleStepImageChange(step.id, file);
-                                }}
+                            <div>
+                              <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                                {tAdmin('form.fields.descriptionEn')}
+                              </label>
+                              <textarea
+                                value={typeof step.desc === 'string' ? '' : step.desc.en}
+                                onChange={(e) => handleStepChange(step.id, 'en', e.target.value)}
+                                rows={3}
+                                required={true}
+                                className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
                               />
-                              {tAdmin('form.buttons.changeImage')}
-                            </label>
+                            </div>
                           </div>
-                        ) : (
-                          <div className="w-full py-8 flex items-center justify-center border border-dashed border-border">
-                            <label className="cursor-pointer text-xs tracking-[0.06em] uppercase text-muted hover:text-text transition-colors">
-                              <input
-                                type="file"
-                                hidden
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleStepImageChange(step.id, file);
-                                }}
-                              />
-                              {tAdmin('form.buttons.addPicture')}
-                            </label>
+                        </div>
+
+                        {stepFieldError && (
+                          <div className='flex items-center justify-center'>
+                            <p className='text-center text-xs bg-red-400 text-white px-3 py-1'>{stepFieldError}</p>
                           </div>
                         )}
-                      </div>
 
-                      {/* Step description with translation */}
-                      <div>
-                        <div className="space-y-3 p-3">
-                          <div>
-                            <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
-                              {tAdmin('form.fields.descriptionUa')}
-                            </label>
-                            <textarea
-                              value={typeof step.desc === 'string' ? '' : step.desc.ua}
-                              onChange={(e) => handleStepChange(step.id, 'ua', e.target.value)}
-                              rows={3}
-                              required={true}
-                              className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
-                            />
-                          </div>
+                        <div className="flex gap-5 justify-end mt-4 col-span-2 place-self-center">
                           <button
-                            type="button"
-                            onClick={() => handleTranslateText('stepDescription', i)}
-                            className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
+                            onClick={() => saveStepChanges(step.id, i)}
+                            className="p-2 bg-green-500 text-white hover:bg-green-600 transition-colors"
                           >
-                            Translate to English →
+                            <IoCheckmark className="text-lg"/>
                           </button>
-                          <div>
-                            <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
-                              {tAdmin('form.fields.descriptionEn')}
-                            </label>
-                            <textarea
-                              value={typeof step.desc === 'string' ? '' : step.desc.en}
-                              onChange={(e) => handleStepChange(step.id, 'en', e.target.value)}
-                              rows={3}
-                              required={true}
-                              className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
-                            />
-                          </div>
+                          <button
+                            onClick={() => cancelStepEditing(step.id)}
+                            className="p-2 bg-red-500 text-white hover:bg-red-600 transition-colors"
+                          >
+                            <IoClose className="text-lg"/>
+                          </button>
                         </div>
                       </div>
-
-                      {stepFieldError && (
-                        <div className='flex items-center justify-center'>
-                          <p className='text-center text-xs bg-red-400 text-white px-3 py-1'>{stepFieldError}</p>
-                        </div>
-                      )}
-
-                      <div className="flex gap-5 justify-end mt-4 col-span-2 place-self-center">
-                        <button
-                          onClick={() => saveStepChanges(step.id, i)}
-                          className="p-2 bg-green-500 text-white hover:bg-green-600 transition-colors"
-                        >
-                          <IoCheckmark className="text-lg"/>
-                        </button>
-                        <button
-                          onClick={() => cancelStepEditing(step.id)}
-                          className="p-2 bg-red-500 text-white hover:bg-red-600 transition-colors"
-                        >
-                          <IoClose className="text-lg"/>
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    // View mode for step (using SortableStep for drag)
+                    ) : (
+                      // View mode for step (using SortableStep for drag)
                       <SortableStep
                         step={step}
                         stepId={step.fieldId}
@@ -1630,14 +1651,17 @@ const Page = () => {
                 ? getPublicImageUrl(step.imgUrl, 'steps')
                 : step.imgUrl;
               return (
-                <div key={step.id} className="bg-bg">
+                <div key={step.id}
+                     className="bg-bg">
                   <SortableStep
                     step={{...step, imgUrl}}
                     stepId={step.id}
                     index={i}
                     isEditing={false}
-                    onEdit={() => {}}
-                    onRemove={() => {}}
+                    onEdit={() => {
+                    }}
+                    onRemove={() => {
+                    }}
                   />
                 </div>
               );
@@ -1702,9 +1726,19 @@ const Page = () => {
               </>
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center gap-3.5">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted">
+                <svg width="24"
+                     height="24"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     strokeWidth="1.5"
+                     className="text-muted">
                   <polygon points="23 7 16 12 23 17 23 7"/>
-                  <rect x="1" y="5" width="15" height="14" rx="2"/>
+                  <rect x="1"
+                        y="5"
+                        width="15"
+                        height="14"
+                        rx="2"/>
                 </svg>
                 <label className="cursor-pointer text-xs tracking-[0.06em] uppercase text-muted hover:text-text transition-colors">
                   <input

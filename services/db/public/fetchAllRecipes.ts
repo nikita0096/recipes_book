@@ -22,6 +22,7 @@ interface RecipeRow {
   steps_count: number;
   created_at: string;
   slug: string;
+  is_published: boolean;
 }
 
 // Возвращает рецепты из main table
@@ -61,6 +62,7 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
         videoUrl: item.video_url!,
         stepsCount: item.steps_count,
         slug: item.slug,
+        isPublished: item.is_published,
       };
     }
 
@@ -81,6 +83,7 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
       videoUrl: item.video_url ?? null,
       stepsCount: item.steps_count,
       slug: item.slug,
+      isPublished: item.is_published,
     };
   });
 }

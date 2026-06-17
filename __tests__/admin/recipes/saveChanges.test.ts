@@ -59,6 +59,7 @@ const createMockRecipePublic = (): IRecipePublic => ({
   videoUrl: 'video-key-1',
   stepsCount: 2,
   slug: 'test-recipe',
+  isPublished: true,
 });
 
 const createMockRecipePremium = (): IRecipePremiumFull => ({
@@ -88,6 +89,7 @@ const createMockRecipePremium = (): IRecipePremiumFull => ({
   videoUrl: 'video-key-2',
   stepsCount: 1,
   slug: 'premium-recipe',
+  isPublished: true,
 });
 
 const createMockFormData = (overrides?: Partial<EditingValues>): EditingValues => ({

@@ -23,6 +23,8 @@ interface IRecipeBase {
   calories: number | null;
   stepsCount: number;
   slug: string;
+  // Draft/published state. New recipes default to false (draft) in the DB.
+  isPublished: boolean;
 }
 
 export interface RecipePrice {
@@ -63,7 +65,8 @@ export interface IRecipePremiumIncomplete extends IRecipeBase {
 // ===== CREATE/UPLOAD ТИПЫ =====
 
 // Public рецепт для загрузки (все поля обязательны)
-export interface IRecipeUploadPublic extends Omit<IRecipeBase, 'id'> {
+// isPublished is omitted: the database defaults new recipes to draft (false).
+export interface IRecipeUploadPublic extends Omit<IRecipeBase, 'id' | 'isPublished'> {
   id: string; // Generated on frontend before upload
   isPremium: false;
   recipeSteps: RecipeStep[];
@@ -71,7 +74,8 @@ export interface IRecipeUploadPublic extends Omit<IRecipeBase, 'id'> {
 }
 
 // Premium рецепт для загрузки в main table (без steps/video)
-export interface IRecipeUploadPremiumMain extends Omit<IRecipeBase, 'id'> {
+// isPublished is omitted: the database defaults new recipes to draft (false).
+export interface IRecipeUploadPremiumMain extends Omit<IRecipeBase, 'id' | 'isPublished'> {
   id: string; // Generated on frontend before upload
   isPremium: true;
   premiumId: string | null;

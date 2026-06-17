@@ -109,6 +109,10 @@
     "delete": "Delete",
     "update": "Update picture",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "published": "Published",
+    "draft": "Draft",
+    "publish": "Publish recipe",
+    "unpublish": "Unpublish recipe"
   }
 }

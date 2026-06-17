@@ -66,7 +66,8 @@ export const updateRecipePublic = async (
       recipeSteps: data.recipe_steps,
       videoUrl: data.video_url,
       stepsCount: data.steps_count,
-      slug: data.slug
+      slug: data.slug,
+      isPublished: data.is_published,
     },
     error: null,
   };
@@ -151,7 +152,8 @@ export const updateRecipePremium = async (
         recipeSteps: premiumData.recipeSteps,
         videoUrl: premiumData.videoUrl,
         stepsCount: data.steps_count,
-        slug: data.slug
+        slug: data.slug,
+        isPublished: data.is_published,
       },
       newPrice: {
         price: premiumData.price,
@@ -245,7 +247,8 @@ export const convertPublicToPremium = async (
         recipeSteps: premiumData.recipeSteps,
         videoUrl: premiumData.videoUrl,
         stepsCount: data.steps_count,
-        slug: data.slug
+        slug: data.slug,
+        isPublished: data.is_published,
       },
       newPrice: {
         price: premiumData.price,
@@ -330,7 +333,8 @@ export const convertPremiumToPublic = async (
       recipeSteps: data.recipe_steps,
       videoUrl: data.video_url,
       stepsCount: data.steps_count,
-      slug: data.slug
+      slug: data.slug,
+      isPublished: data.is_published,
     },
     error: null,
   };
