@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
 import {useUserStore} from "@/store/useUserStore";
 import {useRouter} from "@/i18n/navigation";
@@ -48,8 +48,21 @@ const createEmptyGroup = (): IngredientGroupFormValues => ({
   draft: {ua: '', en: '', quantity: '', unit: units[0].value},
 });
 
+// localStorage key for persisting the in-progress recipe form across reloads
+const FORM_STORAGE_KEY = 'admin-recipe-form-draft';
+
+// File objects can't be serialized to localStorage, so strip them before saving.
+// Only the text data is persisted; images and video must be re-selected after a reload.
+const stripFilesForStorage = (values: IFormValues): IFormValues => ({
+  ...values,
+  heroImg: null,
+  videoFile: null,
+  recipeSteps: values.recipeSteps.map((step) => ({...step, image: null})),
+});
+
 const Page = () => {
   const [mounted, setMounted] = useState<boolean>(false);
+  const [isHydrated, setIsHydrated] = useState<boolean>(false);
 
   const [stepImageUrls, setStepImageUrls] = useState<string[]>([]);
   const [heroImg, setHeroImg] = useState<string | null>(null);
@@ -83,7 +96,7 @@ const Page = () => {
       description: {en: '', ua: ''},
       likes: 0,
       category: categories.find(cat => cat.en === 'Desserts')?.en,
-      price: { en: 0, ua: 0 },
+      price: {en: 0, ua: 0},
       discount: 0,
       ingredientGroups: [createEmptyGroup()],
       heroImg: null,
@@ -128,7 +141,39 @@ const Page = () => {
 
   useEffect(() => {
     setMounted(true);
+
+    // Restore any in-progress form data saved before a reload.
+    // keepDefaultValues preserves the original empty defaults so a later
+    // no-arg reset() clears the form instead of reverting to this draft.
+    try {
+      const saved = localStorage.getItem(FORM_STORAGE_KEY);
+      if (saved) {
+        reset(JSON.parse(saved) as IFormValues, {keepDefaultValues: true});
+      }
+    } catch {
+      // Ignore corrupted drafts
+    }
+
+    setIsHydrated(true);
   }, []);
+
+  // Persist text data to localStorage on every change so a reload won't lose it
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const subscription = watch((values) => {
+      try {
+        localStorage.setItem(
+          FORM_STORAGE_KEY,
+          JSON.stringify(stripFilesForStorage(values as IFormValues))
+        );
+      } catch {
+        // Ignore storage quota / serialization errors
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch, isHydrated]);
 
   useEffect(() => {
     if (user === null && mounted) {
@@ -304,6 +349,18 @@ const Page = () => {
     setValue('heroImg', null);
   };
 
+  const deleteVideoPreview = () => {
+    setVideoUrl(null);
+  }
+
+  const resetFormValues = () => {
+    reset();
+    localStorage.removeItem(FORM_STORAGE_KEY);
+    setStepImageUrls([]);
+    setHeroImg(null);
+    setVideoUrl(null);
+  }
+
   const handleFormData = async (data: IFormValues, folder: string) => {
     setError(null);
 
@@ -351,7 +408,7 @@ const Page = () => {
       return null;
     }
 
-    if(data.isPremium && (data.price.en === 0 || data.price.ua === 0)) {
+    if (data.isPremium && (data.price.en === 0 || data.price.ua === 0)) {
       setError(t('form.validation.enterPrice'));
       return null;
     }
@@ -376,12 +433,12 @@ const Page = () => {
         onProgress: (percentage) => setVideoUploadProgress(percentage),
       });
 
-      if(error) throw new Error(error);
+      if (error) throw new Error(error);
 
       videoUrl = videoKey;
 
       setIsVideoUploading(false);
-    } catch(error) {
+    } catch (error) {
       setVideoError(t('form.validation.videoUploadingError'));
       console.log(error);
       return null;
@@ -530,6 +587,7 @@ const Page = () => {
 
       setIsSuccess(true);
       reset();
+      localStorage.removeItem(FORM_STORAGE_KEY);
       setStepImageUrls([]);
       setHeroImg(null);
       setVideoUrl(null);
@@ -550,7 +608,7 @@ const Page = () => {
   const engTitle = watch('title.en');
 
   const generateSlug = (str: string): string => {
-    if(str.trim() !== '') {
+    if (str.trim() !== '') {
       return engTitle.trim().toLowerCase().split(' ').join('-');
     }
 
@@ -558,7 +616,7 @@ const Page = () => {
   };
 
   useEffect(() => {
-    if(engTitle.trim()) {
+    if (engTitle.trim()) {
       const slug = generateSlug(engTitle);
 
       setValue('slug', slug);
@@ -582,11 +640,17 @@ const Page = () => {
         {/* Basic Info Section */}
         <div className="p-6 sm:p-8 bg-surface border border-border">
           {/* Section header */}
-          <div className="flex items-center gap-3.5 mb-6 pb-3.5 border-b border-border">
-            <div className="w-6 h-6 border border-border flex items-center justify-center shrink-0">
-              <span className="text-[11px] text-accent font-semibold">1</span>
+          <div className="flex items-center justify-between gap-2 mb-6 pb-3.5 border-b border-border">
+            <div className="flex items-center gap-3.5">
+              <div className="w-6 h-6 border border-border flex items-center justify-center shrink-0">
+                <span className="text-[11px] text-accent font-semibold">1</span>
+              </div>
+              <span className="font-serif text-xl text-text">{t('form.sections.basicInfo')}</span>
             </div>
-            <span className="font-serif text-xl text-text">{t('form.sections.basicInfo')}</span>
+            <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
+                    type='button'
+                    onClick={resetFormValues}>Reset
+            </button>
           </div>
 
           <div className="space-y-4">
@@ -624,8 +688,8 @@ const Page = () => {
                   {t('form.fields.description')}
                 </label>
                 <textarea {...register('description.ua', {required: true})}
-                       className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
-                       placeholder={t('form.fields.descriptionPlaceholderUa')}
+                          className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
+                          placeholder={t('form.fields.descriptionPlaceholderUa')}
                 />
               </div>
               <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
@@ -633,15 +697,16 @@ const Page = () => {
                 Translate to English →
               </button>
               <textarea {...register('description.en', {required: true})}
-                     className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
-                     placeholder={t('form.fields.descriptionPlaceholderEn')}/>
+                        className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
+                        placeholder={t('form.fields.descriptionPlaceholderEn')}/>
             </div>
 
             {/* Paid content toggle */}
             <div className="flex items-center gap-3 mb-4">
               <div className="text-xs text-muted tracking-[0.05em]">{t('form.fields.premiumContent')}</div>
               <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" {...register('isPremium')} className="sr-only peer"/>
+                <input type="checkbox" {...register('isPremium')}
+                       className="sr-only peer"/>
                 <div className="w-9 h-5 border border-border bg-surface transition-colors
                                 after:content-[''] after:absolute after:top-1/2 after:-translate-y-1/2 after:left-0.5 after:w-3.5 after:h-3.5 after:bg-gray-500 after:transition-all
                                 peer-checked:after:left-[18px] relative peer-checked:after:bg-accent"/>
@@ -782,163 +847,164 @@ const Page = () => {
             collisionDetection={closestCenter}
             onDragEnd={handleGroupDragEnd}
           >
-          <SortableContext items={watchedGroups?.map(group => group.id) ?? []} strategy={verticalListSortingStrategy}>
-          <div className="space-y-5">
-            {groupFields.map((groupField, groupIndex) => (
-              <SortableItem
-                key={groupField.id}
-                itemId={watchedGroups?.[groupIndex]?.id ?? groupField.id}
-                className="border border-border p-4 sm:p-5 bg-bg"
-              >
-                {(dragHandle) => (
-                <>
-                {/* Group header */}
-                <div className="grid grid-cols-[auto_32px_1fr_auto] gap-3.5 items-center mb-4">
-                  {dragHandle}
-                  <span className="text-[11px] text-accent font-semibold">
+            <SortableContext items={watchedGroups?.map(group => group.id) ?? []}
+                             strategy={verticalListSortingStrategy}>
+              <div className="space-y-5">
+                {groupFields.map((groupField, groupIndex) => (
+                  <SortableItem
+                    key={groupField.id}
+                    itemId={watchedGroups?.[groupIndex]?.id ?? groupField.id}
+                    className="border border-border p-4 sm:p-5 bg-bg"
+                  >
+                    {(dragHandle) => (
+                      <>
+                        {/* Group header */}
+                        <div className="grid grid-cols-[auto_32px_1fr_auto] gap-3.5 items-center mb-4">
+                          {dragHandle}
+                          <span className="text-[11px] text-accent font-semibold">
                     {String(groupIndex + 1).padStart(2, '0')}
                   </span>
-                  <span className="text-sm text-muted italic truncate">
+                          <span className="text-sm text-muted italic truncate">
                     {watchedGroups?.[groupIndex]?.title.ua || t('form.fields.group') + ' ' + (groupIndex + 1)}
                   </span>
-                  <button
-                    type="button"
-                    className="p-1 text-muted hover:text-red-500 transition-colors"
-                    onClick={() => removeGroup(groupIndex)}
-                  >
-                    <MdDeleteForever className="text-lg"/>
-                  </button>
-                </div>
+                          <button
+                            type="button"
+                            className="p-1 text-muted hover:text-red-500 transition-colors"
+                            onClick={() => removeGroup(groupIndex)}
+                          >
+                            <MdDeleteForever className="text-lg"/>
+                          </button>
+                        </div>
 
-                {/* Group title inputs */}
-                <div className="space-y-3 mb-5">
-                  <div>
-                    <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
-                      {t('form.fields.groupTitle')}
-                    </label>
-                    <input {...register(`ingredientGroups.${groupIndex}.title.ua`)}
-                           className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
-                           type="text"
-                           placeholder={t('form.fields.groupTitlePlaceholderUa')}/>
-                  </div>
-                  <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
-                          onClick={(e) => handleTranslateText(e, 'groupTitle', groupIndex)}>
-                    Translate to English →
-                  </button>
-                  <input {...register(`ingredientGroups.${groupIndex}.title.en`)}
-                         className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
-                         type="text"
-                         placeholder={t('form.fields.groupTitlePlaceholderEn')}/>
-                </div>
+                        {/* Group title inputs */}
+                        <div className="space-y-3 mb-5">
+                          <div>
+                            <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                              {t('form.fields.groupTitle')}
+                            </label>
+                            <input {...register(`ingredientGroups.${groupIndex}.title.ua`)}
+                                   className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                                   type="text"
+                                   placeholder={t('form.fields.groupTitlePlaceholderUa')}/>
+                          </div>
+                          <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
+                                  onClick={(e) => handleTranslateText(e, 'groupTitle', groupIndex)}>
+                            Translate to English →
+                          </button>
+                          <input {...register(`ingredientGroups.${groupIndex}.title.en`)}
+                                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                                 type="text"
+                                 placeholder={t('form.fields.groupTitlePlaceholderEn')}/>
+                        </div>
 
-                {/* Ingredient inputs */}
-                <div className="space-y-3 mb-4">
-                  <div className="grid grid-cols-1 gap-3">
-                    <input {...register(`ingredientGroups.${groupIndex}.draft.ua`)}
-                           className={`w-full px-3.5 py-2.5 bg-surface border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
-                             error !== null && watchedGroups?.[groupIndex]?.ingredients.length === 0 ? 'border-red-400' : 'border-border'
-                           }`}
-                           type="text"
-                           placeholder={t('form.fields.ingredientPlaceholder')}/>
-                    <button className="self-start px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
-                            onClick={(e) => handleTranslateText(e, 'ingredient', groupIndex)}>
-                      Translate to EN →
-                    </button>
-                    <input {...register(`ingredientGroups.${groupIndex}.draft.en`)}
-                           className={`w-full px-3.5 py-2.5 bg-surface border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
-                             error !== null && watchedGroups?.[groupIndex]?.ingredients.length === 0 ? 'border-red-400' : 'border-border'
-                           }`}
-                           type="text"
-                           placeholder={t('form.fields.ingredientPlaceholderEn')}/>
-                  </div>
+                        {/* Ingredient inputs */}
+                        <div className="space-y-3 mb-4">
+                          <div className="grid grid-cols-1 gap-3">
+                            <input {...register(`ingredientGroups.${groupIndex}.draft.ua`)}
+                                   className={`w-full px-3.5 py-2.5 bg-surface border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
+                                     error !== null && watchedGroups?.[groupIndex]?.ingredients.length === 0 ? 'border-red-400' : 'border-border'
+                                   }`}
+                                   type="text"
+                                   placeholder={t('form.fields.ingredientPlaceholder')}/>
+                            <button className="self-start px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
+                                    onClick={(e) => handleTranslateText(e, 'ingredient', groupIndex)}>
+                              Translate to EN →
+                            </button>
+                            <input {...register(`ingredientGroups.${groupIndex}.draft.en`)}
+                                   className={`w-full px-3.5 py-2.5 bg-surface border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
+                                     error !== null && watchedGroups?.[groupIndex]?.ingredients.length === 0 ? 'border-red-400' : 'border-border'
+                                   }`}
+                                   type="text"
+                                   placeholder={t('form.fields.ingredientPlaceholderEn')}/>
+                          </div>
 
-                  {/* Quantity and Unit */}
-                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2.5 items-end">
-                    <div>
-                      <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">{t('form.fields.quantity')}</label>
-                      <input {...register(`ingredientGroups.${groupIndex}.draft.quantity`)}
-                             className={`w-full px-3.5 py-2.5 bg-surface border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
-                               error !== null && watchedGroups?.[groupIndex]?.ingredients.length === 0 ? 'border-red-400' : 'border-border'
-                             }`}
-                             type="number"
-                             placeholder={t('form.fields.quantity')}/>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">Unit</label>
-                      <select
-                        {...register(`ingredientGroups.${groupIndex}.draft.unit`)}
-                        className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text focus:outline-none focus:border-accent transition-colors cursor-pointer appearance-none"
-                      >
-                        {units.map((unit) => (
-                          <option key={unit.value}
-                                  value={unit.value}>
-                            {unit.label.ua} / {unit.label.en}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <button
-                      className="px-4 py-2.5 bg-text border border-text text-bg text-[11px] tracking-[0.06em] uppercase whitespace-nowrap hover:opacity-90 transition-opacity"
-                      onClick={(e) => handleIngredientsForm(e, groupIndex)}
-                    >
-                      + {t('form.buttons.add')}
-                    </button>
-                  </div>
-                </div>
+                          {/* Quantity and Unit */}
+                          <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2.5 items-end">
+                            <div>
+                              <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">{t('form.fields.quantity')}</label>
+                              <input {...register(`ingredientGroups.${groupIndex}.draft.quantity`)}
+                                     className={`w-full px-3.5 py-2.5 bg-surface border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
+                                       error !== null && watchedGroups?.[groupIndex]?.ingredients.length === 0 ? 'border-red-400' : 'border-border'
+                                     }`}
+                                     type="number"
+                                     placeholder={t('form.fields.quantity')}/>
+                            </div>
+                            <div>
+                              <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">Unit</label>
+                              <select
+                                {...register(`ingredientGroups.${groupIndex}.draft.unit`)}
+                                className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text focus:outline-none focus:border-accent transition-colors cursor-pointer appearance-none"
+                              >
+                                {units.map((unit) => (
+                                  <option key={unit.value}
+                                          value={unit.value}>
+                                    {unit.label.ua} / {unit.label.en}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <button
+                              className="px-4 py-2.5 bg-text border border-text text-bg text-[11px] tracking-[0.06em] uppercase whitespace-nowrap hover:opacity-90 transition-opacity"
+                              onClick={(e) => handleIngredientsForm(e, groupIndex)}
+                            >
+                              + {t('form.buttons.add')}
+                            </button>
+                          </div>
+                        </div>
 
-                {/* Added ingredients */}
-                <DndContext
-                  id={`group-ingredients-${groupIndex}`}
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={(e) => handleIngredientDragEnd(e, groupIndex)}
-                >
-                  <SortableContext items={watchedGroups?.[groupIndex]?.ingredients.map(item => item.id) ?? []}>
-                    <div className="flex items-center justify-start gap-2 flex-wrap">
-                      {watchedGroups?.[groupIndex]?.ingredients.map((item) => (
-                        <SortableItem
-                          key={item.id}
-                          itemId={item.id}
-                          className="flex flex-row items-center gap-2 px-3 py-1.5 border border-border bg-surface text-sm text-text"
+                        {/* Added ingredients */}
+                        <DndContext
+                          id={`group-ingredients-${groupIndex}`}
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={(e) => handleIngredientDragEnd(e, groupIndex)}
                         >
-                          {(ingredientDragHandle) => (
-                            <>
-                              {ingredientDragHandle}
-                              <span>{item.value.ua}</span>
-                              <span className="text-muted">|</span>
-                              <span className="text-muted">{item.value.en}</span>
-                              <span className="text-accent">-</span>
-                              <span>{item.quantity} {item.unit}</span>
-                              <MdDeleteForever
-                                className="text-red-500 cursor-pointer hover:text-red-600 transition-colors"
-                                onClick={() => removeIngredientFromGroup(groupIndex, item.id)}
-                              />
-                            </>
-                          )}
-                        </SortableItem>
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-                </>
+                          <SortableContext items={watchedGroups?.[groupIndex]?.ingredients.map(item => item.id) ?? []}>
+                            <div className="flex items-center justify-start gap-2 flex-wrap">
+                              {watchedGroups?.[groupIndex]?.ingredients.map((item) => (
+                                <SortableItem
+                                  key={item.id}
+                                  itemId={item.id}
+                                  className="flex flex-row items-center gap-2 px-3 py-1.5 border border-border bg-surface text-sm text-text"
+                                >
+                                  {(ingredientDragHandle) => (
+                                    <>
+                                      {ingredientDragHandle}
+                                      <span>{item.value.ua}</span>
+                                      <span className="text-muted">|</span>
+                                      <span className="text-muted">{item.value.en}</span>
+                                      <span className="text-accent">-</span>
+                                      <span>{item.quantity} {item.unit}</span>
+                                      <MdDeleteForever
+                                        className="text-red-500 cursor-pointer hover:text-red-600 transition-colors"
+                                        onClick={() => removeIngredientFromGroup(groupIndex, item.id)}
+                                      />
+                                    </>
+                                  )}
+                                </SortableItem>
+                              ))}
+                            </div>
+                          </SortableContext>
+                        </DndContext>
+                      </>
+                    )}
+                  </SortableItem>
+                ))}
+
+                {validationErrorIngredients && (
+                  <div className="text-red-500 text-sm">{validationErrorIngredients}</div>
                 )}
-              </SortableItem>
-            ))}
 
-            {validationErrorIngredients && (
-              <div className="text-red-500 text-sm">{validationErrorIngredients}</div>
-            )}
-
-            {/* Add new group button */}
-            <button
-              className="w-full py-5 border border-dashed border-border flex items-center justify-center gap-2.5 text-[11px] tracking-[0.06em] text-accent hover:bg-bg transition-colors"
-              type="button"
-              onClick={() => appendGroup(createEmptyGroup())}
-            >
-              + {t('form.buttons.addGroup')}
-            </button>
-          </div>
-          </SortableContext>
+                {/* Add new group button */}
+                <button
+                  className="w-full py-5 border border-dashed border-border flex items-center justify-center gap-2.5 text-[11px] tracking-[0.06em] text-accent hover:bg-bg transition-colors"
+                  type="button"
+                  onClick={() => appendGroup(createEmptyGroup())}
+                >
+                  + {t('form.buttons.addGroup')}
+                </button>
+              </div>
+            </SortableContext>
           </DndContext>
         </div>
 
@@ -972,9 +1038,21 @@ const Page = () => {
             ) : (
               <div
                 className="flex flex-col items-center justify-center gap-3.5 w-full py-12 border border-dashed border-border cursor-pointer">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                <svg width="24"
+                     height="24"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     strokeWidth="1.5"
+                     className="text-muted">
+                  <rect x="3"
+                        y="3"
+                        width="18"
+                        height="18"
+                        rx="2"/>
+                  <circle cx="8.5"
+                          cy="8.5"
+                          r="1.5"/>
                   <path d="M21 15l-5-5L5 21"/>
                 </svg>
                 <label className="cursor-pointer text-xs tracking-[0.06em] uppercase text-muted hover:text-text transition-colors">
@@ -1135,7 +1213,7 @@ const Page = () => {
                     <div className="w-full bg-border h-1">
                       <div
                         className="bg-accent h-1 transition-all duration-300"
-                        style={{ width: `${videoUploadProgress}%` }}
+                        style={{width: `${videoUploadProgress}%`}}
                       ></div>
                     </div>
                   </div>
@@ -1145,12 +1223,30 @@ const Page = () => {
                     {videoError} (using original file)
                   </p>
                 )}
+
+                <button
+                  type="button"
+                  className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+                  onClick={deleteVideoPreview}
+                >
+                  <MdDeleteForever className="text-lg"/>
+                </button>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center gap-3.5 py-12">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted">
+                <svg width="24"
+                     height="24"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     strokeWidth="1.5"
+                     className="text-muted">
                   <polygon points="23 7 16 12 23 17 23 7"/>
-                  <rect x="1" y="5" width="15" height="14" rx="2"/>
+                  <rect x="1"
+                        y="5"
+                        width="15"
+                        height="14"
+                        rx="2"/>
                 </svg>
                 <label className="cursor-pointer text-xs tracking-[0.06em] uppercase text-muted hover:text-text transition-colors">
                   <Controller

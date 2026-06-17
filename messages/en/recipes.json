@@ -46,7 +46,7 @@
       "stepsUnit": "steps",
       "gramUnit": "g",
       "cmUnit": "cm",
-      "kcalUnit": "kcal"
+      "kcalUnit": "kcal/100g"
     }
   },
   "card": {

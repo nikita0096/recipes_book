@@ -46,7 +46,7 @@
       "stepsUnit": "кроків",
       "gramUnit": "г",
       "cmUnit": "см",
-      "kcalUnit": "ккал"
+      "kcalUnit": "ккал/100г"
     }
   },
   "card": {
