@@ -130,6 +130,7 @@ const Page = () => {
     fields: stepFields,
     append: appendStep,
     remove: removeStep,
+    move: moveStep,
   } = useFieldArray({
     control,
     name: 'recipeSteps',
@@ -240,6 +241,20 @@ const Page = () => {
     if (oldIndex === -1 || newIndex === -1) return;
 
     setValue(`ingredientGroups.${groupIndex}.ingredients`, arrayMove(ingredients, oldIndex, newIndex));
+  };
+
+  const handleStepDragEnd = (event: DragEndEvent) => {
+    const {active, over} = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = stepFields.findIndex((field) => field.id === active.id);
+    const newIndex = stepFields.findIndex((field) => field.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    moveStep(oldIndex, newIndex);
+    // Keep the parallel preview-URL array aligned with the reordered steps
+    setStepImageUrls((prev) => arrayMove(prev, oldIndex, newIndex));
   };
 
   const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -1088,29 +1103,41 @@ const Page = () => {
             <span className="font-serif text-xl text-text">{t('form.sections.steps')}</span>
           </div>
 
-          <div className="space-y-3">
-            {stepFields.map((field, index) => (
-              <div
-                key={field.id}
-                className="border border-border p-4 sm:p-5 bg-bg"
-              >
-                <div className="grid grid-cols-[32px_1fr_auto] gap-3.5 items-center mb-4">
-                  <span className="text-[11px] text-accent font-semibold">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <span className="text-sm text-muted italic truncate">
-                    {getValues(`recipeSteps.${index}.desc.ua`) || t('form.fields.step') + ' ' + (index + 1)}
-                  </span>
-                  <button
-                    type="button"
-                    className="text-sm text-muted hover:text-red-500 transition-colors"
-                    onClick={() => deleteStep(index)}
+          <DndContext
+            id="recipe-steps"
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleStepDragEnd}
+          >
+            <SortableContext items={stepFields.map((field) => field.id)}
+                             strategy={verticalListSortingStrategy}>
+              <div className="space-y-3">
+                {stepFields.map((field, index) => (
+                  <SortableItem
+                    key={field.id}
+                    itemId={field.id}
+                    className="border border-border p-4 sm:p-5 bg-bg"
                   >
-                    ✕
-                  </button>
-                </div>
+                    {(dragHandle) => (
+                      <>
+                        <div className="grid grid-cols-[auto_32px_1fr_auto] gap-3.5 items-center mb-4">
+                          {dragHandle}
+                          <span className="text-[11px] text-accent font-semibold">
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+                          <span className="text-sm text-muted italic truncate">
+                            {getValues(`recipeSteps.${index}.desc.ua`) || t('form.fields.step') + ' ' + (index + 1)}
+                          </span>
+                          <button
+                            type="button"
+                            className="text-sm text-muted hover:text-red-500 transition-colors"
+                            onClick={() => deleteStep(index)}
+                          >
+                            ✕
+                          </button>
+                        </div>
 
-                {stepImageUrls[index] ? (
+                        {stepImageUrls[index] ? (
                   <div className="relative mb-3">
                     <Image
                       className="w-full object-cover"
@@ -1170,11 +1197,15 @@ const Page = () => {
                       rows={3}
                       className={`w-full px-3.5 py-2.5 bg-surface border ${errors.recipeSteps?.[index]?.desc?.en ? 'border-red-400' : 'border-border'} text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none`}
                     />
-                  </div>
-                </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </SortableItem>
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
           {/* Add new step button */}
           <button
             className={`w-full py-5 border border-dashed ${error && stepFields.length === 0 ? 'border-red-400' : 'border-border'} flex items-center justify-center gap-2.5 text-[11px] tracking-[0.06em] text-accent hover:bg-bg transition-colors mb-3`}
