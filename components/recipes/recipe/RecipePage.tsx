@@ -381,19 +381,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
             {recipe.recipeSteps?.map((step, i) => (
               <div key={step.id}
                    className="bg-bg">
-                {/* Mobile/Tablet: Image on top */}
-                {step.imgUrl && (
-                  <div className="lg:hidden ">
-                    <div className="relative w-full aspect-video">
-                      <Image
-                        src={step.imgUrl || RECIPE_PLACEHOLDER_IMAGE}
-                        alt={`${t('singlePage.step')} ${i + 1}`}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
-                )}
+
 
                 {/* Desktop: Grid layout with image on right */}
                 <div className="lg:grid lg:grid-cols-[60px_1fr_1fr] lg:items-stretch">
@@ -411,11 +399,27 @@ const RecipePage: React.FC<RecipePageProps> = ({
                         {String(i + 1).padStart(2, '0')}
                       </span>
                     </div>
-                    <div className="p-4 sm:p-5">
-                      <p className="text-sm sm:text-base text-text leading-relaxed">
-                        {step.desc[locale]}
-                      </p>
+                    <div>
+                      {step.imgUrl && (
+                        <div className="lg:hidden p-1">
+                          <div className="relative w-full aspect-video">
+                            <Image
+                              src={step.imgUrl || RECIPE_PLACEHOLDER_IMAGE}
+                              alt={`${t('singlePage.step')} ${i + 1}`}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      <div className="p-4 sm:p-5">
+                        <p className="text-sm sm:text-base text-text leading-relaxed">
+                          {step.desc[locale]}
+                        </p>
+                      </div>
+                      {/* Mobile/Tablet: Image on top */}
                     </div>
+
                   </div>
 
                   {/* Desktop: Description */}
@@ -427,7 +431,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
 
                   {/* Desktop: Image */}
                   {step.imgUrl && (
-                    <div className="hidden lg:block border-l border-border">
+                    <div className="hidden lg:block border-l border-border p-1">
                       <div className="relative w-full h-full min-h-[220px] aspect-video">
                         <Image
                           src={step.imgUrl}

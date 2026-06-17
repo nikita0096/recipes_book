@@ -116,7 +116,7 @@ export const SecureVideoPlayer = ({
   if (isLoading) {
     return (
       <div
-        className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl ${className}`}
+        className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl aspect-video ${className}`}
       >
         <Spinner />
       </div>
@@ -162,7 +162,7 @@ export const SecureVideoPlayer = ({
 
   // Stream video: use Cloudflare Stream React component
   return (
-    <div className={`overflow-hidden ${className}`}>
+    <div className={`overflow-hidden ${className} aspect-video`}>
       <Stream
         controls
         src={signedToken}

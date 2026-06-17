@@ -16,7 +16,7 @@ const RecipeIngredient: React.FC<IngredientProps> = ({ingredient}) => {
   const unit = units.find((unit) => unit.value === ingredient.unit);
 
   return (
-    <div className="flex items-baseline gap-2.5 py-2 border-b border-border">
+    <div className="flex items-baseline gap-2.5 py-2">
       <span className="text-sm text-text">
         {ingredient.value[locale]}
       </span>
