@@ -156,34 +156,34 @@ const RecipePage: React.FC<RecipePageProps> = ({
   return (
     <div className="min-h-screen bg-bg">
       {/* Hero Section */}
-      <section className="relative w-full" style={{height: 'min(52vw, 460px)'}}>
+      <section className="relative w-full h-100 md:h-120 lg:h-150">
         <Image
           src={recipe.heroImg || RECIPE_PLACEHOLDER_IMAGE}
           alt={recipe.title[locale]}
           fill
           sizes="100vw"
-          className="object-cover"
+          className='relative object-cover'
           priority
         />
         {/* Gradient overlay */}
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.08) 55%, transparent 100%)'}}
+          style={{background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.08) 45%, transparent 100%)'}}
         />
 
         {/* Back link */}
         <button
           onClick={() => router.back()}
-          className="absolute top-[18px] left-5 sm:left-8 text-xs tracking-[0.06em] text-white/65 hover:text-white/90 transition-colors z-10 cursor-pointer"
+          className="absolute top-6 left-6 lg:top-10 lg:left-10 2xl:top-20 2xl:left-20 z-10 w-[46px] h-[46px] rounded-full flex flex-col items-center justify-center gap-px transition-all cursor-pointer select-none hover:scale-105 active:scale-95 bg-white/12 border border-white/40 text-white"
         >
-          ← {t('singlePage.backButton')}
+          ←
         </button>
 
         {/* Like button */}
         <button
           type="button"
           onClick={handleLike}
-          className={`absolute top-[18px] right-6 z-10 w-[46px] h-[46px] rounded-full flex flex-col items-center justify-center gap-px transition-all cursor-pointer select-none hover:scale-105 active:scale-95 ${
+          className={`absolute top-6 right-6 lg:top-10 lg:right-10 2xl:top-20 2xl:right-20 z-10 w-[46px] h-[46px] rounded-full flex flex-col items-center justify-center gap-px transition-all cursor-pointer select-none hover:scale-105 active:scale-95 ${
             isLiked
               ? 'bg-accent border-accent'
               : 'bg-white/12 border-white/40'
@@ -199,7 +199,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
         {/* Hero content */}
         <div className="absolute bottom-7 left-5 sm:left-8 right-20">
           {/* Category */}
-          <span className="inline-block text-[10px] tracking-[0.12em] uppercase text-accent border border-accent px-2.5 py-[3px] mb-3">
+          <span className="inline-block text-[10px] tracking-[0.12em] uppercase text-accent border border-accent px-2.5 py-[3px] mb-3 bg-bg/40">
             {recipe.category && recipe.category[locale]}
           </span>
 

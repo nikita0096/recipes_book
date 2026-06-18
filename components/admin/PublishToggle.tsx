@@ -37,7 +37,7 @@ const PublishToggle: React.FC<PublishToggleProps> = ({recipeId, isPublished}) =>
   });
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center justify-between gap-2">
       <span
         className={`text-xs uppercase tracking-wider ${checked ? 'text-green-600' : 'text-muted'}`}
       >

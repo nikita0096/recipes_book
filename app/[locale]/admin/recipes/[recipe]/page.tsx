@@ -802,9 +802,9 @@ const Page = () => {
         {/* Back link */}
         <Link
           href="/admin/recipes"
-          className="absolute top-4 left-4 sm:left-6 lg:left-10 text-sm text-white/70 tracking-wide hover:text-white/90 transition-colors z-10"
+          className="absolute top-4 left-4 z-10 w-[46px] h-[46px] rounded-full flex flex-col items-center justify-center gap-px transition-all cursor-pointer select-none hover:scale-105 active:scale-95 bg-white/12 border-white/40"
         >
-          ← {tRecipes('singlePage.backButton')}
+          ←
         </Link>
 
         {/* Action buttons */}

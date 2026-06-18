@@ -47,8 +47,6 @@ const Recipes = () => {
     status,
   } = useRecipes();
 
-  console.log(data)
-
   useEffect(() => {
     const urlSearch = searchParams.get("search") ?? "";
     setSearchValue(urlSearch);
