@@ -1,9 +1,12 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import {useLocale, useTranslations} from "next-intl";
+import {supabase} from "@/lib/supabase/ClientComponentClient";
+import {LocalizedText} from "@/types";
+import {PAGES} from "@/config/page.config";
 
 interface CakeHeroProps {
   scrollText?: string;
@@ -24,6 +27,13 @@ interface CakeHeroLayer {
   style?: {transform: string}
 }
 
+interface CakeHeroRecipe {
+  title: LocalizedText,
+  steps_count: number,
+  preparing_time: number,
+  slug: string,
+}
+
 const layers: CakeHeroLayer[] = [
   { id: 'layer1', src: '/images/cake-layer/1.png', dy: 0, lblId: 'lbl1', label: {en: 'Sponge base', ua: "Бісквіт"}, threshold: 0.18, delay: 0, zIndex: 1, style: {transform: "scale(1.4)"}},
   { id: 'layer2', src: '/images/cake-layer/layer_2.jpg', dy: -65, lblId: 'lbl2', label: {en: 'Strawberry jam', ua: "Полуничний джем"}, threshold: 0.26, delay: 150, zIndex: 2 },
@@ -36,6 +46,7 @@ const layers: CakeHeroLayer[] = [
 const CakeHero = ({
   scrollText = 'scroll'
 }: CakeHeroProps) => {
+  const [heroRecipe, setHeroRecipe] = useState<CakeHeroRecipe | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const particlesRef = useRef<HTMLDivElement>(null);
   const scrollHintRef = useRef<HTMLDivElement>(null);
@@ -48,6 +59,19 @@ const CakeHero = ({
 
   const tRecipes = useTranslations('recipes');
   const locale = useLocale() as "en" | "ua";
+
+  useEffect(() => {
+    const fetchHeroCake = async () => {
+      const {data} = await supabase
+        .from('recipes')
+        .select('title, preparing_time, steps_count, slug')
+        .eq('id', '01KTTPMCH43XJY6Q0ZDC6SAD0F')
+        .single();
+      setHeroRecipe(data);
+    }
+
+    fetchHeroCake();
+  }, []);
 
   // Generate particles on mount
   useEffect(() => {
@@ -171,14 +195,14 @@ const CakeHero = ({
         {/* Recipe Card - Left Side */}
         <div className="cake-recipe-card" ref={recipeCardRef}>
           <div className="cake-recipe-divider" />
-          <h3 className="cake-recipe-title">Pistachio Strawberry Cake</h3>
+          <h3 className="cake-recipe-title">{heroRecipe?.title[locale]}</h3>
           <div className="cake-recipe-meta">
             <span className="cake-recipe-time">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10"/>
                 <path d="M12 6v6l4 2"/>
               </svg>
-              120 {tRecipes('singlePage.minutes')}
+              {heroRecipe?.preparing_time} {tRecipes('singlePage.minutes')}
             </span>
             <span className="cake-recipe-steps">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -186,12 +210,11 @@ const CakeHero = ({
                 <rect x="9" y="3" width="6" height="4" rx="1"/>
                 <path d="M9 12h6M9 16h6"/>
               </svg>
-              {/*{tRecipes('singlePage.steps', {count: 3})}*/}
-              4
+              {tRecipes('singlePage.steps', {count: heroRecipe?.steps_count || 5})}
             </span>
           </div>
           <div className="cake-recipe-divider" />
-          <Link href="/recipes" className="cake-recipe-link">
+          <Link href={PAGES.RECIPE(heroRecipe?.slug + "-" + "01KTTPMCH43XJY6Q0ZDC6SAD0F")} className="cake-recipe-link">
             {tRecipes("card.toRecipe")}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M5 12h14M12 5l7 7-7 7"/>

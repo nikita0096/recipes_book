@@ -76,7 +76,7 @@ export default function SignInPage() {
       resetLogin();
       closeModal();
     } catch (error) {
-      if(error instanceof Error) {
+      if (error instanceof Error) {
         const errorMessage = error.message === 'Invalid login credentials'
           ? t('auth.errors.invalidCredentials')
           : error.message;
@@ -96,7 +96,7 @@ export default function SignInPage() {
     try {
       await handleGoogleLogin(redirectUrl);
     } catch (error) {
-      if(error instanceof Error) {
+      if (error instanceof Error) {
         setError(error.message);
       } else {
         setError(t('auth.errors.default'));
@@ -106,9 +106,9 @@ export default function SignInPage() {
 
   return (
     <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
-    onClick={closeModal}>
+         onClick={closeModal}>
       <div className='relative w-11/12 max-w-md bg-surface border border-border p-8 sm:p-10'
-      onClick={(e) => e.stopPropagation()}>
+           onClick={(e) => e.stopPropagation()}>
         {/* Close button */}
         <button
           className='absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-muted hover:text-text transition-colors'
@@ -147,9 +147,9 @@ export default function SignInPage() {
           <form className='flex flex-col w-full'
                 onSubmit={handleSubmitLogin(handleLoginWithEmail)}>
             <label className='w-full mb-5'>
-          <span className='block text-[11px] tracking-[0.08em] uppercase text-muted mb-2'>
-            {t('auth.email')}
-          </span>
+              <span className='block text-[11px] tracking-[0.08em] uppercase text-muted mb-2'>
+                {t('auth.email')}
+              </span>
               <input
                 {...registerLogin('emailLogin')}
                 className='w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors'
@@ -157,10 +157,10 @@ export default function SignInPage() {
                 placeholder={t('auth.emailPlaceholder')}
               />
             </label>
-            <label className='w-full mb-6'>
-          <span className='block text-[11px] tracking-[0.08em] uppercase text-muted mb-2'>
-            {t('auth.password')}
-          </span>
+            <label className='w-full mb-5'>
+              <span className='block text-[11px] tracking-[0.08em] uppercase text-muted mb-2'>
+                {t('auth.password')}
+              </span>
               <div className='relative'>
                 <input
                   {...registerLogin('passwordLogin')}
@@ -173,10 +173,12 @@ export default function SignInPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   className='absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors'
                 >
-                  {showPassword ? <IoEyeOff className='text-lg' /> : <IoEye className='text-lg' />}
+                  {showPassword ? <IoEyeOff className='text-lg'/> : <IoEye className='text-lg'/>}
                 </button>
               </div>
             </label>
+
+            <span className='underline cursor-pointer text-sm mb-5' onClick={() => router.replace(PAGES.RESET_PASSWORD(pathname))}>{t('auth.forgotPassword')}</span>
 
             {error && (
               <p className='text-center text-red-500 text-sm mb-3'>{error}</p>

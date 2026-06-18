@@ -46,7 +46,8 @@ export const handleEmailLogin = async (email: string, password: string) => {
 }
 
 export const handleSignUp = async (email: string, password: string, pathname: string) => {
-  const url = new URL(window.location.origin + '/en/auth/callback');
+  const locale = window.location.pathname.split('/')[1] || 'en';
+  const url = new URL(`${window.location.origin}/${locale}/auth/update-password`);
   url.searchParams.set('next', pathname);
 
   const { data,  error } = await supabase.auth.signUp({
@@ -65,6 +66,28 @@ export const handleSignUp = async (email: string, password: string, pathname: st
 export const logout = async () => {
   await supabase.auth.signOut();
 };
+
+export const handleResetPassword = async (email: string, pathname: string) => {
+  const locale = window.location.pathname.split('/')[1] || 'en';
+  const url = new URL(`${window.location.origin}/${locale}/auth/update-password`);
+  url.searchParams.set('next', pathname);
+
+  const {error} = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: url.toString(),
+  });
+
+  if(error) throw error;
+}
+
+export const handleUpdatePassword = async (newPassword: string) => {
+  const {data, error} = await supabase.auth.updateUser({
+    password: newPassword
+  });
+
+  if(error) throw error;
+
+  return data;
+}
 
 export const getUser = async () => {
   const {data: {user}} = await supabase.auth.getUser();
