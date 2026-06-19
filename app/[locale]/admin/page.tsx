@@ -748,7 +748,7 @@ const Page = () => {
                     {t('form.fields.price')} (UAH)
                   </label>
                   <div className="relative">
-                    <input {...register('price.ua', {required: false, min: 1, max: 100000, valueAsNumber: true})}
+                    <input {...register('price.ua', {required: false, min: 0, max: 100000, valueAsNumber: true})}
                            name="price.ua"
                            aria-invalid={errors.price?.ua ? "true" : "false"}
                            className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"

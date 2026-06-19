@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import Image from "next/image";
 import {IRecipe, IRecipePremiumIncomplete, RecipePrice} from "@/types/recipe";
 import {useTranslations} from "next-intl";
@@ -13,9 +13,11 @@ import {fetchRecipe} from "@/services/db/public/fetchRecipe";
 import {deleteLike} from "@/services/db/recipe-likes/deleteLike";
 import {SecureVideoPlayer} from "@/components/video/SecureVideoPlayer";
 import Footer from "@/components/footer/Footer";
-import {useRouter} from "next/navigation";
+import {usePathname, useRouter} from "next/navigation";
 import {RECIPE_PLACEHOLDER_IMAGE} from "@/constants/images";
 import LoadingPage from "@/components/ui/LoadingPage";
+import CheckoutModal from "@/components/recipes/recipe/CheckoutModal";
+import {PAGES} from "@/config/page.config";
 
 
 interface RecipePageProps {
@@ -82,34 +84,54 @@ const RecipePage: React.FC<RecipePageProps> = ({
   const [error, setError] = useState<Error | string | null>(initialError);
   const [loading, setLoading] = useState<boolean>(false);
 
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+
   const locale = useTypedLocale();
   const t = useTranslations('recipes');
   const {user} = useUserStore();
 
   const router = useRouter();
+  const pathname = usePathname();
+
+  const loadRecipe = useCallback(async () => {
+    setLoading(true);
+    const {data, totalPrice, error} = await fetchRecipe(recipeId);
+
+    if (error) setError(error);
+
+    if (data) {
+      setRecipe(data);
+      setLikes(data.likes);
+    }
+
+    if (totalPrice) {
+      setRecipePrice(totalPrice);
+    }
+    setLoading(false);
+  }, [recipeId]);
 
   useEffect(() => {
     if (initialRecipe) return;
+    const run = async () => {
+      await loadRecipe();
+    };
+    run();
+  }, [initialRecipe, loadRecipe]);
 
-    const fetchData = async () => {
-      setLoading(true);
-      const {data, totalPrice, error} = await fetchRecipe(recipeId);
-
-      if (error) setError(error);
-
-      if (data) {
-        setRecipe(data);
-        setLikes(data.likes);
-      }
-
-      if (totalPrice) {
-        setRecipePrice(totalPrice);
-      }
-      setLoading(false);
+  const handleBuy = () => {
+    if (!user) {
+      router.push(PAGES.SIGNIN(pathname));
+      return;
     }
+    setCheckoutOpen(true);
+  };
 
-    fetchData();
-  }, [recipeId, initialRecipe]);
+  const handleCheckoutComplete = () => {
+    // Stripe confirms payment client-side; the webhook records the purchase.
+    // Re-fetch so the now-unlocked premium content (steps/video) loads.
+    setCheckoutOpen(false);
+    loadRecipe();
+  };
 
   if (error) {
     return (
@@ -147,7 +169,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
       } else {
         await deleteLike(recipe.id, user.id);
       }
-    } catch (error) {
+    } catch {
       setIsLiked(prevState => !prevState);
       setLikes(prevState => isNewLiked ? prevState - 1 : prevState + 1);
     }
@@ -335,15 +357,15 @@ const RecipePage: React.FC<RecipePageProps> = ({
                         {recipePrice.discount && recipePrice.discount > 0 ? (
                           <div className="flex items-end gap-2">
                               <span className="font-serif italic text-2xl md:text-4xl text-text leading-none">
-                                {locale === 'en' ? '$' : '₴'}{(recipePrice.price[locale] * (1 - recipePrice.discount / 100)).toFixed(2)}
+                                ${(recipePrice.price.en * (1 - recipePrice.discount / 100)).toFixed(2)}
                               </span>
                             <span className="text-xs md:text-sm text-muted line-through">
-                                ${recipePrice.price[locale]}
+                                ${recipePrice.price.en}
                               </span>
                           </div>
                         ) : (
                           <span className="font-serif italic text-2xl md:text-4xl text-text leading-none">
-                            {locale === 'en' ? '$' : '₴'}{recipePrice?.price[locale]}
+                            ${recipePrice?.price.en}
                           </span>
                         )}
                       </span>
@@ -353,6 +375,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
                 {/* Buy button */}
                 <button
                   type="button"
+                  onClick={handleBuy}
                   className="w-full bg-accent text-bg font-medium text-sm tracking-wider uppercase py-3 px-5 md:py-3.5 md:px-6 inline-flex items-center justify-center gap-2.5 cursor-pointer hover:opacity-90 transition-opacity"
                 >
                   <UnlockIcon size={13}
@@ -478,6 +501,14 @@ const RecipePage: React.FC<RecipePageProps> = ({
         </button>
       </div>
       <Footer user={user}/>
+
+      {checkoutOpen && (
+        <CheckoutModal
+          recipeId={recipeId}
+          onClose={() => setCheckoutOpen(false)}
+          onComplete={handleCheckoutComplete}
+        />
+      )}
     </div>
   );
 };
