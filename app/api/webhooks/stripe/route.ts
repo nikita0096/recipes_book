@@ -24,19 +24,19 @@ export async function POST(req: Request) {
 
   console.log('[stripe webhook] received event:', event.type)
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object
-    const userId = session.metadata?.userId
-    const recipeId = session.metadata?.recipeId
+  if (event.type === 'payment_intent.succeeded') {
+    const intent = event.data.object
+    const userId = intent.metadata?.userId
+    const recipeId = intent.metadata?.recipeId
 
-    console.log('[stripe webhook] checkout completed:', {
-      payment_status: session.payment_status,
+    console.log('[stripe webhook] payment succeeded:', {
+      status: intent.status,
       userId,
       recipeId,
     })
 
-    if (session.payment_status !== 'paid' || !userId || !recipeId) {
-      // Nothing to fulfill (e.g. unpaid session) — acknowledge so Stripe stops retrying.
+    if (!userId || !recipeId) {
+      // Not one of our recipe purchases — acknowledge so Stripe stops retrying.
       return NextResponse.json({ received: true })
     }
 
@@ -62,8 +62,8 @@ export async function POST(req: Request) {
         user_id: userId,
         recipe_id: recipeId,
         premium_recipe_id: recipe?.premium_recipe ?? null,
-        payment_status: session.payment_status, // 'paid'
-        price: (session.amount_total ?? 0) / 100, // dollars actually charged
+        payment_status: 'paid',
+        price: (intent.amount_received ?? intent.amount) / 100, // dollars actually charged
       })
 
       if (error) {

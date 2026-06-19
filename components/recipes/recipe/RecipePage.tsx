@@ -93,8 +93,10 @@ const RecipePage: React.FC<RecipePageProps> = ({
   const router = useRouter();
   const pathname = usePathname();
 
-  const loadRecipe = useCallback(async () => {
-    setLoading(true);
+  const loadRecipe = useCallback(async (silent = false) => {
+    // `silent` lets the caller manage the loading state itself (e.g. while
+    // polling) so the screen doesn't flicker between attempts.
+    if (!silent) setLoading(true);
     const {data, totalPrice, error} = await fetchRecipe(recipeId);
 
     if (error) setError(error);
@@ -107,7 +109,8 @@ const RecipePage: React.FC<RecipePageProps> = ({
     if (totalPrice) {
       setRecipePrice(totalPrice);
     }
-    setLoading(false);
+    if (!silent) setLoading(false);
+    return data;
   }, [recipeId]);
 
   useEffect(() => {
@@ -126,11 +129,19 @@ const RecipePage: React.FC<RecipePageProps> = ({
     setCheckoutOpen(true);
   };
 
-  const handleCheckoutComplete = () => {
-    // Stripe confirms payment client-side; the webhook records the purchase.
-    // Re-fetch so the now-unlocked premium content (steps/video) loads.
+  const handleCheckoutComplete = async () => {
+    // Stripe confirms payment client-side, but the webhook records the purchase
+    // asynchronously — so poll the recipe until the unlocked content lands
+    // instead of refetching once and possibly racing the webhook.
     setCheckoutOpen(false);
-    loadRecipe();
+    setLoading(true);
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const data = await loadRecipe(true);
+      const unlocked = !!data?.recipeSteps?.length || (data?.videoUrl ?? null) !== null;
+      if (unlocked) break;
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    }
+    setLoading(false);
   };
 
   if (error) {

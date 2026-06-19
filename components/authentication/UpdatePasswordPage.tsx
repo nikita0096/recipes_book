@@ -78,7 +78,7 @@ const UpdatePasswordPage = () => {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className='text-md sm:text-xl text-text mb-2 uppercase'>
+          <h1 className='text-md sm:text-xl text-text mb-2 uppercase' style={{ fontFamily: 'var(--font-dm-serif), Georgia, serif' }}>
             {t('auth.updatePasswordSubtitle')}
           </h1>
         </div>

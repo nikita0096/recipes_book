@@ -119,7 +119,7 @@ export default function SignInPage() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className='font-serif text-3xl sm:text-4xl italic font-normal text-text mb-2'>
+          <h1 className='font-serif text-3xl sm:text-4xl italic font-normal text-text mb-2' style={{ fontFamily: 'var(--font-dm-serif), Georgia, serif' }}>
             {t('auth.welcome')}
           </h1>
           <p className="text-sm text-muted">

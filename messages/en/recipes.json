@@ -35,6 +35,15 @@
       "buyButton": "Buy recipe",
       "footer": "Secure checkout · instant access"
     },
+    "checkout": {
+      "title": "Checkout",
+      "close": "Close",
+      "loading": "Loading…",
+      "pay": "Pay",
+      "processing": "Processing…",
+      "payError": "Payment failed",
+      "startError": "Failed to start checkout"
+    },
     "meta": {
       "time": "Time",
       "preparation": "Preparation",
