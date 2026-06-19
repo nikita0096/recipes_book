@@ -94,7 +94,8 @@ export default function SignInPage() {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const redirectUrl = origin + pathname;
     try {
-      await handleGoogleLogin(redirectUrl);
+      const user = await handleGoogleLogin(redirectUrl);
+      console.log(user);
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
