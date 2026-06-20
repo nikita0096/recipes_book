@@ -2,11 +2,14 @@ import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {AuthorInfoForm} from "@/app/[locale]/admin/author/page";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {deleteFileByPath} from "@/services/storage/deleteImageFromStorage";
-import {AuthorInfo} from "@/services/db/author/fetchAuthorInfo";
+import {AuthorInfo, mapAuthorRow} from "@/services/db/author/fetchAuthorInfo";
 import {v4 as uuidv4} from "uuid";
-import {getPublicImageUrl} from "@/services/storage/getPublicImageUrl";
 
 const AUTHOR_BUCKET = 'author';
+
+// Hero words are stored as an array; normalize free-text input into clean,
+// space-separated tokens (collapses extra whitespace, drops empties).
+const toWords = (value: string): string[] => value.trim().split(/\s+/).filter(Boolean);
 
 export const updateAuthorInfo = async (
   id: string,
@@ -48,7 +51,12 @@ export const updateAuthorInfo = async (
       views: data.views,
       you_tube_link: data.youTube,
       name: data.name,
-      description: data.description
+      description: data.description,
+      description_footer: data.descriptionFooter,
+      animated_hero_words: {
+        en: toWords(data.animatedHeroWords.en),
+        uk: toWords(data.animatedHeroWords.uk),
+      }
     })
     .eq('id', id)
     .select()
@@ -58,27 +66,5 @@ export const updateAuthorInfo = async (
     throw new Error(error?.message || 'Failed to update author');
   }
 
-  const imageUrl = getPublicImageUrl(updatedAuthor.image, 'author');
-
-  return {
-    data: {
-      instagram: updatedAuthor.inst_link,
-      tikTok: updatedAuthor.tik_tok_link,
-      youTube: updatedAuthor.you_tube_link,
-      facebook: updatedAuthor.facebook_link,
-      telegram: updatedAuthor.telegram_link,
-      id: updatedAuthor.id,
-      image: imageUrl || '',
-      name: updatedAuthor.name,
-      recipesCount: updatedAuthor.recipes_count,
-      subscribers: updatedAuthor.subscribers,
-      views: updatedAuthor.views,
-      email: updatedAuthor.contact_email,
-      description: {
-        en: updatedAuthor.description.en,
-        uk: updatedAuthor.description.uk,
-      }
-    },
-    error: null
-  };
+  return {data: mapAuthorRow(updatedAuthor), error: null};
 };

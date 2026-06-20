@@ -93,6 +93,12 @@
       "authorInfo": "Інформація",
       "descriptionUK": "Опис (Українська)",
       "descriptionEN": "Опис (Англійська)",
+      "descriptionFooterUK": "Опис у футері (Українська)",
+      "descriptionFooterEN": "Опис у футері (Англійська)",
+      "animatedHeroWordsUK": "Анімовані слова на головній (Українська)",
+      "animatedHeroWordsEN": "Анімовані слова на головній (Англійська)",
+      "animatedHeroWordsHint": "Введіть слова через один пробіл, без ком — кожне слово анімується окремо.",
+      "translateToEnglish": "Перекласти англійською →",
       "submitForm": "Зберегти зміни",
       "validation": {
         "addPicture": "Додати зображення автора"

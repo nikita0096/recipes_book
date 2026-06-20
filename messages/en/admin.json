@@ -93,6 +93,12 @@
       "authorInfo": "Information",
       "descriptionUK": "Description (Ukrainian)",
       "descriptionEN": "Description (English)",
+      "descriptionFooterUK": "Footer description (Ukrainian)",
+      "descriptionFooterEN": "Footer description (English)",
+      "animatedHeroWordsUK": "Animated hero words (Ukrainian)",
+      "animatedHeroWordsEN": "Animated hero words (English)",
+      "animatedHeroWordsHint": "Enter words separated by a single space, without commas — each word is animated separately.",
+      "translateToEnglish": "Translate to English →",
       "submitForm": "Save changes",
       "validation": {
         "addPicture": "Add author picture"
