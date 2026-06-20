@@ -73,7 +73,7 @@ export const prepareUpdateData = async ({
 
     // Process steps - upload new images if needed
     const processedSteps: RecipeStep[] = [];
-    const filteredSteps = formData.recipeSteps.filter(step => step.desc.en && step.desc.ua);
+    const filteredSteps = formData.recipeSteps.filter(step => step.desc.en && step.desc.uk);
 
     for (const step of filteredSteps) {
       let imgPath = step.imgUrl;
@@ -251,17 +251,17 @@ export const prepareUpdateData = async ({
 // Helper to check if data has changed
 export const hasDataChanged = (formData: EditingValues, recipe: IRecipe): boolean => {
   // Check title
-  if (formData.title.ua !== recipe.title.ua || formData.title.en !== recipe.title.en) {
+  if (formData.title.uk !== recipe.title.uk || formData.title.en !== recipe.title.en) {
     return true;
   }
 
   // Check description
-  if (formData.description.ua !== recipe.description.ua || formData.description.en !== recipe.description.en) {
+  if (formData.description.uk !== recipe.description.uk || formData.description.en !== recipe.description.en) {
     return true;
   }
 
   // Check category
-  if (formData.category.ua !== recipe.category.ua || formData.category.en !== recipe.category.en) {
+  if (formData.category.uk !== recipe.category.uk || formData.category.en !== recipe.category.en) {
     return true;
   }
 
@@ -315,7 +315,7 @@ export const hasDataChanged = (formData: EditingValues, recipe: IRecipe): boolea
     const formStep = formData.recipeSteps[i];
     const recipeStep = recipe.recipeSteps[i];
 
-    if (formStep.desc.ua !== recipeStep.desc.ua || formStep.desc.en !== recipeStep.desc.en) {
+    if (formStep.desc.uk !== recipeStep.desc.uk || formStep.desc.en !== recipeStep.desc.en) {
       return true;
     }
     if (formStep.imgUrl !== recipeStep.imgUrl || formStep.imgFile !== null) {
@@ -334,7 +334,7 @@ export const hasDataChanged = (formData: EditingValues, recipe: IRecipe): boolea
     const recipeGroup = recipe.ingredients[g];
 
     if (
-      formGroup.title.ua !== recipeGroup.title.ua ||
+      formGroup.title.uk !== recipeGroup.title.uk ||
       formGroup.title.en !== recipeGroup.title.en
     ) {
       return true;
@@ -349,7 +349,7 @@ export const hasDataChanged = (formData: EditingValues, recipe: IRecipe): boolea
       const recipeIng = recipeGroup.ingredients[i];
 
       if (
-        formIng.value.ua !== recipeIng.value.ua ||
+        formIng.value.uk !== recipeIng.value.uk ||
         formIng.value.en !== recipeIng.value.en ||
         formIng.quantity !== recipeIng.quantity ||
         formIng.unit !== recipeIng.unit

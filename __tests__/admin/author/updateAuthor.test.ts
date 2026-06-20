@@ -48,7 +48,7 @@ const createMockAuthorForm = (overrides?: Partial<AuthorInfoForm>): AuthorInfoFo
   imageFile: null,
   description: {
     en: 'Professional pastry chef with 10+ years experience',
-    ua: 'Професійний кондитер з 10+ роками досвіду',
+    uk: 'Професійний кондитер з 10+ роками досвіду',
   },
   ...overrides,
 });
@@ -186,7 +186,7 @@ describe('updateAuthorInfo', () => {
       const formData = createMockAuthorForm({
         description: {
           en: 'Updated English description',
-          ua: 'Оновлений український опис',
+          uk: 'Оновлений український опис',
         },
       });
 
@@ -209,7 +209,7 @@ describe('updateAuthorInfo', () => {
                 image: formData.image,
                 description: {
                   en: 'Updated English description',
-                  ua: 'Оновлений український опис',
+                  uk: 'Оновлений український опис',
                 },
               },
               error: null,
@@ -223,7 +223,7 @@ describe('updateAuthorInfo', () => {
       const result = await updateAuthorInfo('author-1', formData, 'author-123.jpg');
 
       expect(result.data.description.en).toBe('Updated English description');
-      expect(result.data.description.ua).toBe('Оновлений український опис');
+      expect(result.data.description.uk).toBe('Оновлений український опис');
     });
   });
 

@@ -51,11 +51,11 @@ import {getPublicImageUrl} from "@/services/storage/getPublicImageUrl";
 
 type StepFields = { desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string }
 
-const createEmptyDraft = () => ({ua: '', en: '', quantity: '', unit: units[0].value});
+const createEmptyDraft = () => ({uk: '', en: '', quantity: '', unit: units[0].value});
 
 const createEmptyGroup = (): IngredientGroupFormValues => ({
   id: uuidv4(),
-  title: {en: '', ua: ''},
+  title: {en: '', uk: ''},
   ingredients: [],
   draft: createEmptyDraft(),
 });
@@ -65,12 +65,12 @@ type EditingSteps = { desc: LocalizedText; imgUrl: string | null; imgFile: File 
 export interface EditingValues {
   heroImg: string;
   heroImgFile: File | null;
-  category: { ua: string; en: string };
-  title: { ua: string; en: string };
-  description: { ua: string; en: string };
+  category: { uk: string; en: string };
+  title: { uk: string; en: string };
+  description: { uk: string; en: string };
   ingredientGroups: IngredientGroupFormValues[];
   recipeSteps: StepFields[];
-  price: { en: number; ua: number },
+  price: { en: number; uk: number },
   discount: number,
   likes: number;
   videoUrl: string;
@@ -123,10 +123,10 @@ const Page = () => {
     defaultValues: {
       heroImg: '',
       heroImgFile: null,
-      category: {ua: '', en: ''},
-      title: {ua: '', en: ''},
-      description: {ua: '', en: ''},
-      price: {en: 0, ua: 0},
+      category: {uk: '', en: ''},
+      title: {uk: '', en: ''},
+      description: {uk: '', en: ''},
+      price: {en: 0, uk: 0},
       discount: 0,
       ingredientGroups: [],
       recipeSteps: [],
@@ -351,30 +351,30 @@ const Page = () => {
 
   // Translation function
   type TranslateInputs =
-    | 'title.ua'
-    | 'description.ua'
-    | `ingredientGroups.${number}.draft.ua`
-    | `ingredientGroups.${number}.title.ua`
-    | `recipeSteps.${number}.desc.ua`;
+    | 'title.uk'
+    | 'description.uk'
+    | `ingredientGroups.${number}.draft.uk`
+    | `ingredientGroups.${number}.title.uk`
+    | `recipeSteps.${number}.desc.uk`;
 
   const handleTranslateText = async (flag: string, index?: number) => {
     const inputFields: Record<string, TranslateInputs> = {
-      title: 'title.ua',
-      description: 'description.ua',
+      title: 'title.uk',
+      description: 'description.uk',
       ...(index !== undefined && {
-        ingredient: `ingredientGroups.${index}.draft.ua`,
-        groupTitle: `ingredientGroups.${index}.title.ua`,
-        stepDescription: `recipeSteps.${index}.desc.ua`
+        ingredient: `ingredientGroups.${index}.draft.uk`,
+        groupTitle: `ingredientGroups.${index}.title.uk`,
+        stepDescription: `recipeSteps.${index}.desc.uk`
       })
     }
 
-    const textUa = getValues(inputFields[flag]);
+    const textUk = getValues(inputFields[flag]);
 
-    if (!textUa) return;
+    if (!textUk) return;
 
     const res = await fetch('/api/translate', {
       method: 'POST',
-      body: JSON.stringify({text: textUa})
+      body: JSON.stringify({text: textUk})
     });
 
     const {translated} = await res.json();
@@ -406,12 +406,21 @@ const Page = () => {
 
   const toggleEditButton = () => {
     if (recipe) {
-      setValue('title', recipe.title);
-      setValue('description', recipe.description);
+      setValue('title', {en: recipe.title.en, uk: recipe.title.uk});
+      setValue('description', {en: recipe.description.en, uk: recipe.description.uk});
       setValue('heroImg', recipe.heroImg);
-      setValue('category', recipe.category);
-      setValue('ingredientGroups', recipe.ingredients.map(group => ({...group, draft: createEmptyDraft()})));
-      setValue('recipeSteps', recipe.recipeSteps.map(step => ({...step, imgFile: null})));
+      setValue('category', {en: recipe.category.en, uk: recipe.category.uk});
+      setValue('ingredientGroups', recipe.ingredients.map(group => ({
+        ...group,
+        title: {en: group.title.en, uk: group.title.uk},
+        ingredients: group.ingredients.map(ing => ({...ing, value: {en: ing.value.en, uk: ing.value.uk}})),
+        draft: createEmptyDraft(),
+      })));
+      setValue('recipeSteps', recipe.recipeSteps.map(step => ({
+        ...step,
+        desc: {en: step.desc.en, uk: step.desc.uk},
+        imgFile: null,
+      })));
       setValue('likes', recipe.likes);
       setValue('videoUrl', videoSrc ?? '');
       setValue('preparingTime', recipe.preparingTime);
@@ -419,7 +428,7 @@ const Page = () => {
       setValue('diameter', recipe.diameter);
       setValue('calories', recipe.calories);
       setValue('isPremium', recipe.isPremium);
-      setValue('price', recipePrice?.price || {en: 0, ua: 0});
+      setValue('price', recipePrice?.price ? {en: recipePrice.price.en, uk: recipePrice.price.uk} : {en: 0, uk: 0});
       setValue('discount', recipePrice?.discount || 0);
       setValue('slug', recipe.slug)
     }
@@ -481,17 +490,17 @@ const Page = () => {
 
   const addNewIngredient = (groupIndex: number) => {
     const draft = getValues(`ingredientGroups.${groupIndex}.draft`);
-    const ingredientUa = draft.ua?.trim();
+    const ingredientUk = draft.uk?.trim();
     const ingredientEn = draft.en?.trim();
     const quantity = draft.quantity?.trim();
     const unit = draft.unit;
 
-    if (!ingredientUa || !ingredientEn || !quantity || !unit) {
+    if (!ingredientUk || !ingredientEn || !quantity || !unit) {
       return;
     }
 
     const newIngredient = {
-      value: {en: ingredientEn, ua: ingredientUa},
+      value: {en: ingredientEn, uk: ingredientUk},
       quantity: quantity,
       unit: unit,
       id: uuidv4()
@@ -580,7 +589,7 @@ const Page = () => {
   const addNewStep = () => {
     const newId = uuidv4();
     startEditingStep(newId);
-    const newStep = {desc: {en: '', ua: ''}, imgUrl: null, imgFile: null, id: newId};
+    const newStep = {desc: {en: '', uk: ''}, imgUrl: null, imgFile: null, id: newId};
     appendStep(newStep);
   };
 
@@ -596,7 +605,7 @@ const Page = () => {
     handleCloseStepEditing(id);
   };
 
-  const handleStepChange = (id: string, field: 'ua' | 'en', value: string) => {
+  const handleStepChange = (id: string, field: 'uk' | 'en', value: string) => {
     const index = watchedSteps.findIndex(item => item.id === id);
     if (index === -1) return;
 
@@ -621,10 +630,10 @@ const Page = () => {
   };
 
   const saveStepChanges = (id: string, i: number) => {
-    if (stepFields[i].desc.en && stepFields[i].desc.ua) {
+    if (stepFields[i].desc.en && stepFields[i].desc.uk) {
       handleCloseStepEditing(id);
       setStepFieldError(null);
-    } else setStepFieldError(locale === 'ua' ? "Додайте хоча б опис" : "Add at least description");
+    } else setStepFieldError(locale === 'uk' ? "Додайте хоча б опис" : "Add at least description");
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -936,12 +945,12 @@ const Page = () => {
                             <div className="line-through text-white/40 mr-1.5 flex gap-2">
                               <span>${recipePrice.price.en}</span>
                               /
-                              <span>{recipePrice.price.ua}₴</span>
+                              <span>{recipePrice.price.uk}₴</span>
                             </div>
                             <div className="text-accent font-medium flex gap-2">
                               <span>${(recipePrice.price.en * (1 - recipePrice.discount / 100)).toFixed(2)}</span>
                               /
-                              <span>{(recipePrice.price.ua * (1 - recipePrice.discount / 100)).toFixed(2)}₴</span>
+                              <span>{(recipePrice.price.uk * (1 - recipePrice.discount / 100)).toFixed(2)}₴</span>
                             </div>
                             <span className="ml-1.5 text-xs text-green-400">-{recipePrice.discount}%</span>
                           </>
@@ -949,7 +958,7 @@ const Page = () => {
                           <div className="text-accent font-medium flex gap-2">
                             <span>${recipePrice.price.en}</span>
                             /
-                            <span>{recipePrice.price.ua}₴</span>
+                            <span>{recipePrice.price.uk}₴</span>
                           </div>
                         )}
                       </span>
@@ -1140,9 +1149,9 @@ const Page = () => {
                   {tAdmin('form.fields.price')} (UAH)
                 </label>
                 <div className="relative">
-                  <input {...register('price.ua', {required: false, min: 1, max: 100000, valueAsNumber: true})}
-                         name="price.ua"
-                         aria-invalid={errors.price?.ua ? "true" : "false"}
+                  <input {...register('price.uk', {required: false, min: 0, max: 100000, valueAsNumber: true})}
+                         name="price.uk"
+                         aria-invalid={errors.price?.uk ? "true" : "false"}
                          className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                          type="number"/>
                   <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">₴</span>
@@ -1170,8 +1179,8 @@ const Page = () => {
             <div className="space-y-3 max-w-2xl">
               <input
                 type="text"
-                {...register('title.ua')}
-                placeholder={tAdmin('form.fields.titlePlaceholderUa')}
+                {...register('title.uk')}
+                placeholder={tAdmin('form.fields.titlePlaceholderUk')}
                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
               />
               <button
@@ -1208,8 +1217,8 @@ const Page = () => {
             <div className="space-y-3 max-w-2xl">
               <textarea
                 cols={5}
-                {...register('description.ua')}
-                placeholder={tAdmin('form.fields.descriptionPlaceholderUa')}
+                {...register('description.uk')}
+                placeholder={tAdmin('form.fields.descriptionPlaceholderUk')}
                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
               />
               <button
@@ -1316,10 +1325,10 @@ const Page = () => {
                           {/* Group title inputs */}
                           <div className="space-y-3 mb-5 max-w-2xl">
                             <input
-                              {...register(`ingredientGroups.${groupIndex}.title.ua`)}
+                              {...register(`ingredientGroups.${groupIndex}.title.uk`)}
                               className="w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                               type="text"
-                              placeholder={tAdmin('form.fields.groupTitlePlaceholderUa')}
+                              placeholder={tAdmin('form.fields.groupTitlePlaceholderUk')}
                             />
                             <button
                               type="button"
@@ -1351,9 +1360,9 @@ const Page = () => {
                                         <div className="space-y-2">
                                           <input
                                             type="text"
-                                            name='value.ua'
+                                            name='value.uk'
                                             onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
-                                            value={editingIngredientsData[ingredient.id].value.ua}
+                                            value={editingIngredientsData[ingredient.id].value.uk}
                                             placeholder="UA"
                                             className="w-full px-2 py-1.5 text-sm bg-bg border border-border focus:outline-none focus:border-accent"
                                           />
@@ -1425,10 +1434,10 @@ const Page = () => {
                             <div className="space-y-3">
                               <div className="grid grid-cols-1 gap-3">
                                 <input
-                                  {...register(`ingredientGroups.${groupIndex}.draft.ua`)}
+                                  {...register(`ingredientGroups.${groupIndex}.draft.uk`)}
                                   className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                                   type="text"
-                                  placeholder={tAdmin('form.fields.ingredientPlaceholderUa')}
+                                  placeholder={tAdmin('form.fields.ingredientPlaceholderUk')}
                                 />
                                 <button
                                   type="button"
@@ -1463,7 +1472,7 @@ const Page = () => {
                                     {units.map((unit) => (
                                       <option key={unit.value}
                                               value={unit.value}>
-                                        {unit.label.ua} / {unit.label.en}
+                                        {unit.label.uk} / {unit.label.en}
                                       </option>
                                     ))}
                                   </select>
@@ -1575,11 +1584,11 @@ const Page = () => {
                           <div className="space-y-3 p-3">
                             <div>
                               <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
-                                {tAdmin('form.fields.descriptionUa')}
+                                {tAdmin('form.fields.descriptionUk')}
                               </label>
                               <textarea
-                                value={typeof step.desc === 'string' ? '' : step.desc.ua}
-                                onChange={(e) => handleStepChange(step.id, 'ua', e.target.value)}
+                                value={typeof step.desc === 'string' ? '' : step.desc.uk}
+                                onChange={(e) => handleStepChange(step.id, 'uk', e.target.value)}
                                 rows={3}
                                 required={true}
                                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"

@@ -18,16 +18,16 @@ const mockSupabase = supabase as jest.Mocked<typeof supabase>;
 // Mock data
 const createMockPublicRecipe = (): IRecipeUploadPublic => ({
   id: 'recipe-123',
-  title: { ua: 'Тестовий рецепт', en: 'Test Recipe' },
-  description: { ua: 'Тестовий опис', en: 'Test Description' },
-  category: { ua: 'Десерти', en: 'Desserts' },
+  title: { uk: 'Тестовий рецепт', en: 'Test Recipe' },
+  description: { uk: 'Тестовий опис', en: 'Test Description' },
+  category: { uk: 'Десерти', en: 'Desserts' },
   likes: 0,
   ingredients: [
     {
       id: 'group-1',
-      title: { ua: 'Основа', en: 'Base' },
+      title: { uk: 'Основа', en: 'Base' },
       ingredients: [
-        { id: 'ing-1', value: { ua: 'Цукор', en: 'Sugar' }, quantity: '100', unit: 'g' },
+        { id: 'ing-1', value: { uk: 'Цукор', en: 'Sugar' }, quantity: '100', unit: 'g' },
       ],
     },
   ],
@@ -39,7 +39,7 @@ const createMockPublicRecipe = (): IRecipeUploadPublic => ({
   calories: null,
   videoUrl: 'video-key-1',
   recipeSteps: [
-    { desc: { ua: 'Крок 1', en: 'Step 1' }, imgUrl: null, id: 'step-1' },
+    { desc: { uk: 'Крок 1', en: 'Step 1' }, imgUrl: null, id: 'step-1' },
   ],
   stepsCount: 1,
   slug: 'test-recipe',
@@ -47,16 +47,16 @@ const createMockPublicRecipe = (): IRecipeUploadPublic => ({
 
 const createMockPremiumRecipe = (): IRecipeUploadPremiumMain => ({
   id: 'recipe-456',
-  title: { ua: 'Преміум рецепт', en: 'Premium Recipe' },
-  description: { ua: 'Преміум опис', en: 'Premium Description' },
-  category: { ua: 'Торти', en: 'Cakes' },
+  title: { uk: 'Преміум рецепт', en: 'Premium Recipe' },
+  description: { uk: 'Преміум опис', en: 'Premium Description' },
+  category: { uk: 'Торти', en: 'Cakes' },
   likes: 0,
   ingredients: [
     {
       id: 'group-1',
-      title: { ua: 'Основа', en: 'Base' },
+      title: { uk: 'Основа', en: 'Base' },
       ingredients: [
-        { id: 'ing-1', value: { ua: 'Борошно', en: 'Flour' }, quantity: '200', unit: 'g' },
+        { id: 'ing-1', value: { uk: 'Борошно', en: 'Flour' }, quantity: '200', unit: 'g' },
       ],
     },
   ],

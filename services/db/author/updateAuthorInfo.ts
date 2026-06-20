@@ -76,7 +76,7 @@ export const updateAuthorInfo = async (
       email: updatedAuthor.contact_email,
       description: {
         en: updatedAuthor.description.en,
-        ua: updatedAuthor.description.ua,
+        uk: updatedAuthor.description.uk,
       }
     },
     error: null

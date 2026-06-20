@@ -43,7 +43,7 @@ export const fetchAuthorInfo = async (): Promise<AuthorInfo> => {
         email: '',
         description: {
           en: '',
-          ua: ''
+          uk: ''
         }
       },
       error: error
@@ -68,7 +68,7 @@ export const fetchAuthorInfo = async (): Promise<AuthorInfo> => {
       email: author[0].contact_email,
       description: {
         en: author[0].description?.en || '',
-        ua: author[0].description?.ua || '',
+        uk: author[0].description?.uk || '',
       }
     },
     error: null

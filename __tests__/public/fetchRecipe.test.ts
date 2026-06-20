@@ -53,11 +53,11 @@ describe('fetchRecipe - Access Control', () => {
       // Mock recipe fetch
       const mockRecipeData = {
         id: recipeId,
-        title: { ua: 'Преміум рецепт', en: 'Premium Recipe' },
-        description: { ua: 'Опис', en: 'Description' },
+        title: { uk: 'Преміум рецепт', en: 'Premium Recipe' },
+        description: { uk: 'Опис', en: 'Description' },
         likes: 10,
-        category: { ua: 'Десерти', en: 'Desserts' },
-        ingredients: [{ id: 'ing-1', value: { ua: 'Цукор', en: 'Sugar' }, quantity: '100', unit: 'g' }],
+        category: { uk: 'Десерти', en: 'Desserts' },
+        ingredients: [{ id: 'ing-1', value: { uk: 'Цукор', en: 'Sugar' }, quantity: '100', unit: 'g' }],
         hero_img: 'recipe-123/hero.jpg',
         is_premium: true,
         preparing_time: 30,
@@ -101,9 +101,9 @@ describe('fetchRecipe - Access Control', () => {
         recipe_id: recipeId,
         video_url: 'premium-video-key-123',
         recipe_steps: [
-          { desc: { ua: 'Крок 1', en: 'Step 1' }, imgUrl: 'recipe-123/step-1.jpg', id: 'step-1' },
-          { desc: { ua: 'Крок 2', en: 'Step 2' }, imgUrl: 'recipe-123/step-2.jpg', id: 'step-2' },
-          { desc: { ua: 'Крок 3', en: 'Step 3' }, imgUrl: null, id: 'step-3' },
+          { desc: { uk: 'Крок 1', en: 'Step 1' }, imgUrl: 'recipe-123/step-1.jpg', id: 'step-1' },
+          { desc: { uk: 'Крок 2', en: 'Step 2' }, imgUrl: 'recipe-123/step-2.jpg', id: 'step-2' },
+          { desc: { uk: 'Крок 3', en: 'Step 3' }, imgUrl: null, id: 'step-3' },
         ],
       };
 
@@ -136,17 +136,17 @@ describe('fetchRecipe - Access Control', () => {
         preparingTime: mockRecipeData.preparing_time,
         recipeSteps: [
           {
-            desc: { ua: 'Крок 1', en: 'Step 1' },
+            desc: { uk: 'Крок 1', en: 'Step 1' },
             imgUrl: expect.stringContaining('step-1.jpg'),
             id: 'step-1',
           },
           {
-            desc: { ua: 'Крок 2', en: 'Step 2' },
+            desc: { uk: 'Крок 2', en: 'Step 2' },
             imgUrl: expect.stringContaining('step-2.jpg'),
             id: 'step-2',
           },
           {
-            desc: { ua: 'Крок 3', en: 'Step 3' },
+            desc: { uk: 'Крок 3', en: 'Step 3' },
             imgUrl: null,
             id: 'step-3',
           },
@@ -166,11 +166,11 @@ describe('fetchRecipe - Access Control', () => {
       // Mock recipe fetch
       const mockRecipeData = {
         id: recipeId,
-        title: { ua: 'Куплений рецепт', en: 'Purchased Recipe' },
-        description: { ua: 'Опис', en: 'Description' },
+        title: { uk: 'Куплений рецепт', en: 'Purchased Recipe' },
+        description: { uk: 'Опис', en: 'Description' },
         likes: 5,
-        category: { ua: 'Салати', en: 'Salads' },
-        ingredients: [{ id: 'ing-1', value: { ua: 'Помідор', en: 'Tomato' }, quantity: '2', unit: 'pcs' }],
+        category: { uk: 'Салати', en: 'Salads' },
+        ingredients: [{ id: 'ing-1', value: { uk: 'Помідор', en: 'Tomato' }, quantity: '2', unit: 'pcs' }],
         hero_img: 'recipe-456/hero.jpg',
         is_premium: true,
         preparing_time: 15,
@@ -214,8 +214,8 @@ describe('fetchRecipe - Access Control', () => {
         recipe_id: recipeId,
         video_url: 'premium-video-key-456',
         recipe_steps: [
-          { desc: { ua: 'Крок 1', en: 'Step 1' }, imgUrl: 'recipe-456/step-1.jpg', id: 'step-1' },
-          { desc: { ua: 'Крок 2', en: 'Step 2' }, imgUrl: null, id: 'step-2' },
+          { desc: { uk: 'Крок 1', en: 'Step 1' }, imgUrl: 'recipe-456/step-1.jpg', id: 'step-1' },
+          { desc: { uk: 'Крок 2', en: 'Step 2' }, imgUrl: null, id: 'step-2' },
         ],
       };
 
@@ -247,12 +247,12 @@ describe('fetchRecipe - Access Control', () => {
         preparingTime: mockRecipeData.preparing_time,
         recipeSteps: [
           {
-            desc: { ua: 'Крок 1', en: 'Step 1' },
+            desc: { uk: 'Крок 1', en: 'Step 1' },
             imgUrl: expect.stringContaining('step-1.jpg'),
             id: 'step-1',
           },
           {
-            desc: { ua: 'Крок 2', en: 'Step 2' },
+            desc: { uk: 'Крок 2', en: 'Step 2' },
             imgUrl: null,
             id: 'step-2',
           },
@@ -273,16 +273,16 @@ describe('fetchRecipe - Access Control', () => {
       // Mock recipe fetch
       const mockRecipeData = {
         id: recipeId,
-        title: { ua: 'Закритий рецепт', en: 'Locked Recipe' },
-        description: { ua: 'Опис', en: 'Description' },
+        title: { uk: 'Закритий рецепт', en: 'Locked Recipe' },
+        description: { uk: 'Опис', en: 'Description' },
         likes: 20,
-        category: { ua: 'Супи', en: 'Soups' },
-        ingredients: [{ id: 'ing-1', value: { ua: 'Вода', en: 'Water' }, quantity: '1', unit: 'l' }],
+        category: { uk: 'Супи', en: 'Soups' },
+        ingredients: [{ id: 'ing-1', value: { uk: 'Вода', en: 'Water' }, quantity: '1', unit: 'l' }],
         hero_img: 'recipe-789/hero.jpg',
         is_premium: true,
         preparing_time: 45,
         recipe_steps: [
-          { desc: { ua: 'Короткий опис', en: 'Short desc' }, imgUrl: null, id: 'public-step-1' },
+          { desc: { uk: 'Короткий опис', en: 'Short desc' }, imgUrl: null, id: 'public-step-1' },
         ],
         video_url: 'public-video-preview',
         steps_count: 5,
@@ -338,7 +338,7 @@ describe('fetchRecipe - Access Control', () => {
         preparingTime: mockRecipeData.preparing_time,
         recipeSteps: [
           {
-            desc: { ua: 'Короткий опис', en: 'Short desc' },
+            desc: { uk: 'Короткий опис', en: 'Short desc' },
             imgUrl: null,
             id: 'public-step-1',
           },
@@ -364,10 +364,10 @@ describe('fetchRecipe - Access Control', () => {
 
       const mockRecipeData = {
         id: recipeId,
-        title: { ua: 'Рецепт', en: 'Recipe' },
-        description: { ua: 'Опис', en: 'Description' },
+        title: { uk: 'Рецепт', en: 'Recipe' },
+        description: { uk: 'Опис', en: 'Description' },
         likes: 15,
-        category: { ua: "М'ясо", en: 'Meat' },
+        category: { uk: "М'ясо", en: 'Meat' },
         ingredients: [],
         hero_img: 'recipe-999/hero.jpg',
         is_premium: true,

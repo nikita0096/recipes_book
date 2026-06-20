@@ -1,11 +1,12 @@
-export const categories: {en: string, ua: string}[] = [
-  { en: "All recipes", ua: "Усі рецепти" },
-  { en: "Appetizers", ua: "Закуски" },
-  { en: "Breakfast", ua: "Сніданки" },
-  { en: "Dinner", ua: "Вечеря" },
-  { en: "Soups", ua: "Супи" },
-  { en: "Salads", ua: "Салати" },
-  { en: "Main dishes", ua: "Основні страви" },
-  { en: "Side dishes", ua: "Гарніри" },
-  { en: "Desserts", ua: "Десерти" }
+export const categories: {en: string, uk: string}[] = [
+  { en: "All recipes", uk: "Усі рецепти" },
+  { en: "Appetizers", uk: "Закуски" },
+  { en: "Breakfast", uk: "Сніданки" },
+  { en: "Dinner", uk: "Вечеря" },
+  { en: "Soups", uk: "Супи" },
+  { en: "Salads", uk: "Салати" },
+  { en: "Main dishes", uk: "Основні страви" },
+  { en: "Side dishes", uk: "Гарніри" },
+  { en: "Desserts", uk: "Десерти" },
+  { en: "Baking", uk: "Випічка" }
 ];

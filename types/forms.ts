@@ -1,13 +1,13 @@
 import { units } from '@/constants/units';
 
-export type Locale = 'en' | 'ua';
+export type Locale = 'en' | 'uk';
 
-export type LocalizedText = { en: string; ua: string };
+export type LocalizedText = { en: string; uk: string };
 
 export type UnitValue = typeof units[number]['value'];
 
 export interface Ingredient {
-  value: { en: string; ua: string };
+  value: { en: string; uk: string };
   quantity: string;
   unit: UnitValue;
   id: string;
@@ -21,7 +21,7 @@ export interface IngredientGroup {
 
 // Draft inputs for adding a new ingredient inside a group form
 export interface IngredientDraft {
-  ua: string;
+  uk: string;
   en: string;
   quantity: string;
   unit: UnitValue;
@@ -32,13 +32,13 @@ export interface IngredientGroupFormValues extends IngredientGroup {
 }
 
 export interface IFormValues {
-  title: { en: string; ua: string };
-  description: { en: string; ua: string };
+  title: { en: string; uk: string };
+  description: { en: string; uk: string };
   likes: number;
   category: string;
-  price: { en: number; ua: number };
+  price: { en: number; uk: number };
   discount: number;
-  recipeSteps: { desc: { en: string; ua: string }; image: File | null }[];
+  recipeSteps: { desc: { en: string; uk: string }; image: File | null }[];
   ingredientGroups: IngredientGroupFormValues[];
   heroImg: File | null;
   isPremium: boolean;

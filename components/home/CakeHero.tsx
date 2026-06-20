@@ -19,7 +19,7 @@ interface CakeHeroLayer {
   lblId: string;
   label: {
     en: string;
-    ua: string;
+    uk: string;
   };
   threshold: number;
   delay: number;
@@ -35,12 +35,12 @@ interface CakeHeroRecipe {
 }
 
 const layers: CakeHeroLayer[] = [
-  { id: 'layer1', src: '/images/cake-layer/1.png', dy: 0, lblId: 'lbl1', label: {en: 'Sponge base', ua: "Бісквіт"}, threshold: 0.18, delay: 0, zIndex: 1, style: {transform: "scale(1.4)"}},
-  { id: 'layer2', src: '/images/cake-layer/layer_2.jpg', dy: -65, lblId: 'lbl2', label: {en: 'Strawberry jam', ua: "Полуничний джем"}, threshold: 0.26, delay: 150, zIndex: 2 },
-  { id: 'layer3', src: '/images/cake-layer/layer_3.jpg', dy: -115, lblId: 'lbl3', label: {en: 'Pistachio cheesecake', ua: "Фісташковий чізкейк"}, threshold: 0.34, delay: 300, zIndex: 3 },
-  { id: 'layer4', src: '/images/cake-layer/layer_4.jpg', dy: -170, lblId: 'lbl4', label: {en: 'Strawberry jam', ua: "Полуничний джем"}, threshold: 0.42, delay: 450, zIndex: 4 },
-  { id: 'layer5', src: '/images/cake-layer/layer_5.jpg', dy: -225, lblId: 'lbl5', label: {en: 'Sponge base', ua: "Бісквіт"}, threshold: 0.50, delay: 600, zIndex: 5 },
-  { id: 'layer6', src: '/images/cake-layer/layer_6.jpg', dy: -280, lblId: 'lbl6', label: {en: 'Decoration', ua: "Декорація"}, threshold: 0.58, delay: 750, zIndex: 6 },
+  { id: 'layer1', src: '/images/cake-layer/1.png', dy: 0, lblId: 'lbl1', label: {en: 'Sponge base', uk: "Бісквіт"}, threshold: 0.18, delay: 0, zIndex: 1, style: {transform: "scale(1.4)"}},
+  { id: 'layer2', src: '/images/cake-layer/layer_2.jpg', dy: -65, lblId: 'lbl2', label: {en: 'Strawberry jam', uk: "Полуничний джем"}, threshold: 0.26, delay: 150, zIndex: 2 },
+  { id: 'layer3', src: '/images/cake-layer/layer_3.jpg', dy: -115, lblId: 'lbl3', label: {en: 'Pistachio cheesecake', uk: "Фісташковий чізкейк"}, threshold: 0.34, delay: 300, zIndex: 3 },
+  { id: 'layer4', src: '/images/cake-layer/layer_4.jpg', dy: -170, lblId: 'lbl4', label: {en: 'Strawberry jam', uk: "Полуничний джем"}, threshold: 0.42, delay: 450, zIndex: 4 },
+  { id: 'layer5', src: '/images/cake-layer/layer_5.jpg', dy: -225, lblId: 'lbl5', label: {en: 'Sponge base', uk: "Бісквіт"}, threshold: 0.50, delay: 600, zIndex: 5 },
+  { id: 'layer6', src: '/images/cake-layer/layer_6.jpg', dy: -280, lblId: 'lbl6', label: {en: 'Decoration', uk: "Декорація"}, threshold: 0.58, delay: 750, zIndex: 6 },
 ];
 
 const CakeHero = ({
@@ -58,7 +58,7 @@ const CakeHero = ({
   const labelRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const tRecipes = useTranslations('recipes');
-  const locale = useLocale() as "en" | "ua";
+  const locale = useLocale() as "en" | "uk";
 
   useEffect(() => {
     const fetchHeroCake = async () => {

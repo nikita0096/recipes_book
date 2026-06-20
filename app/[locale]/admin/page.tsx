@@ -43,9 +43,9 @@ import {
 
 const createEmptyGroup = (): IngredientGroupFormValues => ({
   id: uuidv4(),
-  title: {en: '', ua: ''},
+  title: {en: '', uk: ''},
   ingredients: [],
-  draft: {ua: '', en: '', quantity: '', unit: units[0].value},
+  draft: {uk: '', en: '', quantity: '', unit: units[0].value},
 });
 
 // localStorage key for persisting the in-progress recipe form across reloads
@@ -92,11 +92,11 @@ const Page = () => {
   } = useForm<IFormValues>({
     defaultValues: {
       recipeSteps: [],
-      title: {en: '', ua: ''},
-      description: {en: '', ua: ''},
+      title: {en: '', uk: ''},
+      description: {en: '', uk: ''},
       likes: 0,
       category: categories.find(cat => cat.en === 'Desserts')?.en,
-      price: {en: 0, ua: 0},
+      price: {en: 0, uk: 0},
       discount: 0,
       ingredientGroups: [createEmptyGroup()],
       heroImg: null,
@@ -185,12 +185,12 @@ const Page = () => {
   const handleIngredientsForm = (e: React.MouseEvent<HTMLButtonElement>, groupIndex: number) => {
     e.preventDefault();
     const draft = getValues(`ingredientGroups.${groupIndex}.draft`);
-    const ingredientUa = draft.ua?.trim();
+    const ingredientUk = draft.uk?.trim();
     const ingredientEn = draft.en?.trim();
     const quantity = draft.quantity?.trim();
     const unit = draft.unit;
 
-    if (!ingredientUa || !ingredientEn || !quantity || !unit) {
+    if (!ingredientUk || !ingredientEn || !quantity || !unit) {
       setValidationErrorIngredients(t('form.validation.fillAllIngredientFields'));
       return;
     }
@@ -199,13 +199,13 @@ const Page = () => {
     setValue(`ingredientGroups.${groupIndex}.ingredients`, [
       ...ingredients,
       {
-        value: {en: ingredientEn, ua: ingredientUa},
+        value: {en: ingredientEn, uk: ingredientUk},
         quantity: quantity,
         unit: unit,
         id: uuidv4()
       }
     ]);
-    setValue(`ingredientGroups.${groupIndex}.draft`, {ua: '', en: '', quantity: '', unit: units[0].value});
+    setValue(`ingredientGroups.${groupIndex}.draft`, {uk: '', en: '', quantity: '', unit: units[0].value});
     setValidationErrorIngredients('');
   };
 
@@ -282,31 +282,31 @@ const Page = () => {
   };
 
   type TranslateInputs =
-    | 'title.ua'
-    | 'description.ua'
-    | `ingredientGroups.${number}.draft.ua`
-    | `ingredientGroups.${number}.title.ua`
-    | `recipeSteps.${number}.desc.ua`;
+    | 'title.uk'
+    | 'description.uk'
+    | `ingredientGroups.${number}.draft.uk`
+    | `ingredientGroups.${number}.title.uk`
+    | `recipeSteps.${number}.desc.uk`;
 
   const handleTranslateText = async (e: React.MouseEvent<HTMLButtonElement>, flag: string, index?: number) => {
     e.preventDefault();
     const inputFields: Record<string, TranslateInputs> = {
-      title: 'title.ua',
-      description: 'description.ua',
+      title: 'title.uk',
+      description: 'description.uk',
       ...(index !== undefined && {
-        ingredient: `ingredientGroups.${index}.draft.ua`,
-        groupTitle: `ingredientGroups.${index}.title.ua`,
-        stepDescription: `recipeSteps.${index}.desc.ua`
+        ingredient: `ingredientGroups.${index}.draft.uk`,
+        groupTitle: `ingredientGroups.${index}.title.uk`,
+        stepDescription: `recipeSteps.${index}.desc.uk`
       })
     }
 
-    const textUa = getValues(inputFields[flag]);
+    const textUk = getValues(inputFields[flag]);
 
-    if (!textUa) return;
+    if (!textUk) return;
 
     const res = await fetch('/api/translate', {
       method: 'POST',
-      body: JSON.stringify({text: textUa})
+      body: JSON.stringify({text: textUk})
     });
 
     const {translated} = await res.json();
@@ -394,25 +394,25 @@ const Page = () => {
     // Group titles are required only when there is more than one group
     if (data.ingredientGroups.length > 1) {
       for (const group of data.ingredientGroups) {
-        if (!group.title.en.trim() || !group.title.ua.trim()) {
+        if (!group.title.en.trim() || !group.title.uk.trim()) {
           setError(t('form.validation.enterGroupTitleBothLanguages'));
           return null;
         }
       }
     }
 
-    if (!data.title.en || !data.title.ua) {
+    if (!data.title.en || !data.title.uk) {
       setError(t('form.validation.enterTitleBothLanguages'));
       return null;
     }
 
-    if (!data.description.en || !data.description.ua) {
+    if (!data.description.en || !data.description.uk) {
       setError(t('form.validation.enterDescriptionBothLanguages'));
       return null;
     }
 
     for (const step of data.recipeSteps) {
-      if (!step.desc.en || !step.desc.ua) {
+      if (!step.desc.en || !step.desc.uk) {
         setError(t('form.validation.enterStepsBothLanguages'));
         return null;
       }
@@ -423,7 +423,7 @@ const Page = () => {
       return null;
     }
 
-    if (data.isPremium && (data.price.en === 0 || data.price.ua === 0)) {
+    if (data.isPremium && (data.price.en === 0)) {
       setError(t('form.validation.enterPrice'));
       return null;
     }
@@ -674,10 +674,10 @@ const Page = () => {
                 <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
                   {t('form.fields.title')}
                 </label>
-                <input {...register('title.ua', {required: true})}
+                <input {...register('title.uk', {required: true})}
                        className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                        type="text"
-                       placeholder={t('form.fields.titlePlaceholderUa')}
+                       placeholder={t('form.fields.titlePlaceholderUk')}
                 />
               </div>
               <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
@@ -702,9 +702,9 @@ const Page = () => {
                 <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
                   {t('form.fields.description')}
                 </label>
-                <textarea {...register('description.ua', {required: true})}
+                <textarea {...register('description.uk', {required: true})}
                           className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
-                          placeholder={t('form.fields.descriptionPlaceholderUa')}
+                          placeholder={t('form.fields.descriptionPlaceholderUk')}
                 />
               </div>
               <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
@@ -748,9 +748,9 @@ const Page = () => {
                     {t('form.fields.price')} (UAH)
                   </label>
                   <div className="relative">
-                    <input {...register('price.ua', {required: false, min: 0, max: 100000, valueAsNumber: true})}
-                           name="price.ua"
-                           aria-invalid={errors.price?.ua ? "true" : "false"}
+                    <input {...register('price.uk')}
+                           name="price.uk"
+                           aria-invalid={errors.price?.uk ? "true" : "false"}
                            className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                            type="number"/>
                     <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">₴</span>
@@ -880,7 +880,7 @@ const Page = () => {
                     {String(groupIndex + 1).padStart(2, '0')}
                   </span>
                           <span className="text-sm text-muted italic truncate">
-                    {watchedGroups?.[groupIndex]?.title.ua || t('form.fields.group') + ' ' + (groupIndex + 1)}
+                    {watchedGroups?.[groupIndex]?.title.uk || t('form.fields.group') + ' ' + (groupIndex + 1)}
                   </span>
                           <button
                             type="button"
@@ -897,10 +897,10 @@ const Page = () => {
                             <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
                               {t('form.fields.groupTitle')}
                             </label>
-                            <input {...register(`ingredientGroups.${groupIndex}.title.ua`)}
+                            <input {...register(`ingredientGroups.${groupIndex}.title.uk`)}
                                    className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                                    type="text"
-                                   placeholder={t('form.fields.groupTitlePlaceholderUa')}/>
+                                   placeholder={t('form.fields.groupTitlePlaceholderUk')}/>
                           </div>
                           <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
                                   onClick={(e) => handleTranslateText(e, 'groupTitle', groupIndex)}>
@@ -915,7 +915,7 @@ const Page = () => {
                         {/* Ingredient inputs */}
                         <div className="space-y-3 mb-4">
                           <div className="grid grid-cols-1 gap-3">
-                            <input {...register(`ingredientGroups.${groupIndex}.draft.ua`)}
+                            <input {...register(`ingredientGroups.${groupIndex}.draft.uk`)}
                                    className={`w-full px-3.5 py-2.5 bg-surface border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
                                      error !== null && watchedGroups?.[groupIndex]?.ingredients.length === 0 ? 'border-red-400' : 'border-border'
                                    }`}
@@ -953,7 +953,7 @@ const Page = () => {
                                 {units.map((unit) => (
                                   <option key={unit.value}
                                           value={unit.value}>
-                                    {unit.label.ua} / {unit.label.en}
+                                    {unit.label.uk} / {unit.label.en}
                                   </option>
                                 ))}
                               </select>
@@ -985,7 +985,7 @@ const Page = () => {
                                   {(ingredientDragHandle) => (
                                     <>
                                       {ingredientDragHandle}
-                                      <span>{item.value.ua}</span>
+                                      <span>{item.value.uk}</span>
                                       <span className="text-muted">|</span>
                                       <span className="text-muted">{item.value.en}</span>
                                       <span className="text-accent">-</span>
@@ -1126,7 +1126,7 @@ const Page = () => {
                             {String(index + 1).padStart(2, '0')}
                           </span>
                           <span className="text-sm text-muted italic truncate">
-                            {getValues(`recipeSteps.${index}.desc.ua`) || t('form.fields.step') + ' ' + (index + 1)}
+                            {getValues(`recipeSteps.${index}.desc.uk`) || t('form.fields.step') + ' ' + (index + 1)}
                           </span>
                           <button
                             type="button"
@@ -1177,10 +1177,10 @@ const Page = () => {
                       {t('form.fields.stepDescLabel')}
                     </label>
                     <textarea
-                      {...register(`recipeSteps.${index}.desc.ua`, {required: t('form.validation.addAtLeastOneStep')})}
-                      placeholder={t('form.fields.stepDescPlaceholderUa')}
+                      {...register(`recipeSteps.${index}.desc.uk`, {required: t('form.validation.addAtLeastOneStep')})}
+                      placeholder={t('form.fields.stepDescPlaceholderUk')}
                       rows={3}
-                      className={`w-full px-3.5 py-2.5 bg-surface border ${errors.recipeSteps?.[index]?.desc?.ua ? 'border-red-400' : 'border-border'} text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none`}
+                      className={`w-full px-3.5 py-2.5 bg-surface border ${errors.recipeSteps?.[index]?.desc?.uk ? 'border-red-400' : 'border-border'} text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none`}
                     />
                   </div>
                   <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
@@ -1210,7 +1210,7 @@ const Page = () => {
           <button
             className={`w-full py-5 border border-dashed ${error && stepFields.length === 0 ? 'border-red-400' : 'border-border'} flex items-center justify-center gap-2.5 text-[11px] tracking-[0.06em] text-accent hover:bg-bg transition-colors mb-3`}
             type="button"
-            onClick={() => appendStep({desc: {en: '', ua: ''}, image: null})}
+            onClick={() => appendStep({desc: {en: '', uk: ''}, image: null})}
           >
             + {t('form.buttons.addNewStep')}
           </button>

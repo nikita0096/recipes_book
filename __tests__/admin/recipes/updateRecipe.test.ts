@@ -36,16 +36,16 @@ const mockSupabase = supabase as jest.Mocked<typeof supabase>;
 
 // Mock data factories
 const createMockPublicUpdateData = (): UpdateRecipeDataPublic => ({
-  title: { ua: 'Оновлений рецепт', en: 'Updated Recipe' },
-  description: { ua: 'Оновлений опис', en: 'Updated Description' },
-  category: { ua: 'Десерти', en: 'Desserts' },
+  title: { uk: 'Оновлений рецепт', en: 'Updated Recipe' },
+  description: { uk: 'Оновлений опис', en: 'Updated Description' },
+  category: { uk: 'Десерти', en: 'Desserts' },
   likes: 25,
   ingredients: [
     {
       id: 'group-1',
-      title: { ua: 'Основа', en: 'Base' },
+      title: { uk: 'Основа', en: 'Base' },
       ingredients: [
-        { id: 'ing-1', value: { ua: 'Цукор', en: 'Sugar' }, quantity: '100', unit: 'g' },
+        { id: 'ing-1', value: { uk: 'Цукор', en: 'Sugar' }, quantity: '100', unit: 'g' },
       ],
     },
   ],
@@ -57,23 +57,23 @@ const createMockPublicUpdateData = (): UpdateRecipeDataPublic => ({
   calories: null,
   videoUrl: 'video-key-1',
   recipeSteps: [
-    { desc: { ua: 'Крок 1', en: 'Step 1' }, imgUrl: null, id: 'step-1' },
+    { desc: { uk: 'Крок 1', en: 'Step 1' }, imgUrl: null, id: 'step-1' },
   ],
   stepsCount: 1,
   slug: 'updated-recipe',
 });
 
 const createMockPremiumMainData = (): UpdateRecipeDataPremiumMain => ({
-  title: { ua: 'Преміум рецепт', en: 'Premium Recipe' },
-  description: { ua: 'Преміум опис', en: 'Premium Description' },
-  category: { ua: 'Торти', en: 'Cakes' },
+  title: { uk: 'Преміум рецепт', en: 'Premium Recipe' },
+  description: { uk: 'Преміум опис', en: 'Premium Description' },
+  category: { uk: 'Торти', en: 'Cakes' },
   likes: 50,
   ingredients: [
     {
       id: 'group-1',
-      title: { ua: 'Основа', en: 'Base' },
+      title: { uk: 'Основа', en: 'Base' },
       ingredients: [
-        { id: 'ing-1', value: { ua: 'Борошно', en: 'Flour' }, quantity: '200', unit: 'g' },
+        { id: 'ing-1', value: { uk: 'Борошно', en: 'Flour' }, quantity: '200', unit: 'g' },
       ],
     },
   ],
@@ -90,19 +90,19 @@ const createMockPremiumMainData = (): UpdateRecipeDataPremiumMain => ({
 const createMockPremiumPartData = (): UpdateRecipeDataPremiumPart => ({
   recipeId: 'recipe-123',
   recipeSteps: [
-    { desc: { ua: 'Преміум крок 1', en: 'Premium Step 1' }, imgUrl: 'recipe-123/step-img-1.jpg', id: 'step-1' },
+    { desc: { uk: 'Преміум крок 1', en: 'Premium Step 1' }, imgUrl: 'recipe-123/step-img-1.jpg', id: 'step-1' },
   ],
   videoUrl: 'video-key-premium',
-  price: { en: 100, ua: 4000 },
+  price: { en: 100, uk: 4000 },
   discount: null,
 });
 
 const createMockDbResponse = (id: string, isPremium: boolean) => ({
   id,
-  title: { ua: 'Рецепт', en: 'Recipe' },
-  description: { ua: 'Опис', en: 'Description' },
+  title: { uk: 'Рецепт', en: 'Recipe' },
+  description: { uk: 'Опис', en: 'Description' },
   likes: 10,
-  category: { ua: 'Десерти', en: 'Desserts' },
+  category: { uk: 'Десерти', en: 'Desserts' },
   ingredients: [],
   hero_img: `${id}/hero-img-1.jpg`,
   is_premium: isPremium,

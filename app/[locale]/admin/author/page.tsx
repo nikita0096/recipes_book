@@ -73,7 +73,7 @@ const Page = () => {
       views: 0,
       description: {
         en: '',
-        ua: ''
+        uk: ''
       }
     }
   });
@@ -105,7 +105,7 @@ const Page = () => {
       setValue('views', author.views);
       setValue('email', author.email);
       setValue('description.en', author.description.en || '');
-      setValue('description.ua', author.description.ua || '');
+      setValue('description.uk', author.description.uk || '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [author]);
@@ -293,14 +293,14 @@ const Page = () => {
                  type="email"
                  {...register('email', {required: true})}
                  placeholder="Email"/>
-          <label htmlFor="description-ua" className="block text-xs tracking-[0.08em] uppercase text-muted mt-4">
-            {t('form.author.descriptionUA')}
+          <label htmlFor="description-uk" className="block text-xs tracking-[0.08em] uppercase text-muted mt-4">
+            {t('form.author.descriptionUK')}
           </label>
           <textarea
-            id="description-ua"
+            id="description-uk"
             className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors min-h-[120px]"
-            {...register('description.ua', {required: true})}
-            placeholder={t('form.author.descriptionUA')}
+            {...register('description.uk', {required: true})}
+            placeholder={t('form.author.descriptionUK')}
           />
           <label htmlFor="description-en" className="block text-xs tracking-[0.08em] uppercase text-muted">
             {t('form.author.descriptionEN')}

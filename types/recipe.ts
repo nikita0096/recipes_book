@@ -30,7 +30,7 @@ interface IRecipeBase {
 export interface RecipePrice {
   price: {
     en: number;
-    ua: number;
+    uk: number;
   };
   discount: number | null;
 }
@@ -89,7 +89,7 @@ export interface IRecipePremiumUpload {
   videoUrl: string;
   price: {
     en: number;
-    ua: number;
+    uk: number;
   };
   discount: number | null;
 }
@@ -134,7 +134,7 @@ export interface UpdateRecipeDataPremiumPart {
   videoUrl: string;
   price: {
     en: number;
-    ua: number;
+    uk: number;
   };
   discount: number | null;
 }

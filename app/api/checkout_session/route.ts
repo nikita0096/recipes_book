@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       .from('recipes')
       .select('title, is_premium')
       .eq('id', recipeId)
-      .single<{ title: { en: string; ua: string }; is_premium: boolean }>()
+      .single<{ title: { en: string; uk: string }; is_premium: boolean }>()
 
     if (!recipe || !recipe.is_premium) {
       return NextResponse.json({ error: 'Recipe is not purchasable' }, { status: 400 })
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
       .from('recipes_price')
       .select('price, discount')
       .eq('recipe_id', recipeId)
-      .maybeSingle<{ price: { en: number; ua: number }; discount: number | null }>()
+      .maybeSingle<{ price: { en: number; uk: number }; discount: number | null }>()
 
     const basePrice = priceRow?.price.en ?? 0
     const discount = priceRow?.discount ?? 0
