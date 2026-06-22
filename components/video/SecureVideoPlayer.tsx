@@ -116,9 +116,19 @@ export const SecureVideoPlayer = ({
   if (isLoading) {
     return (
       <div
-        className={`flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl aspect-video ${className}`}
+        className={`relative flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-xl aspect-video overflow-hidden ${className}`}
       >
-        <Spinner />
+        {thumbnail && (
+          <img
+            src={thumbnail}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 h-full w-full object-cover scale-105 blur-sm brightness-75"
+          />
+        )}
+        <div className="relative flex items-center justify-center">
+          <Spinner />
+        </div>
       </div>
     );
   }
