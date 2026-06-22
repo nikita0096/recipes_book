@@ -490,7 +490,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
             {t('singlePage.videoSection')}
           </h2>
           <div className='flex items-center justify-center pt-4'>
-            <div className="relative w-full lg:w-3/4 rounded-2xl overflow-hidden">
+            <div className="relative w-full min-h-[250px] md:min-h-[350px] lg:min-h-[450px] lg:w-3/4 rounded-2xl overflow-hidden">
               <SecureVideoPlayer
                 recipeId={recipeId}
                 videoKey={recipe.videoUrl}
