@@ -1,19 +1,17 @@
 import {
   insertRecipePublic,
   insertRecipePremiumMain,
-  insertRecipe,
 } from '@/services/db/admin/insertRecipeToDatabase';
-import { supabase } from '@/lib/supabase/ClientComponentClient';
+import { createClient } from '@/lib/supabase/ServerComponentClient';
 import { IRecipeUploadPublic, IRecipeUploadPremiumMain } from '@/types/recipe';
 
-// Mock supabase
-jest.mock('@/lib/supabase/ClientComponentClient', () => ({
-  supabase: {
-    from: jest.fn(),
-  },
+// The insert services create their own request-scoped client; mock the factory.
+jest.mock('@/lib/supabase/ServerComponentClient', () => ({
+  createClient: jest.fn(),
 }));
 
-const mockSupabase = supabase as jest.Mocked<typeof supabase>;
+const mockSupabase = { from: jest.fn() };
+(createClient as jest.Mock).mockResolvedValue(mockSupabase);
 
 // Mock data
 const createMockPublicRecipe = (): IRecipeUploadPublic => ({
@@ -98,6 +96,9 @@ describe('insertRecipePublic', () => {
       hero_img: mockRecipe.heroImg,
       is_premium: false,
       preparing_time: mockRecipe.preparingTime,
+      weight: mockRecipe.weight,
+      diameter: mockRecipe.diameter,
+      calories: mockRecipe.calories,
       video_url: mockRecipe.videoUrl,
       recipe_steps: mockRecipe.recipeSteps,
       steps_count: mockRecipe.recipeSteps.length,
@@ -168,6 +169,9 @@ describe('insertRecipePremiumMain', () => {
       hero_img: mockRecipe.heroImg,
       is_premium: true,
       preparing_time: mockRecipe.preparingTime,
+      weight: mockRecipe.weight,
+      diameter: mockRecipe.diameter,
+      calories: mockRecipe.calories,
       video_url: null,
       recipe_steps: null,
       premium_recipe: mockRecipe.premiumId,
@@ -205,57 +209,5 @@ describe('insertRecipePremiumMain', () => {
     await expect(insertRecipePremiumMain(mockRecipe, 3)).rejects.toEqual({
       message: 'Duplicate key',
     });
-  });
-});
-
-describe('insertRecipe (universal)', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  test('should call insertRecipePublic for public recipe', async () => {
-    const mockRecipe = createMockPublicRecipe();
-    const mockSelect = jest.fn().mockReturnValue({
-      single: jest.fn().mockResolvedValue({
-        data: { id: mockRecipe.id },
-        error: null,
-      }),
-    });
-    const mockInsert = jest.fn().mockReturnValue({
-      select: mockSelect,
-    });
-    (mockSupabase.from as jest.Mock).mockReturnValue({
-      insert: mockInsert,
-    });
-
-    await insertRecipe(mockRecipe);
-
-    const insertCall = mockInsert.mock.calls[0][0];
-    expect(insertCall.is_premium).toBe(false);
-    expect(insertCall.recipe_steps).toEqual(mockRecipe.recipeSteps);
-    expect(insertCall.video_url).toBe(mockRecipe.videoUrl);
-  });
-
-  test('should call insertRecipePremiumMain for premium recipe', async () => {
-    const mockRecipe = createMockPremiumRecipe();
-    const mockSelect = jest.fn().mockReturnValue({
-      single: jest.fn().mockResolvedValue({
-        data: { id: mockRecipe.id },
-        error: null,
-      }),
-    });
-    const mockInsert = jest.fn().mockReturnValue({
-      select: mockSelect,
-    });
-    (mockSupabase.from as jest.Mock).mockReturnValue({
-      insert: mockInsert,
-    });
-
-    await insertRecipe(mockRecipe);
-
-    const insertCall = mockInsert.mock.calls[0][0];
-    expect(insertCall.is_premium).toBe(true);
-    expect(insertCall.recipe_steps).toBeNull();
-    expect(insertCall.video_url).toBeNull();
   });
 });

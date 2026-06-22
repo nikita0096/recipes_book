@@ -3,7 +3,7 @@
 import React, {useState} from 'react';
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {useTranslations} from "next-intl";
-import {togglePublishStatus} from "@/services/db/admin/togglePublishStatus";
+import {togglePublishStatus} from "@/services/api/admin/togglePublishStatus";
 
 interface PublishToggleProps {
   recipeId: string;

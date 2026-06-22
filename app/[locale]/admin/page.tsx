@@ -25,7 +25,7 @@ import {
 import SortableItem from "@/components/admin/SortableItem";
 import {v4 as uuidv4} from 'uuid';
 import {ulid} from "ulid";
-import {insertRecipePublic, insertRecipePremiumMain} from "@/services/db/admin/insertRecipeToDatabase";
+import {createRecipe} from "@/services/api/admin/createRecipe";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {MdDeleteForever} from "react-icons/md";
 import {Spinner} from "@/components/ui/spinner";
@@ -33,7 +33,6 @@ import {units} from "@/constants/units";
 import {categories} from "@/constants/categories";
 import {IFormValues, IngredientGroupFormValues, Locale} from "@/types/forms";
 import {uploadVideoToStream} from "@/services/storage/uploadVideoToStream";
-import {insertPremiumRecipePart} from "@/services/db/admin/insertPremiumRecipeToDb";
 import {
   IRecipeUploadPublic,
   IRecipeUploadPremiumMain,
@@ -563,8 +562,6 @@ const Page = () => {
           stepsCount,
         };
 
-        await insertRecipePremiumMain(premiumMainData, stepsCount);
-
         const premiumPartData: IRecipePremiumUpload = {
           id: premiumRecipeId,
           recipeId: recipeId,
@@ -574,7 +571,12 @@ const Page = () => {
           discount: recipeData.discount,
         };
 
-        await insertPremiumRecipePart(premiumPartData);
+        await createRecipe({
+          isPremium: true,
+          main: premiumMainData,
+          stepsCount,
+          premium: premiumPartData,
+        });
       } else {
         // Public рецепт: все данные в main table
         const publicData: IRecipeUploadPublic = {
@@ -596,7 +598,7 @@ const Page = () => {
           slug: recipeData.slug,
         };
 
-        await insertRecipePublic(publicData);
+        await createRecipe({isPremium: false, recipe: publicData});
       }
 
 

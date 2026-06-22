@@ -1,38 +1,24 @@
 import { updateAuthorInfo } from '@/services/db/author/updateAuthorInfo';
 import { AuthorInfoForm } from '@/app/[locale]/admin/author/page';
-import { supabase } from '@/lib/supabase/ClientComponentClient';
-import { uploadImage } from '@/services/storage/uploadImagetoStorage';
-import { deleteFileByPath } from '@/services/storage/deleteImageFromStorage';
+import { createClient } from '@/lib/supabase/ServerComponentClient';
 import { getPublicImageUrl } from '@/services/storage/getPublicImageUrl';
 
-// Mock dependencies
-jest.mock('@/lib/supabase/ClientComponentClient', () => ({
-  supabase: {
-    from: jest.fn(),
-  },
-}));
-
-jest.mock('@/services/storage/uploadImagetoStorage', () => ({
-  uploadImage: jest.fn(),
-}));
-
-jest.mock('@/services/storage/deleteImageFromStorage', () => ({
-  deleteFileByPath: jest.fn(),
+// The author update service creates its own request-scoped client; mock it.
+jest.mock('@/lib/supabase/ServerComponentClient', () => ({
+  createClient: jest.fn(),
 }));
 
 jest.mock('@/services/storage/getPublicImageUrl', () => ({
   getPublicImageUrl: jest.fn(),
 }));
 
-jest.mock('uuid', () => ({
-  v4: jest.fn(() => 'test-uuid-author'),
-}));
-
-const mockSupabase = supabase as jest.Mocked<typeof supabase>;
-const mockUploadImage = uploadImage as jest.MockedFunction<typeof uploadImage>;
-const mockDeleteFile = deleteFileByPath as jest.MockedFunction<typeof deleteFileByPath>;
+const mockSupabase = { from: jest.fn() };
+(createClient as jest.Mock).mockResolvedValue(mockSupabase);
 const mockGetPublicUrl = getPublicImageUrl as jest.MockedFunction<typeof getPublicImageUrl>;
 
+// The service accepts the form fields with the image already resolved to a
+// path (the imageFile is stripped client-side), so the mock form doubles as a
+// valid payload.
 const createMockAuthorForm = (overrides?: Partial<AuthorInfoForm>): AuthorInfoForm => ({
   name: 'Yuliia Stohantseva',
   email: 'yuliia@example.com',
@@ -50,46 +36,56 @@ const createMockAuthorForm = (overrides?: Partial<AuthorInfoForm>): AuthorInfoFo
     en: 'Professional pastry chef with 10+ years experience',
     uk: 'Професійний кондитер з 10+ роками досвіду',
   },
+  descriptionFooter: {
+    en: 'Sweet moments, baked with love',
+    uk: 'Солодкі моменти, спечені з любовʼю',
+  },
+  animatedHeroWords: {
+    en: 'cakes cookies pastries',
+    uk: 'торти печиво випічка',
+  },
   ...overrides,
 });
 
-describe('updateAuthorInfo', () => {
+// Build a chained update().eq().select().single() mock resolving to the row.
+const mockUpdateChain = (resolved: { data: unknown; error: unknown }) => {
+  const single = jest.fn().mockResolvedValue(resolved);
+  const select = jest.fn().mockReturnValue({ single });
+  const eq = jest.fn().mockReturnValue({ select });
+  const update = jest.fn().mockReturnValue({ eq });
+  mockSupabase.from.mockReturnValue({ update } as never);
+  return { update };
+};
+
+describe('updateAuthorInfo (server)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockGetPublicUrl.mockReturnValue('https://storage.example.com/author-123.jpg');
   });
 
-  describe('Basic updates without image change', () => {
+  describe('Basic updates', () => {
     test('should update author info successfully', async () => {
       const formData = createMockAuthorForm();
-      const mockUpdate = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: {
-                id: 'author-1',
-                name: formData.name,
-                contact_email: formData.email,
-                inst_link: formData.instagram,
-                tik_tok_link: formData.tikTok,
-                you_tube_link: formData.youTube,
-                facebook_link: formData.facebook,
-                telegram_link: formData.telegram,
-                recipes_count: formData.recipesCount,
-                subscribers: formData.subscribers,
-                views: formData.views,
-                image: formData.image,
-                description: formData.description,
-              },
-              error: null,
-            }),
-          }),
-        }),
+      mockUpdateChain({
+        data: {
+          id: 'author-1',
+          name: formData.name,
+          contact_email: formData.email,
+          inst_link: formData.instagram,
+          tik_tok_link: formData.tikTok,
+          you_tube_link: formData.youTube,
+          facebook_link: formData.facebook,
+          telegram_link: formData.telegram,
+          recipes_count: formData.recipesCount,
+          subscribers: formData.subscribers,
+          views: formData.views,
+          image: formData.image,
+          description: formData.description,
+        },
+        error: null,
       });
 
-      mockSupabase.from.mockReturnValue({ update: mockUpdate } as any);
-
-      const result = await updateAuthorInfo('author-1', formData, 'author-123.jpg');
+      const result = await updateAuthorInfo('author-1', formData);
 
       expect(result.error).toBeNull();
       expect(result.data.name).toBe('Yuliia Stohantseva');
@@ -105,34 +101,26 @@ describe('updateAuthorInfo', () => {
         views: 120,
       });
 
-      const mockUpdate = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: {
-                id: 'author-1',
-                name: formData.name,
-                contact_email: formData.email,
-                inst_link: formData.instagram,
-                tik_tok_link: formData.tikTok,
-                you_tube_link: formData.youTube,
-                facebook_link: formData.facebook,
-                telegram_link: formData.telegram,
-                recipes_count: 250,
-                subscribers: 2.8,
-                views: 120,
-                image: formData.image,
-                description: formData.description,
-              },
-              error: null,
-            }),
-          }),
-        }),
+      mockUpdateChain({
+        data: {
+          id: 'author-1',
+          name: formData.name,
+          contact_email: formData.email,
+          inst_link: formData.instagram,
+          tik_tok_link: formData.tikTok,
+          you_tube_link: formData.youTube,
+          facebook_link: formData.facebook,
+          telegram_link: formData.telegram,
+          recipes_count: 250,
+          subscribers: 2.8,
+          views: 120,
+          image: formData.image,
+          description: formData.description,
+        },
+        error: null,
       });
 
-      mockSupabase.from.mockReturnValue({ update: mockUpdate } as any);
-
-      const result = await updateAuthorInfo('author-1', formData, 'author-123.jpg');
+      const result = await updateAuthorInfo('author-1', formData);
 
       expect(result.data.recipesCount).toBe(250);
       expect(result.data.subscribers).toBe(2.8);
@@ -145,37 +133,29 @@ describe('updateAuthorInfo', () => {
         tikTok: '',
         facebook: '',
         telegram: '',
-        youTube: 'https://youtube.com/@yuliia', // Only YouTube provided
+        youTube: 'https://youtube.com/@yuliia',
       });
 
-      const mockUpdate = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: {
-                id: 'author-1',
-                name: formData.name,
-                contact_email: formData.email,
-                inst_link: '',
-                tik_tok_link: '',
-                you_tube_link: 'https://youtube.com/@yuliia',
-                facebook_link: '',
-                telegram_link: '',
-                recipes_count: formData.recipesCount,
-                subscribers: formData.subscribers,
-                views: formData.views,
-                image: formData.image,
-                description: formData.description,
-              },
-              error: null,
-            }),
-          }),
-        }),
+      mockUpdateChain({
+        data: {
+          id: 'author-1',
+          name: formData.name,
+          contact_email: formData.email,
+          inst_link: '',
+          tik_tok_link: '',
+          you_tube_link: 'https://youtube.com/@yuliia',
+          facebook_link: '',
+          telegram_link: '',
+          recipes_count: formData.recipesCount,
+          subscribers: formData.subscribers,
+          views: formData.views,
+          image: formData.image,
+          description: formData.description,
+        },
+        error: null,
       });
 
-      mockSupabase.from.mockReturnValue({ update: mockUpdate } as any);
-
-      const result = await updateAuthorInfo('author-1', formData, 'author-123.jpg');
+      const result = await updateAuthorInfo('author-1', formData);
 
       expect(result.data.instagram).toBe('');
       expect(result.data.tikTok).toBe('');
@@ -190,159 +170,48 @@ describe('updateAuthorInfo', () => {
         },
       });
 
-      const mockUpdate = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: {
-                id: 'author-1',
-                name: formData.name,
-                contact_email: formData.email,
-                inst_link: formData.instagram,
-                tik_tok_link: formData.tikTok,
-                you_tube_link: formData.youTube,
-                facebook_link: formData.facebook,
-                telegram_link: formData.telegram,
-                recipes_count: formData.recipesCount,
-                subscribers: formData.subscribers,
-                views: formData.views,
-                image: formData.image,
-                description: {
-                  en: 'Updated English description',
-                  uk: 'Оновлений український опис',
-                },
-              },
-              error: null,
-            }),
-          }),
-        }),
+      mockUpdateChain({
+        data: {
+          id: 'author-1',
+          name: formData.name,
+          contact_email: formData.email,
+          inst_link: formData.instagram,
+          tik_tok_link: formData.tikTok,
+          you_tube_link: formData.youTube,
+          facebook_link: formData.facebook,
+          telegram_link: formData.telegram,
+          recipes_count: formData.recipesCount,
+          subscribers: formData.subscribers,
+          views: formData.views,
+          image: formData.image,
+          description: {
+            en: 'Updated English description',
+            uk: 'Оновлений український опис',
+          },
+        },
+        error: null,
       });
 
-      mockSupabase.from.mockReturnValue({ update: mockUpdate } as any);
-
-      const result = await updateAuthorInfo('author-1', formData, 'author-123.jpg');
+      const result = await updateAuthorInfo('author-1', formData);
 
       expect(result.data.description.en).toBe('Updated English description');
       expect(result.data.description.uk).toBe('Оновлений український опис');
     });
   });
 
-  describe('Image upload scenarios', () => {
-    test('should upload new image and delete old one', async () => {
-      const mockFile = new File(['image content'], 'new-author.jpg', { type: 'image/jpeg' });
-      const formData = createMockAuthorForm({
-        imageFile: mockFile,
-      });
-
-      mockDeleteFile.mockResolvedValue({ success: true });
-      mockUploadImage.mockResolvedValue({
-        imagePath: 'author-test-uuid-author',
-        error: null,
-      });
-      mockGetPublicUrl.mockReturnValue('https://storage.example.com/author-test-uuid-author');
-
-      const mockUpdate = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: {
-                id: 'author-1',
-                name: formData.name,
-                contact_email: formData.email,
-                inst_link: formData.instagram,
-                tik_tok_link: formData.tikTok,
-                you_tube_link: formData.youTube,
-                facebook_link: formData.facebook,
-                telegram_link: formData.telegram,
-                recipes_count: formData.recipesCount,
-                subscribers: formData.subscribers,
-                views: formData.views,
-                image: 'author-test-uuid-author',
-                description: formData.description,
-              },
-              error: null,
-            }),
-          }),
-        }),
-      });
-
-      mockSupabase.from.mockReturnValue({ update: mockUpdate } as any);
-
-      const result = await updateAuthorInfo('author-1', formData, 'old-author-123.jpg');
-
-      // Should delete old image
-      expect(mockDeleteFile).toHaveBeenCalledWith('old-author-123.jpg', 'author');
-
-      // Should upload new image
-      expect(mockUploadImage).toHaveBeenCalledWith({
-        file: mockFile,
-        bucket: 'author',
-        filePath: 'author-test-uuid-author',
-      });
-
-      // Should return new image URL
-      expect(result.data.image).toBe('https://storage.example.com/author-test-uuid-author');
-    });
-
-    test('should throw error if image upload fails', async () => {
-      const mockFile = new File(['image content'], 'new-author.jpg', { type: 'image/jpeg' });
-      const formData = createMockAuthorForm({
-        imageFile: mockFile,
-      });
-
-      mockDeleteFile.mockResolvedValue({ success: true });
-      mockUploadImage.mockResolvedValue({
-        imagePath: '',
-        error: 'Upload failed',
-      });
-
-      await expect(updateAuthorInfo('author-1', formData, 'old-author.jpg')).rejects.toThrow(
-        'Failed to upload image'
-      );
-    });
-  });
-
   describe('Error handling', () => {
     test('should throw error when database update fails', async () => {
       const formData = createMockAuthorForm();
+      mockUpdateChain({ data: null, error: { message: 'Database error' } });
 
-      const mockUpdate = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: null,
-              error: { message: 'Database error' },
-            }),
-          }),
-        }),
-      });
-
-      mockSupabase.from.mockReturnValue({ update: mockUpdate } as any);
-
-      await expect(updateAuthorInfo('author-1', formData, 'author-123.jpg')).rejects.toThrow(
-        'Database error'
-      );
+      await expect(updateAuthorInfo('author-1', formData)).rejects.toThrow('Database error');
     });
 
     test('should throw error when no data returned', async () => {
       const formData = createMockAuthorForm();
+      mockUpdateChain({ data: null, error: null });
 
-      const mockUpdate = jest.fn().mockReturnValue({
-        eq: jest.fn().mockReturnValue({
-          select: jest.fn().mockReturnValue({
-            single: jest.fn().mockResolvedValue({
-              data: null,
-              error: null,
-            }),
-          }),
-        }),
-      });
-
-      mockSupabase.from.mockReturnValue({ update: mockUpdate } as any);
-
-      await expect(updateAuthorInfo('author-1', formData, 'author-123.jpg')).rejects.toThrow(
-        'Failed to update author'
-      );
+      await expect(updateAuthorInfo('author-1', formData)).rejects.toThrow('Failed to update author');
     });
   });
 
@@ -350,47 +219,45 @@ describe('updateAuthorInfo', () => {
     test('should correctly map all fields to snake_case', async () => {
       const formData = createMockAuthorForm();
 
-      let capturedUpdateData: any;
-      const mockUpdate = jest.fn().mockImplementation((data) => {
-        capturedUpdateData = data;
-        return {
-          eq: jest.fn().mockReturnValue({
-            select: jest.fn().mockReturnValue({
-              single: jest.fn().mockResolvedValue({
-                data: {
-                  id: 'author-1',
-                  name: formData.name,
-                  contact_email: formData.email,
-                  inst_link: formData.instagram,
-                  tik_tok_link: formData.tikTok,
-                  you_tube_link: formData.youTube,
-                  facebook_link: formData.facebook,
-                  telegram_link: formData.telegram,
-                  recipes_count: formData.recipesCount,
-                  subscribers: formData.subscribers,
-                  views: formData.views,
-                  image: formData.image,
-                  description: formData.description,
-                },
-                error: null,
-              }),
-            }),
-          }),
-        };
+      let capturedUpdateData: Record<string, unknown> | undefined;
+      const single = jest.fn().mockResolvedValue({
+        data: {
+          id: 'author-1',
+          name: formData.name,
+          contact_email: formData.email,
+          inst_link: formData.instagram,
+          tik_tok_link: formData.tikTok,
+          you_tube_link: formData.youTube,
+          facebook_link: formData.facebook,
+          telegram_link: formData.telegram,
+          recipes_count: formData.recipesCount,
+          subscribers: formData.subscribers,
+          views: formData.views,
+          image: formData.image,
+          description: formData.description,
+        },
+        error: null,
       });
+      const update = jest.fn().mockImplementation((data) => {
+        capturedUpdateData = data;
+        return { eq: jest.fn().mockReturnValue({ select: jest.fn().mockReturnValue({ single }) }) };
+      });
+      mockSupabase.from.mockReturnValue({ update } as never);
 
-      mockSupabase.from.mockReturnValue({ update: mockUpdate } as any);
+      await updateAuthorInfo('author-1', formData);
 
-      await updateAuthorInfo('author-1', formData, 'author-123.jpg');
-
-      // Verify snake_case mapping
-      expect(capturedUpdateData.contact_email).toBe(formData.email);
-      expect(capturedUpdateData.inst_link).toBe(formData.instagram);
-      expect(capturedUpdateData.tik_tok_link).toBe(formData.tikTok);
-      expect(capturedUpdateData.you_tube_link).toBe(formData.youTube);
-      expect(capturedUpdateData.facebook_link).toBe(formData.facebook);
-      expect(capturedUpdateData.telegram_link).toBe(formData.telegram);
-      expect(capturedUpdateData.recipes_count).toBe(formData.recipesCount);
+      expect(capturedUpdateData!.contact_email).toBe(formData.email);
+      expect(capturedUpdateData!.inst_link).toBe(formData.instagram);
+      expect(capturedUpdateData!.tik_tok_link).toBe(formData.tikTok);
+      expect(capturedUpdateData!.you_tube_link).toBe(formData.youTube);
+      expect(capturedUpdateData!.facebook_link).toBe(formData.facebook);
+      expect(capturedUpdateData!.telegram_link).toBe(formData.telegram);
+      expect(capturedUpdateData!.recipes_count).toBe(formData.recipesCount);
+      // Hero words are normalized from free text into arrays.
+      expect(capturedUpdateData!.animated_hero_words).toEqual({
+        en: ['cakes', 'cookies', 'pastries'],
+        uk: ['торти', 'печиво', 'випічка'],
+      });
     });
   });
 });

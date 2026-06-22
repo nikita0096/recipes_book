@@ -3,7 +3,7 @@
 import React, {useState} from 'react';
 import {IRecipe} from "@/types/recipe";
 import {useQueryClient} from "@tanstack/react-query";
-import {deleteRecipe} from "@/services/db/admin/deleteRecipe";
+import {deleteRecipe} from "@/services/api/admin/deleteRecipe";
 import {Link} from "@/i18n/navigation";
 import Image from 'next/image';
 import {PAGES} from "@/config/page.config";

@@ -5,7 +5,7 @@ import {fetchAuthorInfo} from "@/services/db/author/fetchAuthorInfo";
 import Image from "next/image";
 import {useTranslations} from "next-intl";
 import {SubmitHandler, useForm} from "react-hook-form";
-import {updateAuthorInfo} from "@/services/db/author/updateAuthorInfo";
+import {updateAuthorInfo} from "@/services/api/admin/updateAuthor";
 import {Spinner} from "@/components/ui/spinner";
 import {MdDeleteForever} from "react-icons/md";
 import {LocalizedText} from "@/types";

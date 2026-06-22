@@ -2,23 +2,23 @@ import {prepareUpdateData, hasDataChanged, PrepareUpdateDataResult} from '@/app/
 import {EditingValues} from '@/app/[locale]/admin/recipes/[recipe]/page';
 import {IRecipe, IRecipePublic, IRecipePremiumFull} from '@/types/recipe';
 import {uploadImage} from '@/services/storage/uploadImagetoStorage';
-import {uploadVideoToStorage} from '@/services/storage/uploadVideoToStorage';
+import {uploadVideoToStream} from '@/services/storage/uploadVideoToStream';
 
 // Mock the upload functions
 jest.mock('@/services/storage/uploadImagetoStorage', () => ({
   uploadImage: jest.fn(),
 }));
 
-jest.mock('@/services/storage/uploadVideoToStorage', () => ({
-  uploadVideoToStorage: jest.fn(),
+jest.mock('@/services/storage/uploadVideoToStream', () => ({
+  uploadVideoToStream: jest.fn(),
 }));
 
 jest.mock('@/services/storage/deleteImageFromStorage', () => ({
   deleteFileByPath: jest.fn().mockResolvedValue({success: true}),
 }));
 
-jest.mock('@/services/storage/deleteVideoR2Bucket', () => ({
-  deleteVideo: jest.fn().mockResolvedValue({success: true}),
+jest.mock('@/services/storage/deleteVideoFromStream', () => ({
+  deleteVideoFromStream: jest.fn().mockResolvedValue({success: true, error: ''}),
 }));
 
 // Mock uuid
@@ -27,7 +27,7 @@ jest.mock('uuid', () => ({
 }));
 
 const mockUploadImage = uploadImage as jest.MockedFunction<typeof uploadImage>;
-const mockUploadVideo = uploadVideoToStorage as jest.MockedFunction<typeof uploadVideoToStorage>;
+const mockUploadVideo = uploadVideoToStream as jest.MockedFunction<typeof uploadVideoToStream>;
 
 // Base mock data
 const createMockRecipePublic = (): IRecipePublic => ({

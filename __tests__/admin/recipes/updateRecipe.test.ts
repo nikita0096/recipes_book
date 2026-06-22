@@ -4,18 +4,16 @@ import {
   convertPublicToPremium,
   convertPremiumToPublic,
 } from '@/services/db/admin/updateRecipe';
-import { supabase } from '@/lib/supabase/ClientComponentClient';
+import { createClient } from '@/lib/supabase/ServerComponentClient';
 import {
   UpdateRecipeDataPublic,
   UpdateRecipeDataPremiumMain,
   UpdateRecipeDataPremiumPart,
 } from '@/types/recipe';
 
-// Mock supabase
-jest.mock('@/lib/supabase/ClientComponentClient', () => ({
-  supabase: {
-    from: jest.fn(),
-  },
+// The update services create their own request-scoped client; mock the factory.
+jest.mock('@/lib/supabase/ServerComponentClient', () => ({
+  createClient: jest.fn(),
 }));
 
 // Mock getPublicImageUrl
@@ -32,7 +30,8 @@ jest.mock('uuid', () => ({
   v4: jest.fn(() => 'test-uuid-123'),
 }));
 
-const mockSupabase = supabase as jest.Mocked<typeof supabase>;
+const mockSupabase = { from: jest.fn() };
+(createClient as jest.Mock).mockResolvedValue(mockSupabase);
 
 // Mock data factories
 const createMockPublicUpdateData = (): UpdateRecipeDataPublic => ({

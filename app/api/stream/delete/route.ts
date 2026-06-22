@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/ServerComponentClient';
+import { requireAdmin } from '@/lib/auth/requireAdmin';
 import { deleteStreamVideo } from '@/lib/cloudflare-stream/client';
 
 /**
@@ -20,29 +20,8 @@ import { deleteStreamVideo } from '@/lib/cloudflare-stream/client';
  */
 export async function POST(request: NextRequest) {
   try {
-    // Check authentication
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Check if user is admin
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    if (profile?.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
+    const denied = await requireAdmin();
+    if (denied) return denied;
 
     // Get video UID from request
     const { videoUid } = await request.json();

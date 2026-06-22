@@ -8,7 +8,7 @@ import {IRecipe, RecipePrice} from "@/types/recipe";
 import LoadingPage from "@/components/ui/LoadingPage";
 import {useTranslations} from "next-intl";
 import {useQueryClient} from "@tanstack/react-query";
-import {deleteRecipe} from "@/services/db/admin/deleteRecipe";
+import {deleteRecipe} from "@/services/api/admin/deleteRecipe";
 import {useRouter} from "next/navigation";
 import {SortableStep, PublishToggle} from "@/components/admin";
 import {
@@ -42,7 +42,7 @@ import {
   updateRecipePremium,
   convertPublicToPremium,
   convertPremiumToPublic,
-} from "@/services/db/admin/updateRecipe";
+} from "@/services/api/admin/updateRecipe";
 import {prepareUpdateData} from "./utils/prepareUpdateData";
 import {fetchRecipeAdmin} from "@/services/db/admin/fetchRecipeAdmin";
 import {SecureVideoPlayer} from "@/components/video/SecureVideoPlayer";

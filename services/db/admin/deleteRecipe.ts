@@ -1,8 +1,18 @@
-import {supabase} from "@/lib/supabase/ClientComponentClient";
-import {deleteVideoFromStream} from "@/services/storage/deleteVideoFromStream";
+import { createClient } from '@/lib/supabase/ServerComponentClient';
+import { deleteRecipeVideo } from '@/services/storage/server/deleteRecipeVideo';
 
-export const deleteRecipe = async ({ id, videoKey }: { id: string; videoKey: string | null }) => {
-  // Если videoKey не передан, пробуем получить из premium таблицы (до удаления рецепта!)
+/**
+ * Delete a recipe and all of its associated assets (storage images + video).
+ * Server-only: uses a request-scoped Supabase client so RLS still enforces
+ * admin-only access. Invoked from the admin API route, not the browser.
+ */
+export const deleteRecipe = async (
+  { id, videoKey }: { id: string; videoKey: string | null }
+) => {
+  const supabase = await createClient();
+
+  // If videoKey wasn't provided, resolve it from the premium table before the
+  // recipe row (and its cascade) is deleted.
   let finalVideoKey = videoKey;
 
   if (!finalVideoKey) {
@@ -73,7 +83,7 @@ export const deleteRecipe = async ({ id, videoKey }: { id: string; videoKey: str
 
 
   if (finalVideoKey) {
-    const res = await deleteVideoFromStream(finalVideoKey);
+    const res = await deleteRecipeVideo(finalVideoKey);
 
     if (!res.success && res.error) {
       return { error: res.error };

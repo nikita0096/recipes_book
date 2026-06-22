@@ -41,7 +41,7 @@ describe('fetchRecipe - Access Control', () => {
 
     // Default price mock
     mockFetchRecipePrice.mockResolvedValue({
-      price: { usd: 9.99, uah: 400 },
+      price: { en: 9.99, uk: 400 },
       discount: null,
     });
   });
@@ -349,7 +349,7 @@ describe('fetchRecipe - Access Control', () => {
 
       // Should include price info for purchase
       expect(result.totalPrice).toEqual({
-        price: { usd: 9.99, uah: 400 },
+        price: { en: 9.99, uk: 400 },
         discount: null,
       });
 
@@ -397,7 +397,7 @@ describe('fetchRecipe - Access Control', () => {
       // Should return public data
       expect(result.data?.isPremium).toBe(false);
       expect(result.totalPrice).toEqual({
-        price: { usd: 9.99, uah: 400 },
+        price: { en: 9.99, uk: 400 },
         discount: null,
       });
       expect(result.error).toBeNull();

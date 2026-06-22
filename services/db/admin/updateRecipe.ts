@@ -1,4 +1,4 @@
-import {supabase} from "@/lib/supabase/ClientComponentClient";
+import {createClient} from "@/lib/supabase/ServerComponentClient";
 import {
   UpdateRecipeDataPublic,
   UpdateRecipeDataPremiumMain,
@@ -16,6 +16,7 @@ export const updateRecipePublic = async (
   formData: UpdateRecipeDataPublic,
   id: string
 ): Promise<{ data: IRecipePublic | null; error: string | null }> => {
+  const supabase = await createClient();
   const {data, error} = await supabase
     .from("recipes")
     .update({
@@ -80,6 +81,7 @@ export const updateRecipePremium = async (
   premiumData: UpdateRecipeDataPremiumPart,
   id: string
 ): Promise<{ data: { newRecipe: IRecipePremiumFull, newPrice: RecipePrice } | null; error: string | null }> => {
+  const supabase = await createClient();
   // Update main table
   const {data, error} = await supabase
     .from("recipes")
@@ -171,8 +173,9 @@ export const convertPublicToPremium = async (
   premiumData: UpdateRecipeDataPremiumPart,
   id: string
 ): Promise<{ data: { newRecipe: IRecipePremiumFull, newPrice: RecipePrice } | null; error: string | null }> => {
+  const supabase = await createClient();
   const premiumId = uuidv4();
-  // Update main table - убираем steps/video, ставим is_premium = true
+  // Update main table - clear steps/video, set is_premium = true
   const {data, error} = await supabase
     .from("recipes")
     .update({
@@ -265,7 +268,8 @@ export const convertPremiumToPublic = async (
   formData: UpdateRecipeDataPublic,
   id: string
 ): Promise<{ data: IRecipePublic | null; error: string | null }> => {
-  // Update main table - добавляем steps/video, ставим is_premium = false, обнуляем premium_recipe
+  const supabase = await createClient();
+  // Update main table - restore steps/video, set is_premium = false, clear premium_recipe
   const {data, error} = await supabase
     .from("recipes")
     .update({

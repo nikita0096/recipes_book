@@ -1,48 +1,29 @@
-import {supabase} from "@/lib/supabase/ClientComponentClient";
-import {AuthorInfoForm} from "@/app/[locale]/admin/author/page";
-import {uploadImage} from "@/services/storage/uploadImagetoStorage";
-import {deleteFileByPath} from "@/services/storage/deleteImageFromStorage";
+import type {AuthorInfoForm} from "@/app/[locale]/admin/author/page";
+import {createClient} from "@/lib/supabase/ServerComponentClient";
 import {AuthorInfo, mapAuthorRow} from "@/services/db/author/fetchAuthorInfo";
-import {v4 as uuidv4} from "uuid";
 
-const AUTHOR_BUCKET = 'author';
+// Payload sent to the server: the form fields with the image already resolved
+// to a storage path client-side (upload uses browser image compression).
+export type UpdateAuthorPayload = Omit<AuthorInfoForm, "imageFile">;
 
 // Hero words are stored as an array; normalize free-text input into clean,
 // space-separated tokens (collapses extra whitespace, drops empties).
 const toWords = (value: string): string[] => value.trim().split(/\s+/).filter(Boolean);
 
+// Server-only: uses a request-scoped Supabase client so RLS still enforces
+// admin-only access. Image upload/deletion is handled client-side before this.
 export const updateAuthorInfo = async (
   id: string,
-  data: AuthorInfoForm,
-  currentImagePath: string
+  data: UpdateAuthorPayload
 ): Promise<AuthorInfo> => {
-  let imagePath = currentImagePath;
-
-  if (data.imageFile) {
-    if (currentImagePath) {
-      await deleteFileByPath(currentImagePath, AUTHOR_BUCKET);
-    }
-
-    const filePath = `author-${uuidv4()}`;
-    const {imagePath: newImagePath, error: uploadError} = await uploadImage({
-      file: data.imageFile,
-      bucket: AUTHOR_BUCKET,
-      filePath: filePath
-    });
-
-    if (uploadError) {
-      throw new Error('Failed to upload image');
-    }
-
-    imagePath = newImagePath;
-  }
+  const supabase = await createClient();
 
   const {data: updatedAuthor, error} = await supabase
     .from('author')
     .update({
       contact_email: data.email,
       facebook_link: data.facebook,
-      image: imagePath,
+      image: data.image,
       inst_link: data.instagram,
       recipes_count: data.recipesCount,
       subscribers: data.subscribers,
