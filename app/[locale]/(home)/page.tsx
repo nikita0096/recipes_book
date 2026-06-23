@@ -23,8 +23,6 @@ export default function Home() {
 
   const triggerFeaturedCardsRef = useRef<HTMLDivElement>(null);
 
-  const words = t.raw('title.words') as string[];
-
   useEffect(() => {
     if(!triggerFeaturedCardsRef.current) return;
 
@@ -46,7 +44,6 @@ export default function Home() {
       <AnimatedHero
         discoverText={t('title.discover')}
         recipesText={t('title.recipes')}
-        words={words}
         byAuthor={t('title.byAuthor')}
         browseText={t('hero.browse')}
         aboutText={t('hero.about')}

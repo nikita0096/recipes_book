@@ -22,9 +22,9 @@ const LanguageSwitcher = () => {
       </Link>
       <Link
         href={pathname}
-        locale="ua"
+        locale="uk"
         className={`text-xs font-medium px-2.5 py-1.5 tracking-wide border-l border-border transition-all ${
-          locale === 'ua'
+          locale === 'uk'
             ? 'bg-accent text-white'
             : 'text-muted hover:text-text hover:bg-surface'
         }`}

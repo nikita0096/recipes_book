@@ -1,22 +1,38 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
 import {useUserStore} from "@/store/useUserStore";
 import {useRouter} from "@/i18n/navigation";
 import {useLocale, useTranslations} from "next-intl";
 import {Controller, SubmitHandler, useFieldArray, useForm} from "react-hook-form";
+import {
+  DndContext,
+  DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  closestCenter,
+  useSensor,
+  useSensors
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy
+} from "@dnd-kit/sortable";
+import SortableItem from "@/components/admin/SortableItem";
 import {v4 as uuidv4} from 'uuid';
 import {ulid} from "ulid";
-import {insertRecipePublic, insertRecipePremiumMain} from "@/services/db/admin/insertRecipeToDatabase";
+import {createRecipe} from "@/services/api/admin/createRecipe";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {MdDeleteForever} from "react-icons/md";
 import {Spinner} from "@/components/ui/spinner";
 import {units} from "@/constants/units";
 import {categories} from "@/constants/categories";
-import {IFormValues, Ingredient, Locale} from "@/types/forms";
-import {uploadVideoToStorage} from "@/services/storage/uploadVideoToStorage";
-import {insertPremiumRecipePart} from "@/services/db/admin/insertPremiumRecipeToDb";
+import {IFormValues, IngredientGroupFormValues, Locale} from "@/types/forms";
+import {uploadVideoToStream} from "@/services/storage/uploadVideoToStream";
 import {
   IRecipeUploadPublic,
   IRecipeUploadPremiumMain,
@@ -24,8 +40,28 @@ import {
   RecipeStep,
 } from "@/types/recipe";
 
+const createEmptyGroup = (): IngredientGroupFormValues => ({
+  id: uuidv4(),
+  title: {en: '', uk: ''},
+  ingredients: [],
+  draft: {uk: '', en: '', quantity: '', unit: units[0].value},
+});
+
+// localStorage key for persisting the in-progress recipe form across reloads
+const FORM_STORAGE_KEY = 'admin-recipe-form-draft';
+
+// File objects can't be serialized to localStorage, so strip them before saving.
+// Only the text data is persisted; images and video must be re-selected after a reload.
+const stripFilesForStorage = (values: IFormValues): IFormValues => ({
+  ...values,
+  heroImg: null,
+  videoFile: null,
+  recipeSteps: values.recipeSteps.map((step) => ({...step, image: null})),
+});
+
 const Page = () => {
   const [mounted, setMounted] = useState<boolean>(false);
+  const [isHydrated, setIsHydrated] = useState<boolean>(false);
 
   const [stepImageUrls, setStepImageUrls] = useState<string[]>([]);
   const [heroImg, setHeroImg] = useState<string | null>(null);
@@ -49,45 +85,51 @@ const Page = () => {
     reset,
     control,
     setValue,
-    resetField,
     getValues,
     watch,
     formState: {errors}
   } = useForm<IFormValues>({
     defaultValues: {
       recipeSteps: [],
-      title: {en: '', ua: ''},
-      description: {en: '', ua: ''},
+      title: {en: '', uk: ''},
+      description: {en: '', uk: ''},
       likes: 0,
       category: categories.find(cat => cat.en === 'Desserts')?.en,
-      price: { en: 0, ua: 0 },
+      price: {en: 0, uk: 0},
       discount: 0,
-      ingredientEn: '',
-      ingredientUa: '',
-      ingredientQuantity: '',
-      ingredientUnit: units[0].value,
-      ingredients: [],
+      ingredientGroups: [createEmptyGroup()],
       heroImg: null,
       isPremium: true,
       preparingTime: 0,
+      weight: null,
+      diameter: null,
+      calories: null,
       videoFile: null,
       slug: ''
     }
   });
 
   const {
-    fields: ingredientFields,
-    append: appendIngredient,
-    remove: removeIngredient,
+    fields: groupFields,
+    append: appendGroup,
+    remove: removeGroup,
+    move: moveGroup,
   } = useFieldArray({
     control,
-    name: 'ingredients',
+    name: 'ingredientGroups',
   });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {activationConstraint: {distance: 6}}),
+    useSensor(KeyboardSensor, {coordinateGetter: sortableKeyboardCoordinates}),
+    useSensor(TouchSensor, {activationConstraint: {distance: 8}}),
+  );
 
   const {
     fields: stepFields,
     append: appendStep,
     remove: removeStep,
+    move: moveStep,
   } = useFieldArray({
     control,
     name: 'recipeSteps',
@@ -99,7 +141,39 @@ const Page = () => {
 
   useEffect(() => {
     setMounted(true);
+
+    // Restore any in-progress form data saved before a reload.
+    // keepDefaultValues preserves the original empty defaults so a later
+    // no-arg reset() clears the form instead of reverting to this draft.
+    try {
+      const saved = localStorage.getItem(FORM_STORAGE_KEY);
+      if (saved) {
+        reset(JSON.parse(saved) as IFormValues, {keepDefaultValues: true});
+      }
+    } catch {
+      // Ignore corrupted drafts
+    }
+
+    setIsHydrated(true);
   }, []);
+
+  // Persist text data to localStorage on every change so a reload won't lose it
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const subscription = watch((values) => {
+      try {
+        localStorage.setItem(
+          FORM_STORAGE_KEY,
+          JSON.stringify(stripFilesForStorage(values as IFormValues))
+        );
+      } catch {
+        // Ignore storage quota / serialization errors
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch, isHydrated]);
 
   useEffect(() => {
     if (user === null && mounted) {
@@ -107,29 +181,79 @@ const Page = () => {
     }
   }, [user, router]);
 
-  const handleIngredientsForm = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleIngredientsForm = (e: React.MouseEvent<HTMLButtonElement>, groupIndex: number) => {
     e.preventDefault();
-    const ingredientUa = getValues('ingredientUa')?.trim();
-    const ingredientEn = getValues('ingredientEn')?.trim();
-    const quantity = getValues('ingredientQuantity')?.trim();
-    const unit = getValues('ingredientUnit');
+    const draft = getValues(`ingredientGroups.${groupIndex}.draft`);
+    const ingredientUk = draft.uk?.trim();
+    const ingredientEn = draft.en?.trim();
+    const quantity = draft.quantity?.trim();
+    const unit = draft.unit;
 
-    if (!ingredientUa || !ingredientEn || !quantity || !unit) {
+    if (!ingredientUk || !ingredientEn || !quantity || !unit) {
       setValidationErrorIngredients(t('form.validation.fillAllIngredientFields'));
       return;
     }
 
-    appendIngredient({
-      value: {en: ingredientEn, ua: ingredientUa},
-      quantity: quantity,
-      unit: unit,
-      id: uuidv4()
-    });
-    resetField('ingredientUa');
-    resetField('ingredientEn');
-    resetField('ingredientQuantity');
-    resetField('ingredientUnit');
+    const ingredients = getValues(`ingredientGroups.${groupIndex}.ingredients`);
+    setValue(`ingredientGroups.${groupIndex}.ingredients`, [
+      ...ingredients,
+      {
+        value: {en: ingredientEn, uk: ingredientUk},
+        quantity: quantity,
+        unit: unit,
+        id: uuidv4()
+      }
+    ]);
+    setValue(`ingredientGroups.${groupIndex}.draft`, {uk: '', en: '', quantity: '', unit: units[0].value});
     setValidationErrorIngredients('');
+  };
+
+  const removeIngredientFromGroup = (groupIndex: number, ingredientId: string) => {
+    const ingredients = getValues(`ingredientGroups.${groupIndex}.ingredients`);
+    setValue(
+      `ingredientGroups.${groupIndex}.ingredients`,
+      ingredients.filter((ingredient) => ingredient.id !== ingredientId)
+    );
+  };
+
+  const handleGroupDragEnd = (event: DragEndEvent) => {
+    const {active, over} = event;
+    if (!over || active.id === over.id) return;
+
+    const groups = getValues('ingredientGroups');
+    const oldIndex = groups.findIndex((group) => group.id === active.id);
+    const newIndex = groups.findIndex((group) => group.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    moveGroup(oldIndex, newIndex);
+  };
+
+  const handleIngredientDragEnd = (event: DragEndEvent, groupIndex: number) => {
+    const {active, over} = event;
+    if (!over || active.id === over.id) return;
+
+    const ingredients = getValues(`ingredientGroups.${groupIndex}.ingredients`);
+    const oldIndex = ingredients.findIndex((item) => item.id === active.id);
+    const newIndex = ingredients.findIndex((item) => item.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    setValue(`ingredientGroups.${groupIndex}.ingredients`, arrayMove(ingredients, oldIndex, newIndex));
+  };
+
+  const handleStepDragEnd = (event: DragEndEvent) => {
+    const {active, over} = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = stepFields.findIndex((field) => field.id === active.id);
+    const newIndex = stepFields.findIndex((field) => field.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    moveStep(oldIndex, newIndex);
+    // Keep the parallel preview-URL array aligned with the reordered steps
+    setStepImageUrls((prev) => arrayMove(prev, oldIndex, newIndex));
   };
 
   const handleFiles = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -156,24 +280,32 @@ const Page = () => {
     }
   };
 
-  type TranslateInputs = 'title.ua' | 'description.ua' | 'ingredientUa' | `recipeSteps.${number}.desc.ua`;
+  type TranslateInputs =
+    | 'title.uk'
+    | 'description.uk'
+    | `ingredientGroups.${number}.draft.uk`
+    | `ingredientGroups.${number}.title.uk`
+    | `recipeSteps.${number}.desc.uk`;
 
   const handleTranslateText = async (e: React.MouseEvent<HTMLButtonElement>, flag: string, index?: number) => {
     e.preventDefault();
     const inputFields: Record<string, TranslateInputs> = {
-      title: 'title.ua',
-      description: 'description.ua',
-      ingredient: 'ingredientUa',
-      ...(index !== undefined && {stepDescription: `recipeSteps.${index}.desc.ua`})
+      title: 'title.uk',
+      description: 'description.uk',
+      ...(index !== undefined && {
+        ingredient: `ingredientGroups.${index}.draft.uk`,
+        groupTitle: `ingredientGroups.${index}.title.uk`,
+        stepDescription: `recipeSteps.${index}.desc.uk`
+      })
     }
 
-    const textUa = getValues(inputFields[flag]);
+    const textUk = getValues(inputFields[flag]);
 
-    if (!textUa) return;
+    if (!textUk) return;
 
     const res = await fetch('/api/translate', {
       method: 'POST',
-      body: JSON.stringify({text: textUa})
+      body: JSON.stringify({text: textUk})
     });
 
     const {translated} = await res.json();
@@ -186,7 +318,14 @@ const Page = () => {
         setValue('description.en', translated);
         break;
       case 'ingredient':
-        setValue('ingredientEn', translated);
+        if (index !== undefined) {
+          setValue(`ingredientGroups.${index}.draft.en`, translated);
+        }
+        break;
+      case 'groupTitle':
+        if (index !== undefined) {
+          setValue(`ingredientGroups.${index}.title.en`, translated);
+        }
         break;
       case 'stepDescription':
         if (index !== undefined) {
@@ -224,26 +363,55 @@ const Page = () => {
     setValue('heroImg', null);
   };
 
+  const deleteVideoPreview = () => {
+    setVideoUrl(null);
+  }
+
+  const resetFormValues = () => {
+    reset();
+    localStorage.removeItem(FORM_STORAGE_KEY);
+    setStepImageUrls([]);
+    setHeroImg(null);
+    setVideoUrl(null);
+  }
+
   const handleFormData = async (data: IFormValues, folder: string) => {
     setError(null);
 
-    if (data.ingredients.length === 0 || data.heroImg === null || data.recipeSteps.length === 0) {
+    if (data.ingredientGroups.length === 0 || data.heroImg === null || data.recipeSteps.length === 0) {
       setError(t('form.validation.fillAllFields'));
       return null;
     }
 
-    if (!data.title.en || !data.title.ua) {
+    for (const group of data.ingredientGroups) {
+      if (group.ingredients.length === 0) {
+        setError(t('form.validation.addAtLeastOneIngredientInGroup'));
+        return null;
+      }
+    }
+
+    // Group titles are required only when there is more than one group
+    if (data.ingredientGroups.length > 1) {
+      for (const group of data.ingredientGroups) {
+        if (!group.title.en.trim() || !group.title.uk.trim()) {
+          setError(t('form.validation.enterGroupTitleBothLanguages'));
+          return null;
+        }
+      }
+    }
+
+    if (!data.title.en || !data.title.uk) {
       setError(t('form.validation.enterTitleBothLanguages'));
       return null;
     }
 
-    if (!data.description.en || !data.description.ua) {
+    if (!data.description.en || !data.description.uk) {
       setError(t('form.validation.enterDescriptionBothLanguages'));
       return null;
     }
 
     for (const step of data.recipeSteps) {
-      if (!step.desc.en || !step.desc.ua) {
+      if (!step.desc.en || !step.desc.uk) {
         setError(t('form.validation.enterStepsBothLanguages'));
         return null;
       }
@@ -254,7 +422,7 @@ const Page = () => {
       return null;
     }
 
-    if(data.isPremium && (data.price.en === 0 || data.price.ua === 0)) {
+    if (data.isPremium && (data.price.en === 0)) {
       setError(t('form.validation.enterPrice'));
       return null;
     }
@@ -271,18 +439,20 @@ const Page = () => {
 
     try {
       setIsVideoUploading(true);
-      const {videoUrl: videoKey, error} = await uploadVideoToStorage({
+      const {videoUrl: videoKey, error} = await uploadVideoToStream({
         videoFile: data.videoFile,
-        folder: folder,
-        onProgress: (percentage) => setVideoUploadProgress(percentage)
+        recipeId: folder, // folder is actually recipeId
+        isPremium: data.isPremium,
+        name: data.title.en,
+        onProgress: (percentage) => setVideoUploadProgress(percentage),
       });
 
-      if(error) throw new Error(error);
+      if (error) throw new Error(error);
 
       videoUrl = videoKey;
 
       setIsVideoUploading(false);
-    } catch(error) {
+    } catch (error) {
       setVideoError(t('form.validation.videoUploadingError'));
       console.log(error);
       return null;
@@ -343,9 +513,12 @@ const Page = () => {
       discount: data.discount ? data.discount : null,
       likes: data.likes,
       recipeSteps: steps as RecipeStep[],
-      ingredients: data.ingredients,
+      ingredients: data.ingredientGroups.map(({id, title, ingredients}) => ({id, title, ingredients})),
       heroImg: heroImgPath,
       preparingTime: data.preparingTime,
+      weight: data.weight || null,
+      diameter: data.diameter || null,
+      calories: data.calories || null,
       videoUrl: videoUrl,  // R2 key stored as videoUrl
       slug: data.slug,
     };
@@ -381,12 +554,13 @@ const Page = () => {
           heroImg: recipeData.heroImg,
           isPremium: true as const,
           preparingTime: recipeData.preparingTime,
+          weight: recipeData.weight,
+          diameter: recipeData.diameter,
+          calories: recipeData.calories,
           premiumId: premiumRecipeId,
           slug: recipeData.slug,
           stepsCount,
         };
-
-        await insertRecipePremiumMain(premiumMainData, stepsCount);
 
         const premiumPartData: IRecipePremiumUpload = {
           id: premiumRecipeId,
@@ -397,7 +571,12 @@ const Page = () => {
           discount: recipeData.discount,
         };
 
-        await insertPremiumRecipePart(premiumPartData);
+        await createRecipe({
+          isPremium: true,
+          main: premiumMainData,
+          stepsCount,
+          premium: premiumPartData,
+        });
       } else {
         // Public рецепт: все данные в main table
         const publicData: IRecipeUploadPublic = {
@@ -410,18 +589,22 @@ const Page = () => {
           heroImg: recipeData.heroImg,
           isPremium: false as const,
           preparingTime: recipeData.preparingTime,
+          weight: recipeData.weight,
+          diameter: recipeData.diameter,
+          calories: recipeData.calories,
           recipeSteps: recipeData.recipeSteps,
           videoUrl: recipeData.videoUrl,
           stepsCount: recipeData.recipeSteps.length,
           slug: recipeData.slug,
         };
 
-        await insertRecipePublic(publicData);
+        await createRecipe({isPremium: false, recipe: publicData});
       }
 
 
       setIsSuccess(true);
       reset();
+      localStorage.removeItem(FORM_STORAGE_KEY);
       setStepImageUrls([]);
       setHeroImg(null);
       setVideoUrl(null);
@@ -437,10 +620,12 @@ const Page = () => {
 
   const isPremium = watch('isPremium');
 
+  const watchedGroups = watch('ingredientGroups');
+
   const engTitle = watch('title.en');
 
   const generateSlug = (str: string): string => {
-    if(str.trim() !== '') {
+    if (str.trim() !== '') {
       return engTitle.trim().toLowerCase().split(' ').join('-');
     }
 
@@ -448,7 +633,7 @@ const Page = () => {
   };
 
   useEffect(() => {
-    if(engTitle.trim()) {
+    if (engTitle.trim()) {
       const slug = generateSlug(engTitle);
 
       setValue('slug', slug);
@@ -472,11 +657,17 @@ const Page = () => {
         {/* Basic Info Section */}
         <div className="p-6 sm:p-8 bg-surface border border-border">
           {/* Section header */}
-          <div className="flex items-center gap-3.5 mb-6 pb-3.5 border-b border-border">
-            <div className="w-6 h-6 border border-border flex items-center justify-center shrink-0">
-              <span className="text-[11px] text-accent font-semibold">1</span>
+          <div className="flex items-center justify-between gap-2 mb-6 pb-3.5 border-b border-border">
+            <div className="flex items-center gap-3.5">
+              <div className="w-6 h-6 border border-border flex items-center justify-center shrink-0">
+                <span className="text-[11px] text-accent font-semibold">1</span>
+              </div>
+              <span className="font-serif text-xl text-text">{t('form.sections.basicInfo')}</span>
             </div>
-            <span className="font-serif text-xl text-text">{t('form.sections.basicInfo')}</span>
+            <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
+                    type='button'
+                    onClick={resetFormValues}>Reset
+            </button>
           </div>
 
           <div className="space-y-4">
@@ -485,10 +676,10 @@ const Page = () => {
                 <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
                   {t('form.fields.title')}
                 </label>
-                <input {...register('title.ua', {required: true})}
+                <input {...register('title.uk', {required: true})}
                        className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                        type="text"
-                       placeholder={t('form.fields.titlePlaceholderUa')}
+                       placeholder={t('form.fields.titlePlaceholderUk')}
                 />
               </div>
               <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
@@ -513,9 +704,9 @@ const Page = () => {
                 <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
                   {t('form.fields.description')}
                 </label>
-                <textarea {...register('description.ua', {required: true})}
-                       className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
-                       placeholder={t('form.fields.descriptionPlaceholderUa')}
+                <textarea {...register('description.uk', {required: true})}
+                          className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
+                          placeholder={t('form.fields.descriptionPlaceholderUk')}
                 />
               </div>
               <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
@@ -523,15 +714,16 @@ const Page = () => {
                 Translate to English →
               </button>
               <textarea {...register('description.en', {required: true})}
-                     className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
-                     placeholder={t('form.fields.descriptionPlaceholderEn')}/>
+                        className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
+                        placeholder={t('form.fields.descriptionPlaceholderEn')}/>
             </div>
 
             {/* Paid content toggle */}
             <div className="flex items-center gap-3 mb-4">
               <div className="text-xs text-muted tracking-[0.05em]">{t('form.fields.premiumContent')}</div>
               <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" {...register('isPremium')} className="sr-only peer"/>
+                <input type="checkbox" {...register('isPremium')}
+                       className="sr-only peer"/>
                 <div className="w-9 h-5 border border-border bg-surface transition-colors
                                 after:content-[''] after:absolute after:top-1/2 after:-translate-y-1/2 after:left-0.5 after:w-3.5 after:h-3.5 after:bg-gray-500 after:transition-all
                                 peer-checked:after:left-[18px] relative peer-checked:after:bg-accent"/>
@@ -558,9 +750,9 @@ const Page = () => {
                     {t('form.fields.price')} (UAH)
                   </label>
                   <div className="relative">
-                    <input {...register('price.ua', {required: true, min: 1, max: 100000, valueAsNumber: true})}
-                           name="price.ua"
-                           aria-invalid={errors.price?.ua ? "true" : "false"}
+                    <input {...register('price.uk')}
+                           name="price.uk"
+                           aria-invalid={errors.price?.uk ? "true" : "false"}
                            className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                            type="number"/>
                     <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">₴</span>
@@ -617,6 +809,42 @@ const Page = () => {
                 <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">{t('form.fields.minutes')}</span>
               </div>
             </div>
+
+            <div className="mt-3.5 grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                  {t('form.fields.weight')}
+                </label>
+                <div className="relative">
+                  <input {...register('weight', {min: 0})}
+                         className="w-full px-3.5 py-2.5 pr-10 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                         type="number"/>
+                  <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">g</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                  {t('form.fields.diameter')}
+                </label>
+                <div className="relative">
+                  <input {...register('diameter', {min: 0})}
+                         className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                         type="number"/>
+                  <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">cm</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                  {t('form.fields.calories')}
+                </label>
+                <div className="relative">
+                  <input {...register('calories', {min: 0})}
+                         className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                         type="number"/>
+                  <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">kcal</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -630,93 +858,171 @@ const Page = () => {
             <span className="font-serif text-xl text-text">{t('form.sections.ingredients')}</span>
           </div>
 
-          <div className="space-y-3 mb-4">
-            <Controller
-              name='ingredients'
-              control={control}
-              rules={{required: 'Ingredients are required'}}
-              render={() => (
-                <div className="space-y-3">
-                  {/* Ingredient name inputs for both languages */}
-                  <div className="grid grid-cols-1 gap-3">
-                    <input {...register('ingredientUa')}
-                           className={`w-full px-3.5 py-2.5 bg-bg border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
-                             error !== null && getValues('ingredients').length === 0 ? 'border-red-400' : 'border-border'
-                           }`}
-                           type="text"
-                           placeholder={t('form.fields.ingredientPlaceholder')}/>
-                    <button className="self-start px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
-                            onClick={(e) => handleTranslateText(e, 'ingredient')}>
-                      Translate to EN →
-                    </button>
-                    <input {...register('ingredientEn')}
-                           className={`w-full px-3.5 py-2.5 bg-bg border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
-                             error !== null && getValues('ingredients').length === 0 ? 'border-red-400' : 'border-border'
-                           }`}
-                           type="text"
-                           placeholder={t('form.fields.ingredientPlaceholderEn')}/>
-                  </div>
+          <DndContext
+            id="ingredient-groups"
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleGroupDragEnd}
+          >
+            <SortableContext items={watchedGroups?.map(group => group.id) ?? []}
+                             strategy={verticalListSortingStrategy}>
+              <div className="space-y-5">
+                {groupFields.map((groupField, groupIndex) => (
+                  <SortableItem
+                    key={groupField.id}
+                    itemId={watchedGroups?.[groupIndex]?.id ?? groupField.id}
+                    className="border border-border p-4 sm:p-5 bg-bg"
+                  >
+                    {(dragHandle) => (
+                      <>
+                        {/* Group header */}
+                        <div className="grid grid-cols-[auto_32px_1fr_auto] gap-3.5 items-center mb-4">
+                          {dragHandle}
+                          <span className="text-[11px] text-accent font-semibold">
+                    {String(groupIndex + 1).padStart(2, '0')}
+                  </span>
+                          <span className="text-sm text-muted italic truncate">
+                    {watchedGroups?.[groupIndex]?.title.uk || t('form.fields.group') + ' ' + (groupIndex + 1)}
+                  </span>
+                          <button
+                            type="button"
+                            className="p-1 text-muted hover:text-red-500 transition-colors"
+                            onClick={() => removeGroup(groupIndex)}
+                          >
+                            <MdDeleteForever className="text-lg"/>
+                          </button>
+                        </div>
 
-                  {/* Quantity and Unit */}
-                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2.5 items-end">
-                    <div>
-                      <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">{t('form.fields.quantity')}</label>
-                      <input {...register('ingredientQuantity')}
-                             className={`w-full px-3.5 py-2.5 bg-bg border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
-                               error !== null && getValues('ingredients').length === 0 ? 'border-red-400' : 'border-border'
-                             }`}
-                             type="number"
-                             placeholder={t('form.fields.quantity')}/>
-                    </div>
-                    <div>
-                      <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">Unit</label>
-                      <select
-                        {...register('ingredientUnit')}
-                        className="w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text focus:outline-none focus:border-accent transition-colors cursor-pointer appearance-none"
-                      >
-                        {units.map((unit) => (
-                          <option key={unit.value}
-                                  value={unit.value}>
-                            {unit.label.ua} / {unit.label.en}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <button
-                      className="px-4 py-2.5 bg-text border border-text text-bg text-[11px] tracking-[0.06em] uppercase whitespace-nowrap hover:opacity-90 transition-opacity"
-                      onClick={(e) => handleIngredientsForm(e)}
-                    >
-                      + {t('form.buttons.add')}
-                    </button>
-                  </div>
-                </div>
-              )}
-            />
-            {errors.ingredients && <p className="text-red-500 text-sm">{t('form.validation.addAtLeastOneIngredient')}</p>}
-          </div>
+                        {/* Group title inputs */}
+                        <div className="space-y-3 mb-5">
+                          <div>
+                            <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                              {t('form.fields.groupTitle')}
+                            </label>
+                            <input {...register(`ingredientGroups.${groupIndex}.title.uk`)}
+                                   className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                                   type="text"
+                                   placeholder={t('form.fields.groupTitlePlaceholderUk')}/>
+                          </div>
+                          <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
+                                  onClick={(e) => handleTranslateText(e, 'groupTitle', groupIndex)}>
+                            Translate to English →
+                          </button>
+                          <input {...register(`ingredientGroups.${groupIndex}.title.en`)}
+                                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                                 type="text"
+                                 placeholder={t('form.fields.groupTitlePlaceholderEn')}/>
+                        </div>
 
-          {validationErrorIngredients && (
-            <div className="pb-4 text-red-500 text-sm">{validationErrorIngredients}</div>
-          )}
+                        {/* Ingredient inputs */}
+                        <div className="space-y-3 mb-4">
+                          <div className="grid grid-cols-1 gap-3">
+                            <input {...register(`ingredientGroups.${groupIndex}.draft.uk`)}
+                                   className={`w-full px-3.5 py-2.5 bg-surface border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
+                                     error !== null && watchedGroups?.[groupIndex]?.ingredients.length === 0 ? 'border-red-400' : 'border-border'
+                                   }`}
+                                   type="text"
+                                   placeholder={t('form.fields.ingredientPlaceholder')}/>
+                            <button className="self-start px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
+                                    onClick={(e) => handleTranslateText(e, 'ingredient', groupIndex)}>
+                              Translate to EN →
+                            </button>
+                            <input {...register(`ingredientGroups.${groupIndex}.draft.en`)}
+                                   className={`w-full px-3.5 py-2.5 bg-surface border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
+                                     error !== null && watchedGroups?.[groupIndex]?.ingredients.length === 0 ? 'border-red-400' : 'border-border'
+                                   }`}
+                                   type="text"
+                                   placeholder={t('form.fields.ingredientPlaceholderEn')}/>
+                          </div>
 
-          <div className="flex items-center justify-start gap-2 flex-wrap">
-            {ingredientFields.map((item, index) => (
-              <div
-                className="flex flex-row items-center gap-2 px-3 py-1.5 border border-border bg-bg text-sm text-text"
-                key={item.id}
-              >
-                <span>{item.value.ua}</span>
-                <span className="text-muted">|</span>
-                <span className="text-muted">{item.value.en}</span>
-                <span className="text-accent">-</span>
-                <span>{item.quantity} {item.unit}</span>
-                <MdDeleteForever
-                  className="text-red-500 cursor-pointer hover:text-red-600 transition-colors"
-                  onClick={() => removeIngredient(index)}
-                />
+                          {/* Quantity and Unit */}
+                          <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2.5 items-end">
+                            <div>
+                              <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">{t('form.fields.quantity')}</label>
+                              <input {...register(`ingredientGroups.${groupIndex}.draft.quantity`)}
+                                     className={`w-full px-3.5 py-2.5 bg-surface border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors ${
+                                       error !== null && watchedGroups?.[groupIndex]?.ingredients.length === 0 ? 'border-red-400' : 'border-border'
+                                     }`}
+                                     type="number"
+                                     placeholder={t('form.fields.quantity')}/>
+                            </div>
+                            <div>
+                              <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">Unit</label>
+                              <select
+                                {...register(`ingredientGroups.${groupIndex}.draft.unit`)}
+                                className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text focus:outline-none focus:border-accent transition-colors cursor-pointer appearance-none"
+                              >
+                                {units.map((unit) => (
+                                  <option key={unit.value}
+                                          value={unit.value}>
+                                    {unit.label.uk} / {unit.label.en}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <button
+                              className="px-4 py-2.5 bg-text border border-text text-bg text-[11px] tracking-[0.06em] uppercase whitespace-nowrap hover:opacity-90 transition-opacity"
+                              onClick={(e) => handleIngredientsForm(e, groupIndex)}
+                            >
+                              + {t('form.buttons.add')}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Added ingredients */}
+                        <DndContext
+                          id={`group-ingredients-${groupIndex}`}
+                          sensors={sensors}
+                          collisionDetection={closestCenter}
+                          onDragEnd={(e) => handleIngredientDragEnd(e, groupIndex)}
+                        >
+                          <SortableContext items={watchedGroups?.[groupIndex]?.ingredients.map(item => item.id) ?? []}>
+                            <div className="flex items-center justify-start gap-2 flex-wrap">
+                              {watchedGroups?.[groupIndex]?.ingredients.map((item) => (
+                                <SortableItem
+                                  key={item.id}
+                                  itemId={item.id}
+                                  className="flex flex-row items-center gap-2 px-3 py-1.5 border border-border bg-surface text-sm text-text"
+                                >
+                                  {(ingredientDragHandle) => (
+                                    <>
+                                      {ingredientDragHandle}
+                                      <span>{item.value.uk}</span>
+                                      <span className="text-muted">|</span>
+                                      <span className="text-muted">{item.value.en}</span>
+                                      <span className="text-accent">-</span>
+                                      <span>{item.quantity} {item.unit}</span>
+                                      <MdDeleteForever
+                                        className="text-red-500 cursor-pointer hover:text-red-600 transition-colors"
+                                        onClick={() => removeIngredientFromGroup(groupIndex, item.id)}
+                                      />
+                                    </>
+                                  )}
+                                </SortableItem>
+                              ))}
+                            </div>
+                          </SortableContext>
+                        </DndContext>
+                      </>
+                    )}
+                  </SortableItem>
+                ))}
+
+                {validationErrorIngredients && (
+                  <div className="text-red-500 text-sm">{validationErrorIngredients}</div>
+                )}
+
+                {/* Add new group button */}
+                <button
+                  className="w-full py-5 border border-dashed border-border flex items-center justify-center gap-2.5 text-[11px] tracking-[0.06em] text-accent hover:bg-bg transition-colors"
+                  type="button"
+                  onClick={() => appendGroup(createEmptyGroup())}
+                >
+                  + {t('form.buttons.addGroup')}
+                </button>
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
         </div>
 
         {/*Hero Image section*/}
@@ -749,9 +1055,21 @@ const Page = () => {
             ) : (
               <div
                 className="flex flex-col items-center justify-center gap-3.5 w-full py-12 border border-dashed border-border cursor-pointer">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted">
-                  <rect x="3" y="3" width="18" height="18" rx="2"/>
-                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                <svg width="24"
+                     height="24"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     strokeWidth="1.5"
+                     className="text-muted">
+                  <rect x="3"
+                        y="3"
+                        width="18"
+                        height="18"
+                        rx="2"/>
+                  <circle cx="8.5"
+                          cy="8.5"
+                          r="1.5"/>
                   <path d="M21 15l-5-5L5 21"/>
                 </svg>
                 <label className="cursor-pointer text-xs tracking-[0.06em] uppercase text-muted hover:text-text transition-colors">
@@ -787,29 +1105,41 @@ const Page = () => {
             <span className="font-serif text-xl text-text">{t('form.sections.steps')}</span>
           </div>
 
-          <div className="space-y-3">
-            {stepFields.map((field, index) => (
-              <div
-                key={field.id}
-                className="border border-border p-4 sm:p-5 bg-bg"
-              >
-                <div className="grid grid-cols-[32px_1fr_auto] gap-3.5 items-center mb-4">
-                  <span className="text-[11px] text-accent font-semibold">
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                  <span className="text-sm text-muted italic truncate">
-                    {getValues(`recipeSteps.${index}.desc.ua`) || t('form.fields.step') + ' ' + (index + 1)}
-                  </span>
-                  <button
-                    type="button"
-                    className="text-sm text-muted hover:text-red-500 transition-colors"
-                    onClick={() => deleteStep(index)}
+          <DndContext
+            id="recipe-steps"
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleStepDragEnd}
+          >
+            <SortableContext items={stepFields.map((field) => field.id)}
+                             strategy={verticalListSortingStrategy}>
+              <div className="space-y-3">
+                {stepFields.map((field, index) => (
+                  <SortableItem
+                    key={field.id}
+                    itemId={field.id}
+                    className="border border-border p-4 sm:p-5 bg-bg"
                   >
-                    ✕
-                  </button>
-                </div>
+                    {(dragHandle) => (
+                      <>
+                        <div className="grid grid-cols-[auto_32px_1fr_auto] gap-3.5 items-center mb-4">
+                          {dragHandle}
+                          <span className="text-[11px] text-accent font-semibold">
+                            {String(index + 1).padStart(2, '0')}
+                          </span>
+                          <span className="text-sm text-muted italic truncate">
+                            {getValues(`recipeSteps.${index}.desc.uk`) || t('form.fields.step') + ' ' + (index + 1)}
+                          </span>
+                          <button
+                            type="button"
+                            className="text-sm text-muted hover:text-red-500 transition-colors"
+                            onClick={() => deleteStep(index)}
+                          >
+                            ✕
+                          </button>
+                        </div>
 
-                {stepImageUrls[index] ? (
+                        {stepImageUrls[index] ? (
                   <div className="relative mb-3">
                     <Image
                       className="w-full object-cover"
@@ -849,10 +1179,10 @@ const Page = () => {
                       {t('form.fields.stepDescLabel')}
                     </label>
                     <textarea
-                      {...register(`recipeSteps.${index}.desc.ua`, {required: t('form.validation.addAtLeastOneStep')})}
-                      placeholder={t('form.fields.stepDescPlaceholderUa')}
+                      {...register(`recipeSteps.${index}.desc.uk`, {required: t('form.validation.addAtLeastOneStep')})}
+                      placeholder={t('form.fields.stepDescPlaceholderUk')}
                       rows={3}
-                      className={`w-full px-3.5 py-2.5 bg-surface border ${errors.recipeSteps?.[index]?.desc?.ua ? 'border-red-400' : 'border-border'} text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none`}
+                      className={`w-full px-3.5 py-2.5 bg-surface border ${errors.recipeSteps?.[index]?.desc?.uk ? 'border-red-400' : 'border-border'} text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none`}
                     />
                   </div>
                   <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
@@ -869,16 +1199,20 @@ const Page = () => {
                       rows={3}
                       className={`w-full px-3.5 py-2.5 bg-surface border ${errors.recipeSteps?.[index]?.desc?.en ? 'border-red-400' : 'border-border'} text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none`}
                     />
-                  </div>
-                </div>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </SortableItem>
+                ))}
               </div>
-            ))}
-          </div>
+            </SortableContext>
+          </DndContext>
           {/* Add new step button */}
           <button
             className={`w-full py-5 border border-dashed ${error && stepFields.length === 0 ? 'border-red-400' : 'border-border'} flex items-center justify-center gap-2.5 text-[11px] tracking-[0.06em] text-accent hover:bg-bg transition-colors mb-3`}
             type="button"
-            onClick={() => appendStep({desc: {en: '', ua: ''}, image: null})}
+            onClick={() => appendStep({desc: {en: '', uk: ''}, image: null})}
           >
             + {t('form.buttons.addNewStep')}
           </button>
@@ -912,7 +1246,7 @@ const Page = () => {
                     <div className="w-full bg-border h-1">
                       <div
                         className="bg-accent h-1 transition-all duration-300"
-                        style={{ width: `${videoUploadProgress}%` }}
+                        style={{width: `${videoUploadProgress}%`}}
                       ></div>
                     </div>
                   </div>
@@ -922,12 +1256,30 @@ const Page = () => {
                     {videoError} (using original file)
                   </p>
                 )}
+
+                <button
+                  type="button"
+                  className="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
+                  onClick={deleteVideoPreview}
+                >
+                  <MdDeleteForever className="text-lg"/>
+                </button>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center gap-3.5 py-12">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted">
+                <svg width="24"
+                     height="24"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     strokeWidth="1.5"
+                     className="text-muted">
                   <polygon points="23 7 16 12 23 17 23 7"/>
-                  <rect x="1" y="5" width="15" height="14" rx="2"/>
+                  <rect x="1"
+                        y="5"
+                        width="15"
+                        height="14"
+                        rx="2"/>
                 </svg>
                 <label className="cursor-pointer text-xs tracking-[0.06em] uppercase text-muted hover:text-text transition-colors">
                   <Controller

@@ -4,18 +4,16 @@ import {
   convertPublicToPremium,
   convertPremiumToPublic,
 } from '@/services/db/admin/updateRecipe';
-import { supabase } from '@/lib/supabase/ClientComponentClient';
+import { createClient } from '@/lib/supabase/ServerComponentClient';
 import {
   UpdateRecipeDataPublic,
   UpdateRecipeDataPremiumMain,
   UpdateRecipeDataPremiumPart,
 } from '@/types/recipe';
 
-// Mock supabase
-jest.mock('@/lib/supabase/ClientComponentClient', () => ({
-  supabase: {
-    from: jest.fn(),
-  },
+// The update services create their own request-scoped client; mock the factory.
+jest.mock('@/lib/supabase/ServerComponentClient', () => ({
+  createClient: jest.fn(),
 }));
 
 // Mock getPublicImageUrl
@@ -32,21 +30,31 @@ jest.mock('uuid', () => ({
   v4: jest.fn(() => 'test-uuid-123'),
 }));
 
-const mockSupabase = supabase as jest.Mocked<typeof supabase>;
+const mockSupabase = { from: jest.fn() };
+(createClient as jest.Mock).mockResolvedValue(mockSupabase);
 
 const createMockPublicData = (): UpdateRecipeDataPublic => ({
-  title: { ua: 'Публічний рецепт', en: 'Public Recipe' },
-  description: { ua: 'Опис', en: 'Description' },
-  category: { ua: 'Десерти', en: 'Desserts' },
+  title: { uk: 'Публічний рецепт', en: 'Public Recipe' },
+  description: { uk: 'Опис', en: 'Description' },
+  category: { uk: 'Десерти', en: 'Desserts' },
   likes: 10,
   ingredients: [
-    { id: 'ing-1', value: { ua: 'Цукор', en: 'Sugar' }, quantity: '100', unit: 'g' },
+    {
+      id: 'group-1',
+      title: { uk: 'Основа', en: 'Base' },
+      ingredients: [
+        { id: 'ing-1', value: { uk: 'Цукор', en: 'Sugar' }, quantity: '100', unit: 'g' },
+      ],
+    },
   ],
   heroImg: 'recipe-1/hero.jpg',
   preparingTime: 30,
+  weight: null,
+  diameter: null,
+  calories: null,
   isPremium: false as const,
   recipeSteps: [
-    { desc: { ua: 'Крок 1', en: 'Step 1' }, imgUrl: null, id: 'step-1' },
+    { desc: { uk: 'Крок 1', en: 'Step 1' }, imgUrl: null, id: 'step-1' },
   ],
   videoUrl: 'video-key-1',
   stepsCount: 1,
@@ -54,15 +62,24 @@ const createMockPublicData = (): UpdateRecipeDataPublic => ({
 });
 
 const createMockPremiumMainData = (): UpdateRecipeDataPremiumMain => ({
-  title: { ua: 'Преміум рецепт', en: 'Premium Recipe' },
-  description: { ua: 'Преміум опис', en: 'Premium Description' },
-  category: { ua: 'Торти', en: 'Cakes' },
+  title: { uk: 'Преміум рецепт', en: 'Premium Recipe' },
+  description: { uk: 'Преміум опис', en: 'Premium Description' },
+  category: { uk: 'Торти', en: 'Cakes' },
   likes: 50,
   ingredients: [
-    { id: 'ing-1', value: { ua: 'Борошно', en: 'Flour' }, quantity: '200', unit: 'g' },
+    {
+      id: 'group-1',
+      title: { uk: 'Основа', en: 'Base' },
+      ingredients: [
+        { id: 'ing-1', value: { uk: 'Борошно', en: 'Flour' }, quantity: '200', unit: 'g' },
+      ],
+    },
   ],
   heroImg: 'recipe-2/hero.jpg',
   preparingTime: 60,
+  weight: null,
+  diameter: null,
+  calories: null,
   isPremium: true as const,
   stepsCount: 2,
   slug: 'premium-recipe',
@@ -71,11 +88,11 @@ const createMockPremiumMainData = (): UpdateRecipeDataPremiumMain => ({
 const createMockPremiumPartData = (): UpdateRecipeDataPremiumPart => ({
   recipeId: 'recipe-2',
   recipeSteps: [
-    { desc: { ua: 'Крок 1', en: 'Step 1' }, imgUrl: null, id: 'step-1' },
-    { desc: { ua: 'Крок 2', en: 'Step 2' }, imgUrl: null, id: 'step-2' },
+    { desc: { uk: 'Крок 1', en: 'Step 1' }, imgUrl: null, id: 'step-1' },
+    { desc: { uk: 'Крок 2', en: 'Step 2' }, imgUrl: null, id: 'step-2' },
   ],
   videoUrl: 'video-key-premium',
-  price: { en: 10, ua: 400 },
+  price: { en: 10, uk: 400 },
   discount: 15,
 });
 
@@ -216,7 +233,7 @@ describe('Recipe Conversions - All Scenarios', () => {
       expect(result.data?.newRecipe.isPremium).toBe(true);
       expect(result.data?.newRecipe.recipeSteps).toHaveLength(2);
       expect(result.data?.newPrice.price.en).toBe(10);
-      expect(result.data?.newPrice.price.ua).toBe(400);
+      expect(result.data?.newPrice.price.uk).toBe(400);
     });
 
     test('should set recipe_steps and video_url to null in main table', async () => {
@@ -319,7 +336,7 @@ describe('Recipe Conversions - All Scenarios', () => {
 
       await updateRecipePremium(mainData, premiumData, 'recipe-2');
 
-      expect(capturedPriceData.price).toEqual({ en: 10, ua: 400 });
+      expect(capturedPriceData.price).toEqual({ en: 10, uk: 400 });
       expect(capturedPriceData.discount).toBe(15);
     });
   });

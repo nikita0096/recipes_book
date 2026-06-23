@@ -22,6 +22,8 @@
     "likes": "likes",
     "minutes": "min",
     "keyIngredients": "Key Ingredients",
+    "details": "Details",
+    "ingredientsCount": "{count, plural, one {# item} other {# items}}",
     "preparationSteps": "Preparation Steps",
     "step": "Step",
     "videoSection": "Video Tutorial",
@@ -32,6 +34,28 @@
       "description": "Get step-by-step instructions, detailed guidance and the full video tutorial. Pay once, access forever.",
       "buyButton": "Buy recipe",
       "footer": "Secure checkout · instant access"
+    },
+    "checkout": {
+      "title": "Checkout",
+      "close": "Close",
+      "loading": "Loading…",
+      "pay": "Pay",
+      "processing": "Processing…",
+      "payError": "Payment failed",
+      "startError": "Failed to start checkout"
+    },
+    "meta": {
+      "time": "Time",
+      "preparation": "Preparation",
+      "weight": "Weight",
+      "diameter": "Diameter",
+      "perServing": "Per serving",
+      "minUnit": "min",
+      "stepUnit": "step",
+      "stepsUnit": "steps",
+      "gramUnit": "g",
+      "cmUnit": "cm",
+      "kcalUnit": "kcal/100g"
     }
   },
   "card": {

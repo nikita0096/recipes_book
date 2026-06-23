@@ -147,7 +147,7 @@ const About = () => {
             {t('about.title')}
           </h1>
           <p className="text-sm text-muted leading-relaxed mb-10 max-w-md whitespace-pre-line">
-            {author.description[locale as 'en' | 'ua']}
+            {author.description[locale as 'en' | 'uk']}
           </p>
 
           {/* Stats */}

@@ -8,9 +8,9 @@ import {IRecipe, RecipePrice} from "@/types/recipe";
 import LoadingPage from "@/components/ui/LoadingPage";
 import {useTranslations} from "next-intl";
 import {useQueryClient} from "@tanstack/react-query";
-import {deleteRecipe} from "@/services/db/admin/deleteRecipe";
+import {deleteRecipe} from "@/services/api/admin/deleteRecipe";
 import {useRouter} from "next/navigation";
-import {SortableStep} from "@/components/admin";
+import {SortableStep, PublishToggle} from "@/components/admin";
 import {
   DndContext,
   DragEndEvent,
@@ -22,6 +22,7 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
+  arrayMove,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy
 } from "@dnd-kit/sortable";
@@ -31,16 +32,17 @@ import {MdDelete, MdDeleteForever} from "react-icons/md";
 import {categories} from "@/constants/categories";
 import {IoCheckmark, IoClose} from "react-icons/io5";
 import {units} from "@/constants/units";
-import {Ingredient, LocalizedText, UnitValue} from "@/types/forms";
+import {Ingredient, IngredientGroupFormValues, LocalizedText} from "@/types/forms";
 import {SubmitHandler, useFieldArray, useForm} from "react-hook-form";
 import {v4 as uuidv4} from "uuid";
 import SortableIngredient from "@/components/admin/SortableIngredient";
+import SortableItem from "@/components/admin/SortableItem";
 import {
   updateRecipePublic,
   updateRecipePremium,
   convertPublicToPremium,
   convertPremiumToPublic,
-} from "@/services/db/admin/updateRecipe";
+} from "@/services/api/admin/updateRecipe";
 import {prepareUpdateData} from "./utils/prepareUpdateData";
 import {fetchRecipeAdmin} from "@/services/db/admin/fetchRecipeAdmin";
 import {SecureVideoPlayer} from "@/components/video/SecureVideoPlayer";
@@ -49,26 +51,34 @@ import {getPublicImageUrl} from "@/services/storage/getPublicImageUrl";
 
 type StepFields = { desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string }
 
-type EditingSteps = {desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string ;fieldId: string};
+const createEmptyDraft = () => ({uk: '', en: '', quantity: '', unit: units[0].value});
+
+const createEmptyGroup = (): IngredientGroupFormValues => ({
+  id: uuidv4(),
+  title: {en: '', uk: ''},
+  ingredients: [],
+  draft: createEmptyDraft(),
+});
+
+type EditingSteps = { desc: LocalizedText; imgUrl: string | null; imgFile: File | null; id: string; fieldId: string };
 
 export interface EditingValues {
   heroImg: string;
   heroImgFile: File | null;
-  category: { ua: string; en: string };
-  title: { ua: string; en: string };
-  description: { ua: string; en: string };
-  ingredients: Ingredient[];
+  category: { uk: string; en: string };
+  title: { uk: string; en: string };
+  description: { uk: string; en: string };
+  ingredientGroups: IngredientGroupFormValues[];
   recipeSteps: StepFields[];
-  price: { en: number; ua: number },
+  price: { en: number; uk: number },
   discount: number,
   likes: number;
-  ingredientEn: string;
-  ingredientUa: string;
-  ingredientQuantity: string | null;
-  ingredientUnit: UnitValue;
   videoUrl: string;
   videoFile: File | null;
   preparingTime: number;
+  weight: number | null;
+  diameter: number | null;
+  calories: number | null;
   isPremium: boolean;
   slug: string;
 }
@@ -91,6 +101,8 @@ const Page = () => {
   const [isEditingIngredient, setIsEditingIngredient] = useState<Record<string, boolean>>({});
   const [editingIngredientsData, setEditingIngredientsData] = useState<Record<string, Ingredient>>({});
   const [isEditingStep, setIsEditingStep] = useState<Record<string, boolean>>({});
+  const [isVideoProcessing, setIsVideoProcessing] = useState<boolean>(false);
+  const [videoProcessingProgress, setVideoProcessingProgress] = useState<number>(0);
 
   const locale = useTypedLocale();
 
@@ -104,7 +116,6 @@ const Page = () => {
     reset,
     control,
     setValue,
-    resetField,
     getValues,
     watch,
     formState: {errors}
@@ -112,35 +123,33 @@ const Page = () => {
     defaultValues: {
       heroImg: '',
       heroImgFile: null,
-      category: {ua: '', en: ''},
-      title: {ua: '', en: ''},
-      description: {ua: '', en: ''},
-      price: { en: 0, ua: 0 },
+      category: {uk: '', en: ''},
+      title: {uk: '', en: ''},
+      description: {uk: '', en: ''},
+      price: {en: 0, uk: 0},
       discount: 0,
-      ingredients: [],
+      ingredientGroups: [],
       recipeSteps: [],
       likes: 0,
-      ingredientEn: '',
-      ingredientUa: '',
-      ingredientQuantity: '',
-      ingredientUnit: units[0].value,
       videoUrl: '',
       videoFile: null,
       preparingTime: 0,
+      weight: null,
+      diameter: null,
+      calories: null,
       isPremium: false,
       slug: ''
     }
   });
 
   const {
-    fields: ingredientFields,
-    append: appendIngredient,
-    remove: removeIngredient,
-    move: moveIngredient,
-    update: updateIngredient,
+    fields: groupFields,
+    append: appendGroup,
+    remove: removeGroup,
+    move: moveGroup,
   } = useFieldArray({
     control,
-    name: 'ingredients',
+    name: 'ingredientGroups',
   });
 
   const {
@@ -154,6 +163,7 @@ const Page = () => {
   });
 
   const watchedSteps = watch('recipeSteps');
+  const watchedGroups = watch('ingredientGroups');
   const mainImage = watch('heroImg');
   const isPremium = watch('isPremium');
   const isVideoChanged = watch('videoFile');
@@ -172,7 +182,7 @@ const Page = () => {
         setError(null);
         const data = await fetchRecipeAdmin(params.recipe);
 
-        if(data.isPremium) {
+        if (data.isPremium) {
           const price = await fetchRecipePrice(params.recipe);
           setRecipePrice(price);
         }
@@ -194,25 +204,100 @@ const Page = () => {
   }, [params.recipe]);
 
   useEffect(() => {
-    if(!recipe) return;
+    if (!recipe || !recipe.videoUrl) return;
+
+    // Check if this is a Cloudflare Stream video (no '/' in the key)
+    const isStreamVideo = !recipe.videoUrl.includes('/');
+
+    let pollInterval: NodeJS.Timeout | null = null;
+
+    const checkVideoStatus = async (): Promise<boolean> => {
+      try {
+        const response = await fetch('/api/stream/status', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({videoUid: recipe.videoUrl}),
+        });
+
+        if (!response.ok) {
+          return false;
+        }
+
+        const {readyToStream, status} = await response.json();
+        setVideoProcessingProgress(status?.pctComplete ? Math.round(status.pctComplete) : 0);
+        return readyToStream;
+      } catch {
+        return false;
+      }
+    };
+
     const fetchVideoUrl = async () => {
       try {
         setIsLoading(true);
         setError(null);
 
-        const response = await fetch('/api/video/view-url', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ videoKey: recipe.videoUrl, recipeId: recipe.id }),
-        });
+        if (isStreamVideo) {
+          // First check if video is ready
+          const isReady = await checkVideoStatus();
 
-        if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.error || 'Failed to load video');
+          if (!isReady) {
+            // Video is still processing, start polling
+            setIsVideoProcessing(true);
+            setIsLoading(false);
+
+            pollInterval = setInterval(async () => {
+              const ready = await checkVideoStatus();
+              if (ready) {
+                setIsVideoProcessing(false);
+                if (pollInterval) clearInterval(pollInterval);
+
+                // Now fetch the token
+                const response = await fetch('/api/stream/view-url', {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({videoKey: recipe.videoUrl, recipeId: recipe.id}),
+                });
+
+                if (response.ok) {
+                  const {token} = await response.json();
+                  setVideoSrc(token);
+                }
+              }
+            }, 3000); // Poll every 3 seconds
+
+            return;
+          }
+
+          // Video is ready, fetch the token
+          const response = await fetch('/api/stream/view-url', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({videoKey: recipe.videoUrl, recipeId: recipe.id}),
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Failed to load video');
+          }
+
+          const {token} = await response.json();
+          setVideoSrc(token);
+        } else {
+          // For legacy R2 videos, use the R2 API
+          const response = await fetch('/api/video/view-url', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({videoKey: recipe.videoUrl, recipeId: recipe.id}),
+          });
+
+          if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Failed to load video');
+          }
+
+          const {viewUrl} = await response.json();
+          setVideoSrc(viewUrl);
         }
-
-        const { viewUrl } = await response.json();
-        setVideoSrc(viewUrl);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load video');
       } finally {
@@ -220,9 +305,12 @@ const Page = () => {
       }
     };
 
-    if (recipe) {
-      fetchVideoUrl();
-    }
+    fetchVideoUrl();
+
+    // Cleanup interval on unmount or when recipe changes
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
   }, [recipe?.videoUrl, recipe?.id]);
 
 
@@ -240,7 +328,7 @@ const Page = () => {
     : recipe?.recipeSteps.map(step => step.id) || [];
 
   const generateSlug = (str: string): string => {
-    if(str.trim() !== '') {
+    if (str.trim() !== '') {
       return engTitle.trim().toLowerCase().split(' ').join('-');
     }
 
@@ -248,7 +336,7 @@ const Page = () => {
   };
 
   useEffect(() => {
-    if(engTitle.trim()) {
+    if (engTitle.trim()) {
       const slug = generateSlug(engTitle);
 
       setValue('slug', slug);
@@ -259,26 +347,34 @@ const Page = () => {
 
   const queryClient = useQueryClient();
 
-  if(!recipe) return null;
+  if (!recipe) return null;
 
   // Translation function
-  type TranslateInputs = 'title.ua' | 'description.ua' | 'ingredientUa' | `recipeSteps.${number}.desc.ua`;
+  type TranslateInputs =
+    | 'title.uk'
+    | 'description.uk'
+    | `ingredientGroups.${number}.draft.uk`
+    | `ingredientGroups.${number}.title.uk`
+    | `recipeSteps.${number}.desc.uk`;
 
   const handleTranslateText = async (flag: string, index?: number) => {
     const inputFields: Record<string, TranslateInputs> = {
-      title: 'title.ua',
-      description: 'description.ua',
-      ingredient: 'ingredientUa',
-      ...(index !== undefined && {stepDescription: `recipeSteps.${index}.desc.ua`})
+      title: 'title.uk',
+      description: 'description.uk',
+      ...(index !== undefined && {
+        ingredient: `ingredientGroups.${index}.draft.uk`,
+        groupTitle: `ingredientGroups.${index}.title.uk`,
+        stepDescription: `recipeSteps.${index}.desc.uk`
+      })
     }
 
-    const textUa = getValues(inputFields[flag]);
+    const textUk = getValues(inputFields[flag]);
 
-    if (!textUa) return;
+    if (!textUk) return;
 
     const res = await fetch('/api/translate', {
       method: 'POST',
-      body: JSON.stringify({text: textUa})
+      body: JSON.stringify({text: textUk})
     });
 
     const {translated} = await res.json();
@@ -291,7 +387,14 @@ const Page = () => {
         setValue('description.en', translated);
         break;
       case 'ingredient':
-        setValue('ingredientEn', translated);
+        if (index !== undefined) {
+          setValue(`ingredientGroups.${index}.draft.en`, translated);
+        }
+        break;
+      case 'groupTitle':
+        if (index !== undefined) {
+          setValue(`ingredientGroups.${index}.title.en`, translated);
+        }
         break;
       case 'stepDescription':
         if (index !== undefined) {
@@ -303,17 +406,29 @@ const Page = () => {
 
   const toggleEditButton = () => {
     if (recipe) {
-      setValue('title', recipe.title);
-      setValue('description', recipe.description);
+      setValue('title', {en: recipe.title.en, uk: recipe.title.uk});
+      setValue('description', {en: recipe.description.en, uk: recipe.description.uk});
       setValue('heroImg', recipe.heroImg);
-      setValue('category', recipe.category);
-      setValue('ingredients', recipe.ingredients);
-      setValue('recipeSteps', recipe.recipeSteps.map(step => ({...step, imgFile: null})));
+      setValue('category', {en: recipe.category.en, uk: recipe.category.uk});
+      setValue('ingredientGroups', recipe.ingredients.map(group => ({
+        ...group,
+        title: {en: group.title.en, uk: group.title.uk},
+        ingredients: group.ingredients.map(ing => ({...ing, value: {en: ing.value.en, uk: ing.value.uk}})),
+        draft: createEmptyDraft(),
+      })));
+      setValue('recipeSteps', recipe.recipeSteps.map(step => ({
+        ...step,
+        desc: {en: step.desc.en, uk: step.desc.uk},
+        imgFile: null,
+      })));
       setValue('likes', recipe.likes);
       setValue('videoUrl', videoSrc ?? '');
       setValue('preparingTime', recipe.preparingTime);
+      setValue('weight', recipe.weight);
+      setValue('diameter', recipe.diameter);
+      setValue('calories', recipe.calories);
       setValue('isPremium', recipe.isPremium);
-      setValue('price', recipePrice?.price || { en: 0, ua: 0 });
+      setValue('price', recipePrice?.price ? {en: recipePrice.price.en, uk: recipePrice.price.uk} : {en: 0, uk: 0});
       setValue('discount', recipePrice?.discount || 0);
       setValue('slug', recipe.slug)
     }
@@ -330,14 +445,14 @@ const Page = () => {
 
   const handleDeleteRecipe = async (id: string) => {
     try {
-      const result = await deleteRecipe({ id, videoKey: recipe.videoUrl });
+      const result = await deleteRecipe({id, videoKey: recipe.videoUrl});
 
       if (result.error) {
         setSaveError(typeof result.error === 'string' ? result.error : 'Failed to delete recipe');
         return;
       }
 
-      await queryClient.invalidateQueries({ queryKey: ["recipes"] });
+      await queryClient.invalidateQueries({queryKey: ["recipes"]});
       router.push(`/admin/recipes`);
     } catch (err) {
       setSaveError('Failed to delete recipe');
@@ -373,29 +488,35 @@ const Page = () => {
     setValue('videoUrl', recipe?.videoUrl ?? '');
   }
 
-  const addNewIngredient = () => {
-    const ingredientUa = getValues('ingredientUa')?.trim();
-    const ingredientEn = getValues('ingredientEn')?.trim();
-    const quantity = getValues('ingredientQuantity')?.trim();
-    const unit = getValues('ingredientUnit');
+  const addNewIngredient = (groupIndex: number) => {
+    const draft = getValues(`ingredientGroups.${groupIndex}.draft`);
+    const ingredientUk = draft.uk?.trim();
+    const ingredientEn = draft.en?.trim();
+    const quantity = draft.quantity?.trim();
+    const unit = draft.unit;
 
-    if (!ingredientUa || !ingredientEn || !quantity || !unit) {
+    if (!ingredientUk || !ingredientEn || !quantity || !unit) {
       return;
     }
 
     const newIngredient = {
-      value: {en: ingredientEn, ua: ingredientUa},
+      value: {en: ingredientEn, uk: ingredientUk},
       quantity: quantity,
       unit: unit,
       id: uuidv4()
     };
 
-    appendIngredient(newIngredient);
+    const ingredients = getValues(`ingredientGroups.${groupIndex}.ingredients`);
+    setValue(`ingredientGroups.${groupIndex}.ingredients`, [...ingredients, newIngredient]);
+    setValue(`ingredientGroups.${groupIndex}.draft`, createEmptyDraft());
+  }
 
-    resetField('ingredientUa');
-    resetField('ingredientEn');
-    resetField('ingredientQuantity');
-    resetField('ingredientUnit');
+  const removeIngredientFromGroup = (groupIndex: number, ingredientId: string) => {
+    const ingredients = getValues(`ingredientGroups.${groupIndex}.ingredients`);
+    setValue(
+      `ingredientGroups.${groupIndex}.ingredients`,
+      ingredients.filter((ingredient) => ingredient.id !== ingredientId)
+    );
   }
 
   const startEditingIngredient = (ingredient: Ingredient) => {
@@ -445,10 +566,15 @@ const Page = () => {
   const saveIngredientsChanges = (id: string) => {
     const updatedIngredient = {...editingIngredientsData[id]}
 
-    const index = ingredientFields.findIndex(item => item.id === id);
-    if (index !== -1) {
-      updateIngredient(index, updatedIngredient);
-    }
+    const groups = getValues('ingredientGroups');
+    groups.forEach((group, groupIndex) => {
+      const index = group.ingredients.findIndex(item => item.id === id);
+      if (index !== -1) {
+        const ingredients = [...group.ingredients];
+        ingredients[index] = updatedIngredient;
+        setValue(`ingredientGroups.${groupIndex}.ingredients`, ingredients);
+      }
+    });
 
     cancelIngredientsEditing(id);
   }
@@ -463,7 +589,7 @@ const Page = () => {
   const addNewStep = () => {
     const newId = uuidv4();
     startEditingStep(newId);
-    const newStep = {desc: {en: '', ua: ''}, imgUrl: null, imgFile: null, id: newId};
+    const newStep = {desc: {en: '', uk: ''}, imgUrl: null, imgFile: null, id: newId};
     appendStep(newStep);
   };
 
@@ -479,7 +605,7 @@ const Page = () => {
     handleCloseStepEditing(id);
   };
 
-  const handleStepChange = (id: string, field: 'ua' | 'en', value: string) => {
+  const handleStepChange = (id: string, field: 'uk' | 'en', value: string) => {
     const index = watchedSteps.findIndex(item => item.id === id);
     if (index === -1) return;
 
@@ -504,27 +630,51 @@ const Page = () => {
   };
 
   const saveStepChanges = (id: string, i: number) => {
-    if(stepFields[i].desc.en && stepFields[i].desc.ua) {
+    if (stepFields[i].desc.en && stepFields[i].desc.uk) {
       handleCloseStepEditing(id);
       setStepFieldError(null);
-    } else setStepFieldError(locale === 'ua' ? "Додайте хоча б опис" : "Add at least description");
+    } else setStepFieldError(locale === 'uk' ? "Додайте хоча б опис" : "Add at least description");
   };
 
-  const handleDragEnd = (event: DragEndEvent, fields: StepFields[] | Ingredient[], type: 'steps' | 'ingredients') => {
+  const handleDragEnd = (event: DragEndEvent) => {
     if (!isEditing) return;
     const {active, over} = event;
     if (!over || active.id === over.id) return;
 
-    const oldIndex = fields.findIndex((step) => step.id === active.id);
-    const newIndex = fields.findIndex((step) => step.id === over.id);
+    const oldIndex = stepFields.findIndex((step) => step.id === active.id);
+    const newIndex = stepFields.findIndex((step) => step.id === over.id);
 
     if (oldIndex === -1 || newIndex === -1) return;
 
-    if (type === 'ingredients') {
-      moveIngredient(oldIndex, newIndex);
-    } else {
-      moveStep(oldIndex, newIndex);
-    }
+    moveStep(oldIndex, newIndex);
+  };
+
+  const handleIngredientDragEnd = (event: DragEndEvent, groupIndex: number) => {
+    if (!isEditing) return;
+    const {active, over} = event;
+    if (!over || active.id === over.id) return;
+
+    const ingredients = getValues(`ingredientGroups.${groupIndex}.ingredients`);
+    const oldIndex = ingredients.findIndex((item) => item.id === active.id);
+    const newIndex = ingredients.findIndex((item) => item.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    setValue(`ingredientGroups.${groupIndex}.ingredients`, arrayMove(ingredients, oldIndex, newIndex));
+  };
+
+  const handleGroupDragEnd = (event: DragEndEvent) => {
+    if (!isEditing) return;
+    const {active, over} = event;
+    if (!over || active.id === over.id) return;
+
+    const groups = getValues('ingredientGroups');
+    const oldIndex = groups.findIndex((group) => group.id === active.id);
+    const newIndex = groups.findIndex((group) => group.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    moveGroup(oldIndex, newIndex);
   };
 
 
@@ -537,7 +687,8 @@ const Page = () => {
       <div className="min-h-screen bg-bg flex items-center justify-center px-4">
         <div className="text-center">
           <p className="text-red-500 text-base mb-4">{error || tCommon('errors.recipeNotFound')}</p>
-          <Link href="/admin/recipes" className="text-sm text-muted hover:text-text">
+          <Link href="/admin/recipes"
+                className="text-sm text-muted hover:text-text">
             ← {tRecipes("singlePage.backButton")}
           </Link>
         </div>
@@ -660,9 +811,9 @@ const Page = () => {
         {/* Back link */}
         <Link
           href="/admin/recipes"
-          className="absolute top-4 left-4 sm:left-6 lg:left-10 text-sm text-white/70 tracking-wide hover:text-white/90 transition-colors z-10"
+          className="absolute top-4 left-4 z-10 w-[46px] h-[46px] rounded-full flex flex-col items-center justify-center gap-px transition-all cursor-pointer select-none hover:scale-105 active:scale-95 bg-white/12 border-white/40"
         >
-          ← {tRecipes('singlePage.backButton')}
+          ←
         </Link>
 
         {/* Action buttons */}
@@ -686,18 +837,24 @@ const Page = () => {
             </>
           ) : (
             <>
-              <button
-                className='px-4 py-2 bg-green-400/90 hover:bg-green-600/80 text-white text-sm tracking-wide transition-colors'
-                onClick={toggleEditButton}
-              >
-                <CiEdit className="inline-block mr-1.5 text-lg"/> {tAdmin('list.edit')}
-              </button>
-              <button
-                className='px-4 py-2 bg-red-500/90 hover:bg-red-600 text-white text-sm tracking-wide transition-colors'
-                onClick={() => handleDeleteRecipe(recipe.id)}
-              >
-                <MdDelete className="inline-block mr-1.5 text-lg"/> {tAdmin('list.delete')}
-              </button>
+              <div>
+                <button
+                  className='px-4 py-2 bg-green-400/90 hover:bg-green-600/80 text-white text-sm tracking-wide transition-colors'
+                  onClick={toggleEditButton}
+                >
+                  <CiEdit className="inline-block mr-1.5 text-lg"/> {tAdmin('list.edit')}
+                </button>
+                <button
+                  className='px-4 py-2 bg-red-500/90 hover:bg-red-600 text-white text-sm tracking-wide transition-colors'
+                  onClick={() => handleDeleteRecipe(recipe.id)}
+                >
+                  <MdDelete className="inline-block mr-1.5 text-lg"/> {tAdmin('list.delete')}
+                </button>
+                <div className="px-3 py-2 bg-black/40 backdrop-blur-sm">
+                  <PublishToggle recipeId={recipe.id}
+                                 isPublished={recipe.isPublished}/>
+                </div>
+              </div>
             </>
           )}
         </div>
@@ -731,7 +888,8 @@ const Page = () => {
               className="inline-block text-xs tracking-widest uppercase text-accent border border-accent px-3 py-1 mb-3 bg-bg/80 focus:outline-none cursor-pointer"
             >
               {categories.filter(cat => cat.en !== 'All recipes').map((category) => (
-                <option key={category.en} value={category.en}>
+                <option key={category.en}
+                        value={category.en}>
                   {category[locale]}
                 </option>
               ))}
@@ -749,7 +907,7 @@ const Page = () => {
             </h1>
           )}
 
-          {/* Stats */}
+          {/* Stats - simplified in hero */}
           <div className="flex gap-5 flex-wrap">
             {isEditing ? (
               <>
@@ -762,15 +920,6 @@ const Page = () => {
                   />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-white/60">◷</span>
-                  <input
-                    {...register('preparingTime', {required: true, min: 1, max: 1000})}
-                    type="number"
-                    className="w-16 px-2 py-1 text-sm text-white bg-white/20 border border-white/30 focus:outline-none focus:border-accent"
-                  />
-                  <span className="text-sm text-white/60">{tRecipes('singlePage.minutes')}</span>
-                </div>
-                <div className="flex items-center gap-2">
                   <span className="text-sm text-white/60">Premium:</span>
                   <input
                     type="checkbox"
@@ -781,12 +930,6 @@ const Page = () => {
               </>
             ) : (
               <>
-                <span className="text-sm text-white/60">
-                  ◷ {recipe.preparingTime} {tRecipes('singlePage.minutes')}
-                </span>
-                <span className="text-sm text-white/60">
-                  ☰ {tRecipes('singlePage.steps', {count: recipe.stepsCount})}
-                </span>
                 <span className="text-sm text-white/60">
                   ♡ {recipe.likes}
                 </span>
@@ -802,12 +945,12 @@ const Page = () => {
                             <div className="line-through text-white/40 mr-1.5 flex gap-2">
                               <span>${recipePrice.price.en}</span>
                               /
-                              <span>{recipePrice.price.ua}₴</span>
+                              <span>{recipePrice.price.uk}₴</span>
                             </div>
                             <div className="text-accent font-medium flex gap-2">
                               <span>${(recipePrice.price.en * (1 - recipePrice.discount / 100)).toFixed(2)}</span>
                               /
-                              <span>{(recipePrice.price.ua * (1 - recipePrice.discount / 100)).toFixed(2)}₴</span>
+                              <span>{(recipePrice.price.uk * (1 - recipePrice.discount / 100)).toFixed(2)}₴</span>
                             </div>
                             <span className="ml-1.5 text-xs text-green-400">-{recipePrice.discount}%</span>
                           </>
@@ -815,7 +958,7 @@ const Page = () => {
                           <div className="text-accent font-medium flex gap-2">
                             <span>${recipePrice.price.en}</span>
                             /
-                            <span>{recipePrice.price.ua}₴</span>
+                            <span>{recipePrice.price.uk}₴</span>
                           </div>
                         )}
                       </span>
@@ -826,6 +969,157 @@ const Page = () => {
             )}
           </div>
         </div>
+      </section>
+
+      {/* Recipe Meta Section */}
+      <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-5 sm:py-6 lg:py-8">
+        {isEditing ? (
+          /* Edit mode - input fields in grid */
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-px bg-border border border-border">
+            {/* Time */}
+            <div className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
+              <span className="text-base text-accent leading-none"
+                    style={{fontFamily: 'sans-serif'}}>◷</span>
+              <div className="flex items-baseline gap-2">
+                <input
+                  {...register('preparingTime', {required: true, min: 1, max: 1000, valueAsNumber: true})}
+                  type="number"
+                  className="w-20 px-2 py-1 font-serif text-xl sm:text-2xl lg:text-3xl text-text bg-surface border border-border focus:outline-none focus:border-accent"
+                />
+                <span className="font-sans text-sm sm:text-base text-muted">{tRecipes('singlePage.meta.minUnit')}</span>
+              </div>
+              <div className="text-[10px] sm:text-xs tracking-widest uppercase text-muted">{tRecipes('singlePage.meta.time')}</div>
+            </div>
+
+            {/* Steps (display only, calculated) */}
+            <div className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
+              <span className="text-base text-accent leading-none"
+                    style={{fontFamily: 'sans-serif'}}>☰</span>
+              <div className="font-serif text-xl sm:text-2xl lg:text-3xl text-text leading-none">
+                {stepFields.length}
+                <span className="font-sans text-sm sm:text-base text-muted">{stepFields.length === 1 ? tRecipes('singlePage.meta.stepUnit') : tRecipes('singlePage.meta.stepsUnit')}</span>
+              </div>
+              <div className="text-[10px] sm:text-xs tracking-widest uppercase text-muted">{tRecipes('singlePage.meta.preparation')}</div>
+            </div>
+
+            {/* Weight */}
+            <div className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
+              <span className="text-base text-accent leading-none"
+                    style={{fontFamily: 'sans-serif'}}>⚖︎</span>
+              <div className="flex items-baseline gap-2">
+                <input
+                  {...register('weight', {min: 0, valueAsNumber: true})}
+                  type="number"
+                  placeholder="—"
+                  className="w-20 px-2 py-1 font-serif text-xl sm:text-2xl lg:text-3xl text-text bg-surface border border-border focus:outline-none focus:border-accent"
+                />
+                <span className="font-sans text-sm sm:text-base text-muted">{tRecipes('singlePage.meta.gramUnit')}</span>
+              </div>
+              <div className="text-[10px] sm:text-xs tracking-widest uppercase text-muted">{tRecipes('singlePage.meta.weight')}</div>
+            </div>
+
+            {/* Diameter */}
+            <div className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
+              <span className="text-base text-accent leading-none"
+                    style={{fontFamily: 'sans-serif'}}>⌀</span>
+              <div className="flex items-baseline gap-2">
+                <input
+                  {...register('diameter', {min: 0, valueAsNumber: true})}
+                  type="number"
+                  placeholder="—"
+                  className="w-20 px-2 py-1 font-serif text-xl sm:text-2xl lg:text-3xl text-text bg-surface border border-border focus:outline-none focus:border-accent"
+                />
+                <span className="font-sans text-sm sm:text-base text-muted">{tRecipes('singlePage.meta.cmUnit')}</span>
+              </div>
+              <div className="text-[10px] sm:text-xs tracking-widest uppercase text-muted">{tRecipes('singlePage.meta.diameter')}</div>
+            </div>
+
+            {/* Calories */}
+            <div className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
+              <span className="text-base text-accent leading-none"
+                    style={{fontFamily: 'sans-serif'}}>◉</span>
+              <div className="flex items-baseline gap-2">
+                <input
+                  {...register('calories', {min: 0, valueAsNumber: true})}
+                  type="number"
+                  placeholder="—"
+                  className="w-20 px-2 py-1 font-serif text-xl sm:text-2xl lg:text-3xl text-text bg-surface border border-border focus:outline-none focus:border-accent"
+                />
+                <span className="font-sans text-sm sm:text-base text-muted">{tRecipes('singlePage.meta.kcalUnit')}</span>
+              </div>
+              <div className="text-[10px] sm:text-xs tracking-widest uppercase text-muted">{tRecipes('singlePage.meta.perServing')}</div>
+            </div>
+          </div>
+        ) : (
+          /* View mode - display cards like RecipeMeta */
+          (() => {
+            const metaCards: Array<{ icon: string; value: number; unit: string; label: string }> = [
+              {
+                icon: '◷',
+                value: recipe.preparingTime,
+                unit: tRecipes('singlePage.meta.minUnit'),
+                label: tRecipes('singlePage.meta.time'),
+              },
+              {
+                icon: '☰',
+                value: recipe.stepsCount,
+                unit: recipe.stepsCount === 1 ? tRecipes('singlePage.meta.stepUnit') : tRecipes('singlePage.meta.stepsUnit'),
+                label: tRecipes('singlePage.meta.preparation'),
+              },
+            ];
+
+            if (recipe.weight) {
+              metaCards.push({
+                icon: '⚖︎',
+                value: recipe.weight,
+                unit: tRecipes('singlePage.meta.gramUnit'),
+                label: tRecipes('singlePage.meta.weight'),
+              });
+            }
+
+            if (recipe.diameter) {
+              metaCards.push({
+                icon: '⌀',
+                value: recipe.diameter,
+                unit: tRecipes('singlePage.meta.cmUnit'),
+                label: tRecipes('singlePage.meta.diameter'),
+              });
+            }
+
+            if (recipe.calories) {
+              metaCards.push({
+                icon: '◉',
+                value: recipe.calories,
+                unit: tRecipes('singlePage.meta.kcalUnit'),
+                label: tRecipes('singlePage.meta.perServing'),
+              });
+            }
+
+            const gridColsClass = metaCards.length <= 2
+              ? 'grid-cols-2'
+              : metaCards.length === 3
+                ? 'grid-cols-2 sm:grid-cols-3'
+                : metaCards.length === 4
+                  ? 'grid-cols-2 sm:grid-cols-4'
+                  : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5';
+
+            return (
+              <div className={`grid ${gridColsClass} gap-px bg-border border border-border`}>
+                {metaCards.map((card, index) => (
+                  <div key={index}
+                       className="bg-bg p-4 sm:p-5 lg:p-6 flex flex-col gap-2 sm:gap-2.5">
+                    <span className="text-base text-accent leading-none"
+                          style={{fontFamily: 'sans-serif'}}>{card.icon}</span>
+                    <div className="font-serif text-xl sm:text-2xl lg:text-3xl text-text leading-none">
+                      {card.value} <span className="font-sans text-sm sm:text-base text-muted">{card.unit}</span>
+                    </div>
+                    <div className="text-[10px] sm:text-xs tracking-widest uppercase text-muted">{card.label}</div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()
+        )}
       </section>
 
       {/* Title, Price, Description Section (Edit Mode) */}
@@ -855,9 +1149,9 @@ const Page = () => {
                   {tAdmin('form.fields.price')} (UAH)
                 </label>
                 <div className="relative">
-                  <input {...register('price.ua', {required: true, min: 1, max: 100000, valueAsNumber: true})}
-                         name="price.ua"
-                         aria-invalid={errors.price?.ua ? "true" : "false"}
+                  <input {...register('price.uk', {required: false, min: 0, max: 100000, valueAsNumber: true})}
+                         name="price.uk"
+                         aria-invalid={errors.price?.uk ? "true" : "false"}
                          className="w-full px-3.5 py-2.5 pr-12 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
                          type="number"/>
                   <span className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[11px] text-muted tracking-[0.04em]">₴</span>
@@ -885,8 +1179,8 @@ const Page = () => {
             <div className="space-y-3 max-w-2xl">
               <input
                 type="text"
-                {...register('title.ua')}
-                placeholder={tAdmin('form.fields.titlePlaceholderUa')}
+                {...register('title.uk')}
+                placeholder={tAdmin('form.fields.titlePlaceholderUk')}
                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
               />
               <button
@@ -923,8 +1217,8 @@ const Page = () => {
             <div className="space-y-3 max-w-2xl">
               <textarea
                 cols={5}
-                {...register('description.ua')}
-                placeholder={tAdmin('form.fields.descriptionPlaceholderUa')}
+                {...register('description.uk')}
+                placeholder={tAdmin('form.fields.descriptionPlaceholderUk')}
                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
               />
               <button
@@ -962,146 +1256,254 @@ const Page = () => {
           {tRecipes('singlePage.keyIngredients')}
         </h2>
 
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={(e) => handleDragEnd(e, ingredientFields, 'ingredients')}
-        >
-          <SortableContext items={ingredientFields.map(f => f.id)}>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px bg-border">
-              {(!isEditing ? recipe.ingredients : ingredientFields).map((ingredient, i) => (
-                <div key={ingredient.id}>
-                  {isEditingIngredient[ingredient.id] ? (
-                    <div className="bg-surface p-3 sm:p-4 space-y-2">
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          name='value.ua'
-                          onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
-                          value={editingIngredientsData[ingredient.id].value.ua}
-                          placeholder="UA"
-                          className="w-full px-2 py-1.5 text-sm bg-bg border border-border focus:outline-none focus:border-accent"
-                        />
-                        <input
-                          type="text"
-                          name='value.en'
-                          onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
-                          value={editingIngredientsData[ingredient.id].value.en}
-                          placeholder="EN"
-                          className="w-full px-2 py-1.5 text-sm bg-bg border border-border focus:outline-none focus:border-accent"
-                        />
-                        <div className="flex gap-1">
-                          <input
-                            type="text"
-                            name='quantity'
-                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
-                            value={editingIngredientsData[ingredient.id].quantity}
-                            placeholder="Qty"
-                            className="w-12 px-2 py-1.5 text-sm bg-bg border border-border focus:outline-none focus:border-accent"
-                          />
-                          <select
-                            name='unit'
-                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
-                            value={editingIngredientsData[ingredient.id].unit}
-                            className="flex-1 px-1 py-1.5 text-xs bg-bg border border-border focus:outline-none focus:border-accent"
-                          >
-                            {units.map((u) => (
-                              <option key={u.value} value={u.value}>{u.label[locale]}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 justify-end">
-                        <button
-                          onClick={() => saveIngredientsChanges(ingredient.id)}
-                          className="p-1.5 bg-green-500 text-white hover:bg-green-600 transition-colors"
-                        >
-                          <IoCheckmark className="text-sm"/>
-                        </button>
-                        <button
-                          onClick={() => cancelIngredientsEditing(ingredient.id)}
-                          className="p-1.5 bg-red-500 text-white hover:bg-red-600 transition-colors"
-                        >
-                          <IoClose className="text-sm"/>
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <SortableIngredient
+        {!isEditing ? (
+          <div className="space-y-6">
+            {recipe.ingredients.map((group) => (
+              <div key={group.id}>
+                {group.title[locale] && (
+                  <h3 className="font-serif text-lg italic text-text mb-3">
+                    {group.title[locale]}
+                  </h3>
+                )}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px bg-border">
+                  {group.ingredients.map((ingredient) => (
+                    <div
                       key={ingredient.id}
-                      ingredient={ingredient}
-                      ingredientId={ingredient.id}
-                      index={i}
-                      isEditing={isEditing}
-                      startEditingIngredient={startEditingIngredient}
-                      removeIngredient={removeIngredient}
-                    />
-                  )}
+                      className="relative bg-bg p-3 sm:p-4 flex justify-between items-start gap-3"
+                    >
+                      <span className="text-sm sm:text-base text-text">
+                        {ingredient.value[locale]}
+                      </span>
+                      <span className="text-sm text-accent font-medium whitespace-nowrap">
+                        {ingredient.quantity} {units.find((u) => u.value === ingredient.unit)?.label[locale]}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </SortableContext>
-        </DndContext>
-
-        {/* Add new ingredient form */}
-        {isEditing && (
-          <div className="mt-6 p-4 sm:p-5 bg-surface border border-border">
-            <h3 className="text-sm tracking-widest uppercase text-muted mb-4">{tAdmin('form.sections.addIngredient')}</h3>
-            <div className="space-y-3">
-              <div className="grid grid-cols-1 gap-3">
-                <input
-                  {...register('ingredientUa')}
-                  className="w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
-                  type="text"
-                  placeholder={tAdmin('form.fields.ingredientPlaceholderUa')}
-                />
-                <button
-                  type="button"
-                  onClick={() => handleTranslateText('ingredient')}
-                  className="self-start px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
-                >
-                  Translate to EN →
-                </button>
-                <input
-                  {...register('ingredientEn')}
-                  className="w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
-                  type="text"
-                  placeholder={tAdmin('form.fields.ingredientPlaceholderEn')}
-                />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2.5 items-end">
-                <div>
-                  <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">{tAdmin('form.fields.quantity')}</label>
-                  <input
-                    {...register('ingredientQuantity')}
-                    className="w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
-                    type="text"
-                    placeholder={tAdmin('form.fields.quantity')}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">Unit</label>
-                  <select
-                    {...register('ingredientUnit')}
-                    className="w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text focus:outline-none focus:border-accent transition-colors cursor-pointer"
-                  >
-                    {units.map((unit) => (
-                      <option key={unit.value} value={unit.value}>
-                        {unit.label.ua} / {unit.label.en}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <button
-                  type="button"
-                  className="px-4 py-2.5 bg-text text-bg text-[11px] tracking-[0.06em] uppercase whitespace-nowrap hover:opacity-90 transition-opacity"
-                  onClick={addNewIngredient}
-                >
-                  + {tAdmin('form.buttons.add')}
-                </button>
-              </div>
-            </div>
+            ))}
           </div>
+        ) : (
+          <DndContext
+            id="ingredient-groups"
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleGroupDragEnd}
+          >
+            <SortableContext items={watchedGroups.map(group => group.id)}
+                             strategy={verticalListSortingStrategy}>
+              <div className="space-y-6">
+                {groupFields.map((groupField, groupIndex) => {
+                  const group = watchedGroups[groupIndex];
+                  if (!group) return null;
+
+                  return (
+                    <SortableItem
+                      key={groupField.id}
+                      itemId={group.id}
+                      className="border border-border p-4 sm:p-5 bg-surface"
+                    >
+                      {(dragHandle) => (
+                        <>
+                          {/* Group header */}
+                          <div className="flex items-center justify-between gap-3 mb-4">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {dragHandle}
+                              <span className="text-sm text-muted italic truncate">
+                                {group.title[locale] || `${tAdmin('form.fields.group')} ${groupIndex + 1}`}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className="p-1 text-muted hover:text-red-500 transition-colors"
+                              onClick={() => removeGroup(groupIndex)}
+                            >
+                              <MdDeleteForever className="text-lg"/>
+                            </button>
+                          </div>
+
+                          {/* Group title inputs */}
+                          <div className="space-y-3 mb-5 max-w-2xl">
+                            <input
+                              {...register(`ingredientGroups.${groupIndex}.title.uk`)}
+                              className="w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                              type="text"
+                              placeholder={tAdmin('form.fields.groupTitlePlaceholderUk')}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleTranslateText('groupTitle', groupIndex)}
+                              className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
+                            >
+                              Translate to English →
+                            </button>
+                            <input
+                              {...register(`ingredientGroups.${groupIndex}.title.en`)}
+                              className="w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                              type="text"
+                              placeholder={tAdmin('form.fields.groupTitlePlaceholderEn')}
+                            />
+                          </div>
+
+                          <DndContext
+                            id={`group-ingredients-${groupIndex}`}
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={(e) => handleIngredientDragEnd(e, groupIndex)}
+                          >
+                            <SortableContext items={group.ingredients.map(ingredient => ingredient.id)}>
+                              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px bg-border">
+                                {group.ingredients.map((ingredient, i) => (
+                                  <div key={ingredient.id}>
+                                    {isEditingIngredient[ingredient.id] ? (
+                                      <div className="bg-surface p-3 sm:p-4 space-y-2">
+                                        <div className="space-y-2">
+                                          <input
+                                            type="text"
+                                            name='value.uk'
+                                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                                            value={editingIngredientsData[ingredient.id].value.uk}
+                                            placeholder="UA"
+                                            className="w-full px-2 py-1.5 text-sm bg-bg border border-border focus:outline-none focus:border-accent"
+                                          />
+                                          <input
+                                            type="text"
+                                            name='value.en'
+                                            onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                                            value={editingIngredientsData[ingredient.id].value.en}
+                                            placeholder="EN"
+                                            className="w-full px-2 py-1.5 text-sm bg-bg border border-border focus:outline-none focus:border-accent"
+                                          />
+                                          <div className="flex gap-1">
+                                            <input
+                                              type="text"
+                                              name='quantity'
+                                              onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                                              value={editingIngredientsData[ingredient.id].quantity}
+                                              placeholder="Qty"
+                                              className="w-12 px-2 py-1.5 text-sm bg-bg border border-border focus:outline-none focus:border-accent"
+                                            />
+                                            <select
+                                              name='unit'
+                                              onChange={(e) => handleIngredientChange(ingredient.id, e.target.name, e.target.value)}
+                                              value={editingIngredientsData[ingredient.id].unit}
+                                              className="flex-1 px-1 py-1.5 text-xs bg-bg border border-border focus:outline-none focus:border-accent"
+                                            >
+                                              {units.map((u) => (
+                                                <option key={u.value}
+                                                        value={u.value}>{u.label[locale]}</option>
+                                              ))}
+                                            </select>
+                                          </div>
+                                        </div>
+                                        <div className="flex gap-2 justify-end">
+                                          <button
+                                            onClick={() => saveIngredientsChanges(ingredient.id)}
+                                            className="p-1.5 bg-green-500 text-white hover:bg-green-600 transition-colors"
+                                          >
+                                            <IoCheckmark className="text-sm"/>
+                                          </button>
+                                          <button
+                                            onClick={() => cancelIngredientsEditing(ingredient.id)}
+                                            className="p-1.5 bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                          >
+                                            <IoClose className="text-sm"/>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <SortableIngredient
+                                        key={ingredient.id}
+                                        ingredient={ingredient}
+                                        ingredientId={ingredient.id}
+                                        index={i}
+                                        isEditing={isEditing}
+                                        startEditingIngredient={startEditingIngredient}
+                                        removeIngredient={() => removeIngredientFromGroup(groupIndex, ingredient.id)}
+                                      />
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </SortableContext>
+                          </DndContext>
+
+                          {/* Add new ingredient form */}
+                          <div className="mt-6 p-4 sm:p-5 bg-bg border border-border">
+                            <h3 className="text-sm tracking-widest uppercase text-muted mb-4">{tAdmin('form.sections.addIngredient')}</h3>
+                            <div className="space-y-3">
+                              <div className="grid grid-cols-1 gap-3">
+                                <input
+                                  {...register(`ingredientGroups.${groupIndex}.draft.uk`)}
+                                  className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                                  type="text"
+                                  placeholder={tAdmin('form.fields.ingredientPlaceholderUk')}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleTranslateText('ingredient', groupIndex)}
+                                  className="self-start px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
+                                >
+                                  Translate to EN →
+                                </button>
+                                <input
+                                  {...register(`ingredientGroups.${groupIndex}.draft.en`)}
+                                  className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                                  type="text"
+                                  placeholder={tAdmin('form.fields.ingredientPlaceholderEn')}
+                                />
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2.5 items-end">
+                                <div>
+                                  <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">{tAdmin('form.fields.quantity')}</label>
+                                  <input
+                                    {...register(`ingredientGroups.${groupIndex}.draft.quantity`)}
+                                    className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                                    type="text"
+                                    placeholder={tAdmin('form.fields.quantity')}
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">Unit</label>
+                                  <select
+                                    {...register(`ingredientGroups.${groupIndex}.draft.unit`)}
+                                    className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text focus:outline-none focus:border-accent transition-colors cursor-pointer"
+                                  >
+                                    {units.map((unit) => (
+                                      <option key={unit.value}
+                                              value={unit.value}>
+                                        {unit.label.uk} / {unit.label.en}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <button
+                                  type="button"
+                                  className="px-4 py-2.5 bg-text text-bg text-[11px] tracking-[0.06em] uppercase whitespace-nowrap hover:opacity-90 transition-opacity"
+                                  onClick={() => addNewIngredient(groupIndex)}
+                                >
+                                  + {tAdmin('form.buttons.add')}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </SortableItem>
+                  );
+                })}
+
+                {/* Add new group button */}
+                <button
+                  className="w-full py-5 border border-dashed border-border flex items-center justify-center gap-2.5 text-[11px] tracking-[0.06em] text-accent hover:bg-surface transition-colors"
+                  type="button"
+                  onClick={() => appendGroup(createEmptyGroup())}
+                >
+                  + {tAdmin('form.buttons.addGroup')}
+                </button>
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </section>
 
@@ -1115,126 +1517,128 @@ const Page = () => {
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
-            onDragEnd={(e) => handleDragEnd(e, stepFields, 'steps')}
+            onDragEnd={handleDragEnd}
           >
-            <SortableContext items={stepIds} strategy={verticalListSortingStrategy}>
+            <SortableContext items={stepIds}
+                             strategy={verticalListSortingStrategy}>
               <div className="flex flex-col gap-px bg-border">
                 {editingSteps.map((step, i) => (
-                  <div key={step.fieldId} className="bg-bg">
+                  <div key={step.fieldId}
+                       className="bg-bg">
                     {isEditingStep[step.id] ? (
-                    // Edit mode for step
-                    <div className=" p-4 sm:p-5 lg:p-6 border border-accent">
+                      // Edit mode for step
+                      <div className=" p-4 sm:p-5 lg:p-6 border border-accent">
 
-                      {/* Step image */}
-                      <div className="w-full">
-                        {step.imgUrl ? (
-                          <div className="relative w-full mb-4">
-                            <div className="relative w-full aspect-video">
-                              <Image
-                                src={step.imgUrl}
-                                alt={`Step ${i + 1}`}
-                                fill
-                                className="object-cover"
+                        {/* Step image */}
+                        <div className="w-full">
+                          {step.imgUrl ? (
+                            <div className="relative w-full mb-4">
+                              <div className="relative w-full aspect-video">
+                                <Image
+                                  src={step.imgUrl}
+                                  alt={`Step ${i + 1}`}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => deleteStepImage(step.id)}
+                                className="absolute top-2 right-2 p-2 bg-red-500 text-white hover:bg-red-600 transition-colors"
+                              >
+                                <MdDeleteForever className="text-lg"/>
+                              </button>
+                              <label className="absolute bottom-2 right-2 cursor-pointer px-3 py-1.5 bg-white/80 text-accent text-xs tracking-wide hover:bg-white transition-colors">
+                                <input
+                                  type="file"
+                                  hidden
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleStepImageChange(step.id, file);
+                                  }}
+                                />
+                                {tAdmin('form.buttons.changeImage')}
+                              </label>
+                            </div>
+                          ) : (
+                            <div className="w-full py-8 flex items-center justify-center border border-dashed border-border">
+                              <label className="cursor-pointer text-xs tracking-[0.06em] uppercase text-muted hover:text-text transition-colors">
+                                <input
+                                  type="file"
+                                  hidden
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleStepImageChange(step.id, file);
+                                  }}
+                                />
+                                {tAdmin('form.buttons.addPicture')}
+                              </label>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Step description with translation */}
+                        <div>
+                          <div className="space-y-3 p-3">
+                            <div>
+                              <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                                {tAdmin('form.fields.descriptionUk')}
+                              </label>
+                              <textarea
+                                value={typeof step.desc === 'string' ? '' : step.desc.uk}
+                                onChange={(e) => handleStepChange(step.id, 'uk', e.target.value)}
+                                rows={3}
+                                required={true}
+                                className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
                               />
                             </div>
                             <button
                               type="button"
-                              onClick={() => deleteStepImage(step.id)}
-                              className="absolute top-2 right-2 p-2 bg-red-500 text-white hover:bg-red-600 transition-colors"
+                              onClick={() => handleTranslateText('stepDescription', i)}
+                              className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
                             >
-                              <MdDeleteForever className="text-lg"/>
+                              Translate to English →
                             </button>
-                            <label className="absolute bottom-2 right-2 cursor-pointer px-3 py-1.5 bg-white/80 text-accent text-xs tracking-wide hover:bg-white transition-colors">
-                              <input
-                                type="file"
-                                hidden
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleStepImageChange(step.id, file);
-                                }}
+                            <div>
+                              <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
+                                {tAdmin('form.fields.descriptionEn')}
+                              </label>
+                              <textarea
+                                value={typeof step.desc === 'string' ? '' : step.desc.en}
+                                onChange={(e) => handleStepChange(step.id, 'en', e.target.value)}
+                                rows={3}
+                                required={true}
+                                className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
                               />
-                              {tAdmin('form.buttons.changeImage')}
-                            </label>
+                            </div>
                           </div>
-                        ) : (
-                          <div className="w-full py-8 flex items-center justify-center border border-dashed border-border">
-                            <label className="cursor-pointer text-xs tracking-[0.06em] uppercase text-muted hover:text-text transition-colors">
-                              <input
-                                type="file"
-                                hidden
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) handleStepImageChange(step.id, file);
-                                }}
-                              />
-                              {tAdmin('form.buttons.addPicture')}
-                            </label>
+                        </div>
+
+                        {stepFieldError && (
+                          <div className='flex items-center justify-center'>
+                            <p className='text-center text-xs bg-red-400 text-white px-3 py-1'>{stepFieldError}</p>
                           </div>
                         )}
-                      </div>
 
-                      {/* Step description with translation */}
-                      <div>
-                        <div className="space-y-3 p-3">
-                          <div>
-                            <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
-                              {tAdmin('form.fields.descriptionUa')}
-                            </label>
-                            <textarea
-                              value={typeof step.desc === 'string' ? '' : step.desc.ua}
-                              onChange={(e) => handleStepChange(step.id, 'ua', e.target.value)}
-                              rows={3}
-                              required={true}
-                              className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
-                            />
-                          </div>
+                        <div className="flex gap-5 justify-end mt-4 col-span-2 place-self-center">
                           <button
-                            type="button"
-                            onClick={() => handleTranslateText('stepDescription', i)}
-                            className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-surface transition-colors"
+                            onClick={() => saveStepChanges(step.id, i)}
+                            className="p-2 bg-green-500 text-white hover:bg-green-600 transition-colors"
                           >
-                            Translate to English →
+                            <IoCheckmark className="text-lg"/>
                           </button>
-                          <div>
-                            <label className="block text-[11px] tracking-[0.08em] uppercase text-muted mb-2">
-                              {tAdmin('form.fields.descriptionEn')}
-                            </label>
-                            <textarea
-                              value={typeof step.desc === 'string' ? '' : step.desc.en}
-                              onChange={(e) => handleStepChange(step.id, 'en', e.target.value)}
-                              rows={3}
-                              required={true}
-                              className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors resize-none"
-                            />
-                          </div>
+                          <button
+                            onClick={() => cancelStepEditing(step.id)}
+                            className="p-2 bg-red-500 text-white hover:bg-red-600 transition-colors"
+                          >
+                            <IoClose className="text-lg"/>
+                          </button>
                         </div>
                       </div>
-
-                      {stepFieldError && (
-                        <div className='flex items-center justify-center'>
-                          <p className='text-center text-xs bg-red-400 text-white px-3 py-1'>{stepFieldError}</p>
-                        </div>
-                      )}
-
-                      <div className="flex gap-5 justify-end mt-4 col-span-2 place-self-center">
-                        <button
-                          onClick={() => saveStepChanges(step.id, i)}
-                          className="p-2 bg-green-500 text-white hover:bg-green-600 transition-colors"
-                        >
-                          <IoCheckmark className="text-lg"/>
-                        </button>
-                        <button
-                          onClick={() => cancelStepEditing(step.id)}
-                          className="p-2 bg-red-500 text-white hover:bg-red-600 transition-colors"
-                        >
-                          <IoClose className="text-lg"/>
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    // View mode for step (using SortableStep for drag)
+                    ) : (
+                      // View mode for step (using SortableStep for drag)
                       <SortableStep
                         step={step}
                         stepId={step.fieldId}
@@ -1256,14 +1660,17 @@ const Page = () => {
                 ? getPublicImageUrl(step.imgUrl, 'steps')
                 : step.imgUrl;
               return (
-                <div key={step.id} className="bg-bg">
+                <div key={step.id}
+                     className="bg-bg">
                   <SortableStep
                     step={{...step, imgUrl}}
                     stepId={step.id}
                     index={i}
                     isEditing={false}
-                    onEdit={() => {}}
-                    onRemove={() => {}}
+                    onEdit={() => {
+                    }}
+                    onRemove={() => {
+                    }}
                   />
                 </div>
               );
@@ -1290,22 +1697,33 @@ const Page = () => {
         </h2>
 
         {isEditing ? (
-          <div className="relative aspect-video bg-surface border border-border overflow-hidden">
+          <div className="relative bg-surface border border-border overflow-hidden">
             {watch('videoUrl') ? (
               <>
-                <video
-                  className="w-full h-full object-contain"
-                  src={watch('videoUrl')}
-                  controls
-                />
+                {/* For new files (blob URLs), use regular video element */}
+                {/* For existing videos, use SecureVideoPlayer */}
+                {watch('videoUrl').startsWith('blob:') ? (
+                  <video
+                    className="w-full h-full object-contain"
+                    src={watch('videoUrl')}
+                    controls
+                  />
+                ) : recipe?.videoUrl ? (
+                  <SecureVideoPlayer
+                    recipeId={recipe.id}
+                    videoKey={recipe.videoUrl}
+                    className="w-full h-full"
+                    thumbnail={recipe.heroImg}
+                  />
+                ) : null}
                 <button
                   type="button"
                   onClick={removeVideoFile}
-                  className="absolute top-2 right-2 p-2 bg-red-500 text-white hover:bg-red-600 transition-colors"
+                  className="absolute top-2 right-2 p-2 bg-red-500 text-white hover:bg-red-600 transition-colors z-10"
                 >
                   <MdDeleteForever className="text-lg"/>
                 </button>
-                <label className="absolute bottom-2 right-2 cursor-pointer px-3 py-1.5 bg-white/80 text-accent text-xs tracking-wide hover:bg-white transition-colors">
+                <label className="absolute bottom-2 right-2 cursor-pointer px-3 py-1.5 bg-white/80 text-accent text-xs tracking-wide hover:bg-white transition-colors z-10">
                   <input
                     type="file"
                     hidden
@@ -1317,9 +1735,19 @@ const Page = () => {
               </>
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center gap-3.5">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted">
+                <svg width="24"
+                     height="24"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     strokeWidth="1.5"
+                     className="text-muted">
                   <polygon points="23 7 16 12 23 17 23 7"/>
-                  <rect x="1" y="5" width="15" height="14" rx="2"/>
+                  <rect x="1"
+                        y="5"
+                        width="15"
+                        height="14"
+                        rx="2"/>
                 </svg>
                 <label className="cursor-pointer text-xs tracking-[0.06em] uppercase text-muted hover:text-text transition-colors">
                   <input
@@ -1333,12 +1761,23 @@ const Page = () => {
               </div>
             )}
           </div>
+        ) : isVideoProcessing ? (
+          <div className="relative aspect-video bg-surface border border-border overflow-hidden flex flex-col items-center justify-center gap-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-accent border-t-transparent"></div>
+            <div className="text-center">
+              <p className="text-sm text-text mb-2">{tCommon('video.processing')}</p>
+              {videoProcessingProgress > 0 && (
+                <p className="text-xs text-muted">{videoProcessingProgress}%</p>
+              )}
+            </div>
+          </div>
         ) : recipe?.videoUrl ? (
-          <div className="relative aspect-video bg-[#0d0d0a] overflow-hidden">
+          <div className="relative bg-[#0d0d0a] overflow-hidden">
             <SecureVideoPlayer
               recipeId={recipe.id}
               videoKey={recipe.videoUrl}
-              className="w-full h-full object-contain"
+              className="w-full h-full"
+              thumbnail={recipe.heroImg}
             />
           </div>
         ) : (

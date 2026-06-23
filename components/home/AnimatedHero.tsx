@@ -3,11 +3,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from '@/i18n/navigation';
 import { PAGES } from '@/config/page.config';
+import {supabase} from "@/lib/supabase/ClientComponentClient";
+import {useTranslations} from "next-intl";
+import {useTypedLocale} from "@/hooks/useTypedLocale";
 
 interface AnimatedHeroProps {
   discoverText?: string;
   recipesText?: string;
-  words?: string[];
   byAuthor?: string;
   browseText?: string;
   aboutText?: string;
@@ -16,12 +18,17 @@ interface AnimatedHeroProps {
 const AnimatedHero = ({
   discoverText = 'Discover',
   recipesText = 'Recipes',
-  words = ['Delicious', 'Inspiring', 'Handcrafted', 'Authentic', 'Beautiful', 'Timeless'],
   byAuthor = 'by Yuliia Stohantseva',
   browseText = 'Browse recipes',
   aboutText = 'About the author',
 }: AnimatedHeroProps) => {
   const [height, setHeight] = useState(0);
+  const [words, setWords] = useState<string[]>([]);
+
+  const t = useTranslations('home');
+  const defaultWords = t.raw('title.words') as string[];
+
+  const locale = useTypedLocale();
 
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const scrollHintRef = useRef<HTMLDivElement | null>(null);
@@ -31,6 +38,18 @@ const AnimatedHero = ({
 
   const interval = 2000;
   const duration = 700;
+
+  useEffect(() => {
+    const fetchAnimatedWords = async () => {
+      const {data, error} = await supabase.from('author').select('animated_hero_words');
+
+      const words = data?.[0]?.animated_hero_words?.[locale] as string[] | undefined;
+      setWords(error || !words?.length ? defaultWords : words);
+    }
+
+    void fetchAnimatedWords();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale]);
 
   useEffect(() => {
     const measure = () => {
