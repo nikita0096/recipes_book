@@ -18,6 +18,7 @@ export interface AuthorData {
   description: LocalizedText;
   descriptionFooter: LocalizedText;
   animatedHeroWords: LocalizedText;
+  heroCakeId: string;
 }
 
 export interface AuthorInfo {
@@ -42,6 +43,7 @@ export interface AuthorRow {
   description: LocalizedText | null;
   description_footer: LocalizedText | null;
   animated_hero_words: { en: string[]; uk: string[] } | null;
+  hero_cake_id: string;
 }
 
 // Single source of truth for mapping a DB row to the app-facing shape.
@@ -71,6 +73,7 @@ export const mapAuthorRow = (row: AuthorRow): AuthorData => ({
     en: row.animated_hero_words?.en?.join(' ') || '',
     uk: row.animated_hero_words?.uk?.join(' ') || '',
   },
+  heroCakeId: row.hero_cake_id,
 });
 
 // Fallback used when the author row can't be loaded.
@@ -90,6 +93,8 @@ const FALLBACK_AUTHOR: AuthorData = {
   description: {en: '', uk: ''},
   descriptionFooter: {en: '', uk: ''},
   animatedHeroWords: {en: '', uk: ''},
+  heroCakeId: '',
+
 };
 
 export const fetchAuthorInfo = async (): Promise<AuthorInfo> => {

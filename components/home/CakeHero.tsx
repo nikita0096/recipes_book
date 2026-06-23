@@ -7,6 +7,7 @@ import {useLocale, useTranslations} from "next-intl";
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {LocalizedText} from "@/types";
 import {PAGES} from "@/config/page.config";
+import {fetchAuthorInfo} from "@/services/db/author/fetchAuthorInfo";
 
 interface CakeHeroProps {
   scrollText?: string;
@@ -61,16 +62,19 @@ const CakeHero = ({
   const locale = useLocale() as "en" | "uk";
 
   useEffect(() => {
-    const fetchHeroCake = async () => {
+    const fetchHeroCakeRecipeId = async () => {
+
+      const recipeId = await fetchAuthorInfo().then(res => res.data.heroCakeId);
+
       const {data} = await supabase
         .from('recipes')
         .select('title, preparing_time, steps_count, slug')
-        .eq('id', '01KTTPMCH43XJY6Q0ZDC6SAD0F')
-        .single();
+        .eq('id', recipeId)
+        .maybeSingle();
       setHeroRecipe(data);
     }
 
-    fetchHeroCake();
+    fetchHeroCakeRecipeId();
   }, []);
 
   // Generate particles on mount

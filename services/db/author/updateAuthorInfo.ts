@@ -37,7 +37,8 @@ export const updateAuthorInfo = async (
       animated_hero_words: {
         en: toWords(data.animatedHeroWords.en),
         uk: toWords(data.animatedHeroWords.uk),
-      }
+      },
+      hero_cake_id: data.heroCakeId,
     })
     .eq('id', id)
     .select()

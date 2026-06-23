@@ -89,6 +89,8 @@
       "placeholderRecipesCount": "Recipes quantity",
       "placeholderViews": "Views",
       "placeholderSubscribers": "Subscribers",
+      "cakeId": "Cake id",
+      "heroCakeId": "Cake id for the home page",
       "authorName": "Author name",
       "authorInfo": "Information",
       "descriptionUK": "Description (Ukrainian)",

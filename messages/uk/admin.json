@@ -89,6 +89,8 @@
       "placeholderRecipesCount": "Кількість рецептів",
       "placeholderViews": "Перегляди",
       "placeholderSubscribers": "Підписники",
+      "cakeId": "Ідентифікатор торта",
+      "heroCakeId": "ID торта для головної сторінки",
       "authorName": "Ім'я автора",
       "authorInfo": "Інформація",
       "descriptionUK": "Опис (Українська)",

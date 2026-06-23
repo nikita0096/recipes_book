@@ -51,7 +51,7 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
     }
 
     fetchSocialMediaLinksAndDescription()
-  });
+  }, []);
 
   return (
     <footer className="relative bg-bg from-gray-900 to-gray-950 text-white overflow-hidden">

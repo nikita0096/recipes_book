@@ -26,7 +26,7 @@ export interface AuthorInfoForm {
   description: LocalizedText;
   descriptionFooter: LocalizedText;
   animatedHeroWords: LocalizedText;
-
+  heroCakeId: string;
 }
 
 interface AuthorInfoState {
@@ -45,6 +45,7 @@ interface AuthorInfoState {
   description: LocalizedText;
   descriptionFooter: LocalizedText;
   animatedHeroWords: LocalizedText;
+  heroCakeId: string;
 }
 
 type TranslateInputs = 'description.uk' | 'descriptionFooter.uk' | 'animatedHeroWords.uk';
@@ -90,7 +91,8 @@ const Page = () => {
       animatedHeroWords: {
         en: '',
         uk: ''
-      }
+      },
+      heroCakeId: ''
     }
   });
 
@@ -131,6 +133,7 @@ const Page = () => {
       setValue('descriptionFooter.en', author.descriptionFooter.en);
       setValue('animatedHeroWords.en', author.animatedHeroWords.en);
       setValue('animatedHeroWords.uk', author.animatedHeroWords.uk);
+      setValue('heroCakeId', author.heroCakeId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [author]);
@@ -429,6 +432,14 @@ const Page = () => {
             {...register('animatedHeroWords.en', {required: true})}
             placeholder={t('form.author.animatedHeroWordsEN')}
           />
+          <label htmlFor="views" className="block text-xs tracking-[0.08em] uppercase text-muted">
+            {t('form.author.cakeId')}
+          </label>
+          <input id="heroCakeId"
+                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                 type="text"
+                 {...register('heroCakeId', {required: true})}
+                 placeholder={t('form.author.heroCakeId')}/>
           <div className='flex flex-col gap-2 items-center justify-center w-full mt-4'>
             {error && (
               <p className='text-red-400'>{error}</p>
