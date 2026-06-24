@@ -13,6 +13,10 @@ interface AnimatedHeroProps {
   byAuthor?: string;
   browseText?: string;
   aboutText?: string;
+  wordsList: {
+    en: string[];
+    uk: string[];
+  } | null;
 }
 
 const AnimatedHero = ({
@@ -21,14 +25,16 @@ const AnimatedHero = ({
   byAuthor = 'by Yuliia Stohantseva',
   browseText = 'Browse recipes',
   aboutText = 'About the author',
+  wordsList
 }: AnimatedHeroProps) => {
   const [height, setHeight] = useState(0);
-  const [words, setWords] = useState<string[]>([]);
 
   const t = useTranslations('home');
-  const defaultWords = t.raw('title.words') as string[];
-
   const locale = useTypedLocale();
+
+  const defaultWords = t.raw('title.words') as string[];
+  const words = wordsList !== null ? wordsList[locale] : defaultWords;
+
 
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const scrollHintRef = useRef<HTMLDivElement | null>(null);
@@ -38,18 +44,6 @@ const AnimatedHero = ({
 
   const interval = 2000;
   const duration = 700;
-
-  useEffect(() => {
-    const fetchAnimatedWords = async () => {
-      const {data, error} = await supabase.from('author').select('animated_hero_words');
-
-      const words = data?.[0]?.animated_hero_words?.[locale] as string[] | undefined;
-      setWords(error || !words?.length ? defaultWords : words);
-    }
-
-    void fetchAnimatedWords();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locale]);
 
   useEffect(() => {
     const measure = () => {

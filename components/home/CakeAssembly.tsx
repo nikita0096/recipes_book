@@ -8,9 +8,11 @@ import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {LocalizedText} from "@/types";
 import {PAGES} from "@/config/page.config";
 import {fetchAuthorInfo} from "@/services/db/author/fetchAuthorInfo";
+import {CakeAssemblyRecipe} from "@/components/home/HomePage";
 
 interface CakeAssemblyProps {
   scrollText?: string;
+  cakeAssemblyData: CakeAssemblyRecipe;
 }
 
 interface CakeAssemblyLayer {
@@ -28,14 +30,6 @@ interface CakeAssemblyLayer {
   style?: {transform: string}
 }
 
-interface CakeAssemblyRecipe {
-  id: string;
-  title?: LocalizedText,
-  steps_count?: number,
-  preparing_time?: number,
-  slug?: string,
-}
-
 const layers: CakeAssemblyLayer[] = [
   { id: 'layer1', src: '/images/cake-layer/layer_1.png', dy: 0, lblId: 'lbl1', label: {en: 'Sponge base', uk: "Бісквіт"}, threshold: 0.18, delay: 0, zIndex: 1, style: {transform: "scale(1.3) translateX(-2px)"}},
   { id: 'layer2', src: '/images/cake-layer/layer_2.png', dy: -50, lblId: 'lbl2', label: {en: 'Strawberry jam', uk: "Полуничний джем"}, threshold: 0.26, delay: 150, zIndex: 2, style: {transform: "scale(1.01)"} },
@@ -46,9 +40,10 @@ const layers: CakeAssemblyLayer[] = [
 ];
 
 const CakeAssembly = ({
-  scrollText = 'scroll'
+  scrollText = 'scroll',
+  cakeAssemblyData
 }: CakeAssemblyProps) => {
-  const [recipe, setRecipe] = useState<CakeAssemblyRecipe | null>(null);
+  const [recipe, setRecipe] = useState<CakeAssemblyRecipe | null>(cakeAssemblyData);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const particlesRef = useRef<HTMLDivElement>(null);
   const scrollHintRef = useRef<HTMLDivElement>(null);
@@ -63,19 +58,19 @@ const CakeAssembly = ({
   const locale = useLocale() as "en" | "uk";
 
   useEffect(() => {
-    const fetchCakeRecipe = async () => {
-
-      const recipeId = await fetchAuthorInfo().then(res => res.data.heroCakeId);
-
-      const {data} = await supabase
-        .from('recipes')
-        .select('title, preparing_time, steps_count, slug')
-        .eq('id', recipeId)
-        .maybeSingle();
-      setRecipe({...data, id: recipeId});
-    }
-
-    fetchCakeRecipe();
+    // const fetchCakeRecipe = async () => {
+    //
+    //   const recipeId = await fetchAuthorInfo().then(res => res.data.heroCakeId);
+    //
+    //   const {data} = await supabase
+    //     .from('recipes')
+    //     .select('title, preparing_time, steps_count, slug')
+    //     .eq('id', recipeId)
+    //     .maybeSingle();
+    //   setRecipe({...data, id: recipeId});
+    // }
+    //
+    // fetchCakeRecipe();
   }, []);
 
   // Generate particles on mount
