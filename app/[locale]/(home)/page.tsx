@@ -6,7 +6,7 @@ import {PAGES} from "@/config/page.config";
 import {useTranslations} from "next-intl";
 import FeaturedRecipeCard from "@/components/home/FeaturedRecipeCard";
 import Footer from "@/components/footer/Footer";
-import CakeHero from "@/components/home/CakeHero";
+import CakeAssembly from "@/components/home/CakeAssembly";
 import AnimatedHero from "@/components/home/AnimatedHero";
 import {useUserStore} from "@/store/useUserStore";
 import FeaturedRecipePreview from "@/components/home/FeaturedRecipePreview";
@@ -50,7 +50,7 @@ export default function Home() {
       />
 
       {/* Cake Hero Section */}
-      <CakeHero scrollText={t('hero.scroll')} />
+      <CakeAssembly scrollText={t('hero.scroll')} />
 
       <section id="featured"
                className="relative pt-5 pb-10 bg-bg overflow-hidden">

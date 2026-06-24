@@ -9,11 +9,11 @@ import {LocalizedText} from "@/types";
 import {PAGES} from "@/config/page.config";
 import {fetchAuthorInfo} from "@/services/db/author/fetchAuthorInfo";
 
-interface CakeHeroProps {
+interface CakeAssemblyProps {
   scrollText?: string;
 }
 
-interface CakeHeroLayer {
+interface CakeAssemblyLayer {
   id: string;
   src: string;
   dy: number;
@@ -28,14 +28,15 @@ interface CakeHeroLayer {
   style?: {transform: string}
 }
 
-interface CakeHeroRecipe {
-  title: LocalizedText,
-  steps_count: number,
-  preparing_time: number,
-  slug: string,
+interface CakeAssemblyRecipe {
+  id: string;
+  title?: LocalizedText,
+  steps_count?: number,
+  preparing_time?: number,
+  slug?: string,
 }
 
-const layers: CakeHeroLayer[] = [
+const layers: CakeAssemblyLayer[] = [
   { id: 'layer1', src: '/images/cake-layer/layer_1.png', dy: 0, lblId: 'lbl1', label: {en: 'Sponge base', uk: "Бісквіт"}, threshold: 0.18, delay: 0, zIndex: 1, style: {transform: "scale(1.3) translateX(-2px)"}},
   { id: 'layer2', src: '/images/cake-layer/layer_2.png', dy: -50, lblId: 'lbl2', label: {en: 'Strawberry jam', uk: "Полуничний джем"}, threshold: 0.26, delay: 150, zIndex: 2, style: {transform: "scale(1.01)"} },
   { id: 'layer3', src: '/images/cake-layer/layer_3.jpg', dy: -105, lblId: 'lbl3', label: {en: 'Pistachio cheesecake', uk: "Фісташковий чізкейк"}, threshold: 0.34, delay: 300, zIndex: 3 },
@@ -44,10 +45,10 @@ const layers: CakeHeroLayer[] = [
   { id: 'layer6', src: '/images/cake-layer/layer_6.jpg', dy: -265, lblId: 'lbl6', label: {en: 'Decoration', uk: "Декорація"}, threshold: 0.58, delay: 750, zIndex: 6, style: {transform: "scale(.9)"} },
 ];
 
-const CakeHero = ({
+const CakeAssembly = ({
   scrollText = 'scroll'
-}: CakeHeroProps) => {
-  const [heroRecipe, setHeroRecipe] = useState<CakeHeroRecipe | null>(null);
+}: CakeAssemblyProps) => {
+  const [recipe, setRecipe] = useState<CakeAssemblyRecipe | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const particlesRef = useRef<HTMLDivElement>(null);
   const scrollHintRef = useRef<HTMLDivElement>(null);
@@ -62,7 +63,7 @@ const CakeHero = ({
   const locale = useLocale() as "en" | "uk";
 
   useEffect(() => {
-    const fetchHeroCakeRecipeId = async () => {
+    const fetchCakeRecipe = async () => {
 
       const recipeId = await fetchAuthorInfo().then(res => res.data.heroCakeId);
 
@@ -71,10 +72,10 @@ const CakeHero = ({
         .select('title, preparing_time, steps_count, slug')
         .eq('id', recipeId)
         .maybeSingle();
-      setHeroRecipe(data);
+      setRecipe({...data, id: recipeId});
     }
 
-    fetchHeroCakeRecipeId();
+    fetchCakeRecipe();
   }, []);
 
   // Generate particles on mount
@@ -189,7 +190,7 @@ const CakeHero = ({
   }, []);
 
   return (
-    <div className="cake-hero-wrapper" ref={wrapperRef}>
+    <div className="cake-assembly-wrapper" ref={wrapperRef}>
       <div className="cake-sticky-scene">
         <div className="cake-bg-image" />
         <div className="cake-bg-glow" />
@@ -199,14 +200,14 @@ const CakeHero = ({
         {/* Recipe Card - Left Side */}
         <div className="cake-recipe-card" ref={recipeCardRef}>
           <div className="cake-recipe-divider" />
-          <h3 className="cake-recipe-title">{heroRecipe?.title[locale]}</h3>
+          <h3 className="cake-recipe-title">{recipe?.title ? recipe?.title[locale] : 'Strawberry and Pistachio Cake'}</h3>
           <div className="cake-recipe-meta">
             <span className="cake-recipe-time">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10"/>
                 <path d="M12 6v6l4 2"/>
               </svg>
-              {heroRecipe?.preparing_time} {tRecipes('singlePage.minutes')}
+              {recipe?.preparing_time ? recipe?.preparing_time : 120} {tRecipes('singlePage.minutes')}
             </span>
             <span className="cake-recipe-steps">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -214,11 +215,11 @@ const CakeHero = ({
                 <rect x="9" y="3" width="6" height="4" rx="1"/>
                 <path d="M9 12h6M9 16h6"/>
               </svg>
-              {tRecipes('singlePage.steps', {count: heroRecipe?.steps_count || 5})}
+              {tRecipes('singlePage.steps', {count: recipe?.steps_count || 5})}
             </span>
           </div>
           <div className="cake-recipe-divider" />
-          <Link href={PAGES.RECIPE(heroRecipe?.slug + "-" + "01KTTPMCH43XJY6Q0ZDC6SAD0F")} className="cake-recipe-link">
+          <Link href={PAGES.RECIPE(recipe?.slug + "-" + recipe?.id)} className="cake-recipe-link">
             {tRecipes("card.toRecipe")}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -267,4 +268,4 @@ const CakeHero = ({
   );
 };
 
-export default CakeHero;
+export default CakeAssembly;
