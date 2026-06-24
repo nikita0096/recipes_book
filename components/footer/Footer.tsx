@@ -27,6 +27,7 @@ interface SocialMediaLinks {
 const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
   const [socialMediaLinks, setSocialMediaLinks] = useState<SocialMediaLinks | null>(null);
   const [description, setDescription] = useState<LocalizedText | null>(null);
+  const [contactEmail, setContactEmail] = useState<string | null>(null);
   const t = useTranslations('footer');
   const currentYear = new Date().getFullYear();
 
@@ -34,7 +35,7 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
 
   useEffect(() => {
     const fetchSocialMediaLinksAndDescription = async () => {
-      const {data, error} = await supabase.from('author').select('inst_link, tik_tok_link, you_tube_link, facebook_link, telegram_link,  description_footer');
+      const {data, error} = await supabase.from('author').select('inst_link, tik_tok_link, you_tube_link, facebook_link, telegram_link,  description_footer, contact_email');
 
       if(!error) {
         setSocialMediaLinks({
@@ -46,6 +47,8 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
         });
 
         setDescription(data[0].description_footer);
+
+        setContactEmail(data[0].contact_email);
       }
 
     }
@@ -239,7 +242,7 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
             </h4>
             <div className="space-y-4">
               <a
-                href="mailto:hello@yuliia-recipes.com"
+                href={`mailto:${contactEmail}`}
                 className="flex items-center gap-3 text-xs md:text-sm text-gray-400 hover:text-amber-400 transition-colors duration-300 group"
               >
                 <div className="w-10 h-10 bg-gray-800 group-hover:bg-amber-500/20 rounded-xl flex items-center justify-center transition-colors">
@@ -247,7 +250,7 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <span className="text-sm">hello@yuliia-recipes.com</span>
+                <span className="text-sm">{contactEmail}</span>
               </a>
             </div>
           </div>
