@@ -1,0 +1,38 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Setup Node.js environment with npm cache
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # Install dependencies using clean install for reproducibility
+      - name: Install dependencies
+        run: npm ci
+
+      # Run the Jest test suite. testMatch in jest.config.js targets __tests__,
+      # so no path filter is needed. Deploy (e.g. Railway) waits for this check
+      # to pass before deploying.
+      - name: Run tests
+        run: npm test

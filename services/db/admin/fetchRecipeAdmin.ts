@@ -81,8 +81,13 @@ export const fetchRecipeAdmin = async (id: string): Promise<IRecipe> => {
     heroImg,
     isPremium: true as const,
     preparingTime: data.preparing_time,
+    weight: data.weight,
+    diameter: data.diameter,
+    calories: data.calories,
     recipeSteps,
     videoUrl: premiumData.video_url,
     stepsCount: data.steps_count,
+    slug: data.slug,
+    isPublished: data.is_published,
   } satisfies IRecipePremiumFull;
 }
