@@ -178,14 +178,14 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
         <div className="p-8 sm:p-12">
           <div className="flex items-center gap-2.5 mb-1.5">
             {isEditingName ? (
-              <>
+              <div className='flex flex-row items-center gap-2'>
                 <input
                   type="text"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   onKeyDown={handleKeyDown}
                   autoFocus
-                  className="font-serif text-3xl sm:text-4xl italic font-normal text-text bg-transparent border-b border-accent focus:outline-none px-1"
+                  className="font-serif text-2xl sm:text-3xl italic font-normal text-text bg-transparent border-b border-accent focus:outline-none px-1"
                 />
                 <button
                   onClick={handleSaveName}
@@ -204,7 +204,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
-              </>
+              </div>
             ) : (
               <>
                 <h1 className="font-serif text-3xl sm:text-4xl italic font-normal text-text">
