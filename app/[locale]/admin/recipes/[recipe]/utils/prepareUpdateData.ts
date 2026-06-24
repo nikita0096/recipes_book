@@ -1,6 +1,6 @@
 import {v4 as uuidv4} from "uuid";
 import {uploadImage} from "@/services/storage/uploadImagetoStorage";
-import {uploadVideoToStorage} from "@/services/storage/uploadVideoToStorage";
+import {uploadVideoToStream} from "@/services/storage/uploadVideoToStream";
 import {deleteFileByPath} from "@/services/storage/deleteImageFromStorage";
 import {EditingValues} from "../page";
 import {
@@ -10,7 +10,25 @@ import {
   UpdateRecipeDataPremiumMain,
   UpdateRecipeDataPremiumPart,
 } from "@/types/recipe";
-import {deleteVideo} from "@/services/storage/deleteVideoR2Bucket";
+import {deleteVideoFromStream} from "@/services/storage/deleteVideoFromStream";
+
+// Extract path from Supabase public URL
+const extractPathFromUrl = (urlOrPath: string, bucket: string): string => {
+  // If it's already a path (doesn't start with http), return as is
+  if (!urlOrPath.startsWith('http')) {
+    return urlOrPath;
+  }
+
+  // Parse URL to extract path
+  // Format: https://xxx.supabase.co/storage/v1/object/public/{bucket}/{path}
+  const urlParts = urlOrPath.split(`/public/${bucket}/`);
+  if (urlParts.length === 2) {
+    return urlParts[1];
+  }
+
+  // If parsing failed, return original (shouldn't happen)
+  return urlOrPath;
+};
 
 export interface PrepareUpdateDataParams {
   formData: EditingValues;
@@ -55,7 +73,9 @@ export const prepareUpdateData = async ({
 
     // Process steps - upload new images if needed
     const processedSteps: RecipeStep[] = [];
-    for (const step of formData.recipeSteps) {
+    const filteredSteps = formData.recipeSteps.filter(step => step.desc.en && step.desc.uk);
+
+    for (const step of filteredSteps) {
       let imgPath = step.imgUrl;
 
       // If there's a new image file, upload it
@@ -78,6 +98,9 @@ export const prepareUpdateData = async ({
         }
 
         imgPath = imagePath;
+      } else if (imgPath) {
+        // Extract path from URL if needed
+        imgPath = extractPathFromUrl(imgPath, 'steps');
       }
 
       processedSteps.push({
@@ -115,6 +138,9 @@ export const prepareUpdateData = async ({
       }
 
       heroImgPath = imagePath;
+    } else {
+      // Extract path from URL if needed
+      heroImgPath = extractPathFromUrl(formData.heroImg, 'hero-images');
     }
 
     // Process video if there's a new file
@@ -124,12 +150,14 @@ export const prepareUpdateData = async ({
     if (formData.videoFile) {
       // Delete old video before uploading new one
       if (recipe.videoUrl) {
-        await deleteVideo(recipe.videoUrl);
+        await deleteVideoFromStream(recipe.videoUrl);
       }
 
-      const {videoUrl: newVideoUrl, error: videoError} = await uploadVideoToStorage({
+      const {videoUrl: newVideoUrl, error: videoError} = await uploadVideoToStream({
         videoFile: formData.videoFile,
-        folder: folder,
+        recipeId: folder, // folder is actually recipe.id
+        isPremium: formData.isPremium,
+        name: formData.title.en
       });
 
       if (videoError) {
@@ -139,12 +167,16 @@ export const prepareUpdateData = async ({
       videoUrl = newVideoUrl;
     }
 
-    // Prepare ingredients
-    const ingredients = formData.ingredients.map(ing => ({
-      id: ing.id,
-      value: ing.value,
-      quantity: ing.quantity,
-      unit: ing.unit
+    // Prepare ingredient groups (drop draft input values)
+    const ingredients = formData.ingredientGroups.map(group => ({
+      id: group.id,
+      title: group.title,
+      ingredients: group.ingredients.map(ing => ({
+        id: ing.id,
+        value: ing.value,
+        quantity: ing.quantity,
+        unit: ing.unit
+      }))
     }));
 
     // Return different structure based on target isPremium
@@ -158,6 +190,9 @@ export const prepareUpdateData = async ({
         ingredients,
         heroImg: heroImgPath,
         preparingTime: formData.preparingTime,
+        weight: formData.weight || null,
+        diameter: formData.diameter || null,
+        calories: formData.calories || null,
         isPremium: true as const,
         stepsCount: processedSteps.length,
         slug: formData.slug,
@@ -191,6 +226,9 @@ export const prepareUpdateData = async ({
       heroImg: heroImgPath,
       videoUrl: videoUrl,
       preparingTime: formData.preparingTime,
+      weight: formData.weight || null,
+      diameter: formData.diameter || null,
+      calories: formData.calories || null,
       isPremium: false as const,
       stepsCount: processedSteps.length,
       slug: formData.slug,
@@ -213,22 +251,47 @@ export const prepareUpdateData = async ({
 // Helper to check if data has changed
 export const hasDataChanged = (formData: EditingValues, recipe: IRecipe): boolean => {
   // Check title
-  if (formData.title.ua !== recipe.title.ua || formData.title.en !== recipe.title.en) {
+  if (formData.title.uk !== recipe.title.uk || formData.title.en !== recipe.title.en) {
     return true;
   }
 
   // Check description
-  if (formData.description.ua !== recipe.description.ua || formData.description.en !== recipe.description.en) {
+  if (formData.description.uk !== recipe.description.uk || formData.description.en !== recipe.description.en) {
     return true;
   }
 
   // Check category
-  if (formData.category.ua !== recipe.category.ua || formData.category.en !== recipe.category.en) {
+  if (formData.category.uk !== recipe.category.uk || formData.category.en !== recipe.category.en) {
     return true;
   }
 
   // Check likes
   if (Number(formData.likes) !== recipe.likes) {
+    return true;
+  }
+
+  // Check preparingTime
+  if (formData.preparingTime !== recipe.preparingTime) {
+    return true;
+  }
+
+  // Check weight
+  if ((formData.weight || null) !== recipe.weight) {
+    return true;
+  }
+
+  // Check diameter
+  if ((formData.diameter || null) !== recipe.diameter) {
+    return true;
+  }
+
+  // Check calories
+  if ((formData.calories || null) !== recipe.calories) {
+    return true;
+  }
+
+  // Check slug
+  if (formData.slug !== recipe.slug) {
     return true;
   }
 
@@ -252,7 +315,7 @@ export const hasDataChanged = (formData: EditingValues, recipe: IRecipe): boolea
     const formStep = formData.recipeSteps[i];
     const recipeStep = recipe.recipeSteps[i];
 
-    if (formStep.desc.ua !== recipeStep.desc.ua || formStep.desc.en !== recipeStep.desc.en) {
+    if (formStep.desc.uk !== recipeStep.desc.uk || formStep.desc.en !== recipeStep.desc.en) {
       return true;
     }
     if (formStep.imgUrl !== recipeStep.imgUrl || formStep.imgFile !== null) {
@@ -260,23 +323,39 @@ export const hasDataChanged = (formData: EditingValues, recipe: IRecipe): boolea
     }
   }
 
-  // Check ingredients count
-  if (formData.ingredients.length !== recipe.ingredients.length) {
+  // Check ingredient groups count
+  if (formData.ingredientGroups.length !== recipe.ingredients.length) {
     return true;
   }
 
-  // Check each ingredient
-  for (let i = 0; i < formData.ingredients.length; i++) {
-    const formIng = formData.ingredients[i];
-    const recipeIng = recipe.ingredients[i];
+  // Check each group
+  for (let g = 0; g < formData.ingredientGroups.length; g++) {
+    const formGroup = formData.ingredientGroups[g];
+    const recipeGroup = recipe.ingredients[g];
 
     if (
-      formIng.value.ua !== recipeIng.value.ua ||
-      formIng.value.en !== recipeIng.value.en ||
-      formIng.quantity !== recipeIng.quantity ||
-      formIng.unit !== recipeIng.unit
+      formGroup.title.uk !== recipeGroup.title.uk ||
+      formGroup.title.en !== recipeGroup.title.en
     ) {
       return true;
+    }
+
+    if (formGroup.ingredients.length !== recipeGroup.ingredients.length) {
+      return true;
+    }
+
+    for (let i = 0; i < formGroup.ingredients.length; i++) {
+      const formIng = formGroup.ingredients[i];
+      const recipeIng = recipeGroup.ingredients[i];
+
+      if (
+        formIng.value.uk !== recipeIng.value.uk ||
+        formIng.value.en !== recipeIng.value.en ||
+        formIng.quantity !== recipeIng.quantity ||
+        formIng.unit !== recipeIng.unit
+      ) {
+        return true;
+      }
     }
   }
 

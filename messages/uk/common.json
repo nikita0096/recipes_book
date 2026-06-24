@@ -1,0 +1,107 @@
+{
+  "header": {
+    "brand": "Книга Рецептів",
+    "byAuthor": "від Юлії"
+  },
+  "nav": {
+    "home": "Головна",
+    "recipes": "Рецепти",
+    "about": "Про автора",
+    "adminPanel": "Адмін панель"
+  },
+  "auth": {
+    "login": "Увійти",
+    "logout": "Вийти",
+    "profile": "Профіль",
+    "welcome": "Ласкаво просимо",
+    "loginSubtitle": "Увійдіть до свого облікового запису",
+    "signupSubtitle": "Створіть новий обліковий запис",
+    "resetPasswordSubtitle": "Відновлення паролю",
+    "updatePasswordSubtitle": "Оновлення паролю",
+    "logIn": "Вхід",
+    "signIn": "Увійти",
+    "signUp": "Реєстрація",
+    "resetPassword": "Відновити",
+    "updatePassword": "Оновити",
+    "forgotPassword": "Забули пароль?",
+    "createAccount": "Створити акаунт",
+    "welcomeGuest": "Вітаємо, Гість",
+    "guestDescription": "Увійдіть, щоб зберігати улюблені рецепти та отримати доступ до ексклюзивного контенту",
+    "email": "Email",
+    "emailPlaceholder": "ваш@email.com",
+    "password": "Пароль",
+    "passwordPlaceholder": "Введіть пароль",
+    "createPassword": "Створіть пароль",
+    "confirmPassword": "Підтвердіть пароль",
+    "confirmPasswordPlaceholder": "Введіть пароль ще раз",
+    "newPassword": "Новий пароль",
+    "newPasswordPlaceholder": "Введіть новий пароль",
+    "createNewPassword": "Створіть новий пароль",
+    "confirmNewPassword": "Підтвердіть новий пароль",
+    "confirmNewPasswordPlaceholder": "Введіть новий пароль ще раз",
+    "passwordRequirements": "Пароль повинен включати:",
+    "checkYourEmail": "Перевірте вашу пошту!",
+    "emailConfirmationSent": "Ми надіслали вам лист з підтвердженням на вказану електронну адресу. Будь ласка, перейдіть за посиланням у листі, щоб активувати акаунт.",
+    "emailResetConfirmationSent": "Ми надіслали вам лист із посиланням для відновлення паролю. Будь ласка, перевірте вашу пошту.",
+    "resendQuestion": "Не отримали електронний лист?",
+    "resendEmail": "Надіслати ще раз",
+    "resendIn": "Повторно через {seconds} с",
+    "continueWithGoogle": "Продовжити з Google",
+    "or": "або",
+    "errors": {
+      "userExists" : "Ця електронна пошта вже зареєстрована. Спробуйте увійти",
+      "invalidCredentials": "Невірний email або пароль",
+      "invalidEmailCredential": "Невірний email",
+      "emailNotConfirmed": "Будь ласка, підтвердіть вашу пошту",
+      "userNotFound": "Користувача не знайдено",
+      "emailAlreadyUsed": "Email вже зареєстрований",
+      "weakPassword": "Пароль має бути не менше 6 символів",
+      "default": "Помилка авторизації. Спробуйте ще раз",
+      "emailRequired": "Email обов'язковий",
+      "invalidEmail": "Невірний формат email",
+      "passwordRequired": "Пароль обов'язковий",
+      "passwordMinLength": "Мінімум 8 символів",
+      "passwordUpperCase": "Велика літера",
+      "passwordLowerCase": "Маленька літера",
+      "passwordNumber": "Цифра",
+      "confirmPasswordRequired": "Підтвердження паролю обов'язкове",
+      "passwordMismatch": "Паролі не співпадають",
+      "passwordsMatchIndicator": "Паролі співпадають",
+      "passwordRequirementsNotMet": "Будь ласка, виконайте всі вимоги до паролю"
+    }
+  },
+  "navigation": {
+    "backToHome": "На головну"
+  },
+  "buttons": {
+    "add": "Додати",
+    "delete": "Видалити",
+    "save": "Зберегти",
+    "cancel": "Скасувати",
+    "loadMore": "Завантажити ще",
+    "loading": "Завантаження...",
+    "viewRecipe": "Переглянути рецепт"
+  },
+  "categories": {
+    "all": "Усі рецепти",
+    "appetizers": "Закуски",
+    "breakfast": "Сніданок",
+    "dinner": "Вечеря",
+    "soups": "Супи",
+    "salads": "Салати",
+    "mainDishes": "Основні страви",
+    "sideDishes": "Гарніри",
+    "desserts": "Десерти"
+  },
+  "errors": {
+    "somethingWentWrong": "Щось пішло не так!",
+    "tryAgainLater": "Будь ласка, перезавантажте сторінку або спробуйте пізніше",
+    "error": "Помилка",
+    "recipeNotFound": "Рецепт не знайдено"
+  },
+  "video": {
+    "comingSoon": "Відео скоро буде",
+    "tryReload": "Спробуйте перезавантажити сторінку",
+    "processing": "Відео обробляється..."
+  }
+}

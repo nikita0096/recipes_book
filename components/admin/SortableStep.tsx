@@ -108,9 +108,9 @@ const SortableStep = ({step, stepId, index, isEditing, onEdit, onRemove}: Sortab
         </div>
 
         {/* Desktop: Image */}
-        <div className='relative'>
+        <div className='hidden lg:block relative'>
           {step.imgUrl && (
-            <div className="hidden lg:block border-l border-border">
+            <div className=" border-l border-border">
               <div className="relative w-full h-full min-h-[220px] aspect-video">
                 <Image
                   src={step.imgUrl}

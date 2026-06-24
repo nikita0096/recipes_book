@@ -17,7 +17,7 @@ export const fetchRecipePrice = async (id: string): Promise<RecipePrice> => {
   return {
     price: {
       en: 0,
-      ua: 0
+      uk: 0
     },
     discount: 0,
   }

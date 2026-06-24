@@ -2,14 +2,13 @@
 
 import {SubmitHandler, useForm} from "react-hook-form";
 import {getUserProfile, handleEmailLogin, handleGoogleLogin} from "@/lib/supabase/authClient";
-import {IoClose} from "react-icons/io5";
+import {IoClose, IoEye, IoEyeOff} from "react-icons/io5";
 import React, {useState} from "react";
 import {useUserStore} from "@/store/useUserStore";
 import {useTranslations} from "next-intl";
 import {usePathname, useRouter} from "@/i18n/navigation";
 import {PAGES} from "@/config/page.config";
 import {useSearchParams} from "next/navigation";
-import ErrorMessage from "@/components/ui/ErrorMessage";
 
 interface ISigninValues {
   emailLogin: string;
@@ -34,6 +33,7 @@ const GoogleIcon = () => (
 
 export default function SignInPage() {
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {setUserData} = useUserStore();
   const t = useTranslations('common');
@@ -59,6 +59,7 @@ export default function SignInPage() {
   const handleLoginWithEmail: SubmitHandler<ISigninValues> = async (formData) => {
     try {
       const data = await handleEmailLogin(formData.emailLogin, formData.passwordLogin);
+      console.log(data)
       if (data) {
         const profile = await getUserProfile(data.id);
 
@@ -75,8 +76,11 @@ export default function SignInPage() {
       resetLogin();
       closeModal();
     } catch (error) {
-      if(error instanceof Error) {
-        setError(error.message);
+      if (error instanceof Error) {
+        const errorMessage = error.message === 'Invalid login credentials'
+          ? t('auth.errors.invalidCredentials')
+          : error.message;
+        setError(errorMessage);
       } else {
         setError(t('auth.errors.default'));
       }
@@ -90,9 +94,10 @@ export default function SignInPage() {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const redirectUrl = origin + pathname;
     try {
-      await handleGoogleLogin(redirectUrl);
+      const user = await handleGoogleLogin(redirectUrl);
+      console.log(user);
     } catch (error) {
-      if(error instanceof Error) {
+      if (error instanceof Error) {
         setError(error.message);
       } else {
         setError(t('auth.errors.default'));
@@ -101,8 +106,10 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
-      <div className='relative w-11/12 max-w-md bg-surface border border-border p-8 sm:p-10'>
+    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
+         onClick={closeModal}>
+      <div className='relative w-11/12 max-w-md bg-surface border border-border p-8 sm:p-10'
+           onClick={(e) => e.stopPropagation()}>
         {/* Close button */}
         <button
           className='absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-muted hover:text-text transition-colors'
@@ -113,7 +120,7 @@ export default function SignInPage() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className='font-serif text-3xl sm:text-4xl italic font-normal text-text mb-2'>
+          <h1 className='font-serif text-3xl sm:text-4xl italic font-normal text-text mb-2' style={{ fontFamily: 'var(--font-dm-serif), Georgia, serif' }}>
             {t('auth.welcome')}
           </h1>
           <p className="text-sm text-muted">
@@ -137,14 +144,13 @@ export default function SignInPage() {
           </button>
         </div>
 
-
         <div className='w-full'>
           <form className='flex flex-col w-full'
                 onSubmit={handleSubmitLogin(handleLoginWithEmail)}>
             <label className='w-full mb-5'>
-          <span className='block text-[11px] tracking-[0.08em] uppercase text-muted mb-2'>
-            {t('auth.email')}
-          </span>
+              <span className='block text-[11px] tracking-[0.08em] uppercase text-muted mb-2'>
+                {t('auth.email')}
+              </span>
               <input
                 {...registerLogin('emailLogin')}
                 className='w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors'
@@ -152,17 +158,33 @@ export default function SignInPage() {
                 placeholder={t('auth.emailPlaceholder')}
               />
             </label>
-            <label className='w-full mb-6'>
-          <span className='block text-[11px] tracking-[0.08em] uppercase text-muted mb-2'>
-            {t('auth.password')}
-          </span>
-              <input
-                {...registerLogin('passwordLogin')}
-                className='w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors'
-                type="password"
-                placeholder={t('auth.passwordPlaceholder')}
-              />
+            <label className='w-full mb-5'>
+              <span className='block text-[11px] tracking-[0.08em] uppercase text-muted mb-2'>
+                {t('auth.password')}
+              </span>
+              <div className='relative'>
+                <input
+                  {...registerLogin('passwordLogin')}
+                  className='w-full px-3.5 py-2.5 pr-10 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors'
+                  type={showPassword ? "text" : "password"}
+                  placeholder={t('auth.passwordPlaceholder')}
+                />
+                <button
+                  type='button'
+                  onClick={() => setShowPassword(!showPassword)}
+                  className='absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors'
+                >
+                  {showPassword ? <IoEyeOff className='text-lg'/> : <IoEye className='text-lg'/>}
+                </button>
+              </div>
             </label>
+
+            <span className='underline cursor-pointer text-sm mb-5' onClick={() => router.replace(PAGES.RESET_PASSWORD(pathname))}>{t('auth.forgotPassword')}</span>
+
+            {error && (
+              <p className='text-center text-red-500 text-sm mb-3'>{error}</p>
+            )}
+
             <button
               type='submit'
               className='w-full py-3.5 bg-text text-bg text-sm tracking-[0.08em] uppercase transition-opacity hover:opacity-90'
@@ -178,8 +200,6 @@ export default function SignInPage() {
           <span className='px-4 text-xs tracking-widest uppercase text-muted'>{t('auth.or')}</span>
           <div className='flex-1 h-px bg-border'></div>
         </div>
-
-        {error && <ErrorMessage message={error} />}
 
         {/* Google button */}
         <button

@@ -1,6 +1,6 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {IRecipePublic, IRecipePremiumIncomplete, RecipeStep} from "@/types/recipe";
-import {Ingredient, LocalizedText} from "@/types/forms";
+import {IngredientGroup, LocalizedText} from "@/types/forms";
 import {batchGetPublicUrls} from "@/services/storage/getPublicImageUrl";
 
 // Database row type
@@ -10,15 +10,19 @@ interface RecipeRow {
   description: LocalizedText;
   likes: number;
   category: LocalizedText;
-  ingredients: Ingredient[];
+  ingredients: IngredientGroup[];
   hero_img: string;
   is_premium: boolean;
   preparing_time: number;
+  weight: number | null;
+  diameter: number | null;
+  calories: number | null;
   recipe_steps: RecipeStep[] | null;
   video_url: string | null;
   steps_count: number;
   created_at: string;
   slug: string;
+  is_published: boolean;
 }
 
 // Возвращает рецепты из main table
@@ -51,10 +55,14 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
         heroImg,
         isPremium: false as const,
         preparingTime: item.preparing_time,
+        weight: item.weight,
+        diameter: item.diameter,
+        calories: item.calories,
         recipeSteps: item.recipe_steps!,
         videoUrl: item.video_url!,
         stepsCount: item.steps_count,
         slug: item.slug,
+        isPublished: item.is_published,
       };
     }
 
@@ -68,10 +76,14 @@ export const fetchAllRecipes = async (): Promise<RecipeListItem[]> => {
       heroImg,
       isPremium: true as const,
       preparingTime: item.preparing_time,
+      weight: item.weight,
+      diameter: item.diameter,
+      calories: item.calories,
       recipeSteps: item.recipe_steps ?? null,
       videoUrl: item.video_url ?? null,
       stepsCount: item.steps_count,
       slug: item.slug,
+      isPublished: item.is_published,
     };
   });
 }

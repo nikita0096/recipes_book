@@ -1,6 +1,6 @@
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {IRecipe, IRecipePublic, IRecipePremiumFull, RecipeStep, RecipePrice} from "@/types/recipe";
-import {Ingredient, LocalizedText} from "@/types";
+import {IngredientGroup, LocalizedText} from "@/types";
 import {getPublicImageUrl, batchGetPublicUrls} from "@/services/storage/getPublicImageUrl";
 import {fetchRecipePrice} from "@/services/db/public/fetchRecipePrice";
 
@@ -10,14 +10,18 @@ interface FetchRecipe {
   description: LocalizedText;
   likes: number;
   category: LocalizedText;
-  ingredients: Ingredient[];
+  ingredients: IngredientGroup[];
   hero_img: string;
   is_premium: boolean;
   preparing_time: number;
+  weight: number | null;
+  diameter: number | null;
+  calories: number | null;
   recipe_steps: RecipeStep[];
   video_url: string;
   steps_count: number;
   slug: string;
+  is_published: boolean;
 }
 
 export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, totalPrice: RecipePrice | null, error: Error | null }> => {
@@ -109,10 +113,14 @@ export const fetchRecipe = async (id: string): Promise<{ data: IRecipe | null, t
       heroImg,
       isPremium: true as const,
       preparingTime: data.preparing_time,
+      weight: data.weight,
+      diameter: data.diameter,
+      calories: data.calories,
       recipeSteps,
       videoUrl: premiumData.video_url,
       stepsCount: data.steps_count,
       slug: data.slug,
+      isPublished: data.is_published,
     } satisfies IRecipePremiumFull,
     totalPrice: null,
     error: null
@@ -143,9 +151,13 @@ const mapToPublic = (data: FetchRecipe): IRecipePublic => {
     heroImg,
     isPremium: false as const,
     preparingTime: data.preparing_time,
+    weight: data.weight,
+    diameter: data.diameter,
+    calories: data.calories,
     recipeSteps,
     videoUrl: data.video_url,
     stepsCount: data.steps_count,
     slug: data.slug,
+    isPublished: data.is_published,
   };
 }

@@ -5,7 +5,7 @@ import {fetchAuthorInfo} from "@/services/db/author/fetchAuthorInfo";
 import Image from "next/image";
 import {useTranslations} from "next-intl";
 import {SubmitHandler, useForm} from "react-hook-form";
-import {updateAuthorInfo} from "@/services/db/author/updateAuthorInfo";
+import {updateAuthorInfo} from "@/services/api/admin/updateAuthor";
 import {Spinner} from "@/components/ui/spinner";
 import {MdDeleteForever} from "react-icons/md";
 import {LocalizedText} from "@/types";
@@ -23,7 +23,10 @@ export interface AuthorInfoForm {
   subscribers: number;
   views: number;
   email: string;
-  description: LocalizedText
+  description: LocalizedText;
+  descriptionFooter: LocalizedText;
+  animatedHeroWords: LocalizedText;
+  heroCakeId: string;
 }
 
 interface AuthorInfoState {
@@ -40,7 +43,12 @@ interface AuthorInfoState {
   views: number;
   email: string;
   description: LocalizedText;
+  descriptionFooter: LocalizedText;
+  animatedHeroWords: LocalizedText;
+  heroCakeId: string;
 }
+
+type TranslateInputs = 'description.uk' | 'descriptionFooter.uk' | 'animatedHeroWords.uk';
 
 
 const Page = () => {
@@ -57,6 +65,7 @@ const Page = () => {
     handleSubmit,
     setValue,
     watch,
+    getValues
   } = useForm<AuthorInfoForm>({
     defaultValues: {
       instagram: '',
@@ -73,8 +82,17 @@ const Page = () => {
       views: 0,
       description: {
         en: '',
-        ua: ''
-      }
+        uk: ''
+      },
+      descriptionFooter: {
+        en: '',
+        uk: ''
+      },
+      animatedHeroWords: {
+        en: '',
+        uk: ''
+      },
+      heroCakeId: ''
     }
   });
 
@@ -82,7 +100,10 @@ const Page = () => {
     const fetchAuthor = async () => {
       const data = await fetchAuthorInfo();
 
-      if(data.error) setError(data.error.message);
+      if(data.error) {
+        setError(data.error.message);
+        return
+      }
 
       setAuthor(data.data);
     }
@@ -91,6 +112,8 @@ const Page = () => {
       fetchAuthor();
       initFetch.current = false;
     }
+
+
 
     if (author) {
       setValue('youTube', author.youTube);
@@ -105,7 +128,12 @@ const Page = () => {
       setValue('views', author.views);
       setValue('email', author.email);
       setValue('description.en', author.description.en || '');
-      setValue('description.ua', author.description.ua || '');
+      setValue('description.uk', author.description.uk || '');
+      setValue('descriptionFooter.uk', author.descriptionFooter.uk);
+      setValue('descriptionFooter.en', author.descriptionFooter.en);
+      setValue('animatedHeroWords.en', author.animatedHeroWords.en);
+      setValue('animatedHeroWords.uk', author.animatedHeroWords.uk);
+      setValue('heroCakeId', author.heroCakeId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [author]);
@@ -155,6 +183,38 @@ const Page = () => {
   if (!author) return null;
 
   const imageUrl = watch('image');
+
+  async function handleTranslateText(e: React.MouseEvent<HTMLButtonElement>, flag: string) {
+    e.preventDefault();
+
+    const inputTitls: Record<string, TranslateInputs> = {
+      description: "description.uk",
+      descriptionFooter: "descriptionFooter.uk",
+      animatedHeroWords: "animatedHeroWords.uk",
+    }
+
+    const textUk = getValues(inputTitls[flag]).trim();
+
+    const res = await fetch('/api/translate', {
+      method: 'POST',
+      body: JSON.stringify({text: textUk})
+    });
+
+    const {translated} = await res.json();
+
+    switch (flag) {
+      case 'description':
+        setValue('description.en', translated);
+        break;
+      case 'descriptionFooter':
+        setValue('descriptionFooter.en', translated);
+        break;
+      case 'animatedHeroWords':
+        setValue('animatedHeroWords.en', translated.split(', ').join(' '));
+        break;
+
+    }
+  }
 
   return (
     <section className='flex flex-col items-center justify-center'>
@@ -293,24 +353,93 @@ const Page = () => {
                  type="email"
                  {...register('email', {required: true})}
                  placeholder="Email"/>
-          <label htmlFor="description-ua" className="block text-xs tracking-[0.08em] uppercase text-muted mt-4">
-            {t('form.author.descriptionUA')}
+          <label htmlFor="description-uk" className="block text-xs tracking-[0.08em] uppercase text-muted mt-4">
+            {t('form.author.descriptionUK')}
           </label>
           <textarea
-            id="description-ua"
-            className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors min-h-[120px]"
-            {...register('description.ua', {required: true})}
-            placeholder={t('form.author.descriptionUA')}
+            id="description-uk"
+            className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors min-h-[120px] resize-none"
+            {...register('description.uk', {required: true})}
+            placeholder={t('form.author.descriptionUK')}
           />
+
+          <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
+                  onClick={(e) => handleTranslateText(e, 'description')}>
+            {t('form.author.translateToEnglish')}
+          </button>
+
           <label htmlFor="description-en" className="block text-xs tracking-[0.08em] uppercase text-muted">
             {t('form.author.descriptionEN')}
           </label>
           <textarea
             id="description-en"
-            className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors min-h-[120px]"
+            className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors min-h-[120px] resize-none"
             {...register('description.en', {required: true})}
             placeholder={t('form.author.descriptionEN')}
           />
+
+          {/*Description footer*/}
+          <label htmlFor="description-footer-uk" className="block text-xs tracking-[0.08em] uppercase text-muted mt-4">
+            {t('form.author.descriptionFooterUK')}
+          </label>
+          <textarea
+            id="description-footer-uk"
+            className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors min-h-[120px] resize-none"
+            {...register('descriptionFooter.uk', {required: true})}
+            placeholder={t('form.author.descriptionFooterUK')}
+          />
+
+          <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
+                  onClick={(e) => handleTranslateText(e, 'descriptionFooter')}>
+            {t('form.author.translateToEnglish')}
+          </button>
+
+          <label htmlFor="description-footer-en" className="block text-xs tracking-[0.08em] uppercase text-muted">
+            {t('form.author.descriptionFooterEN')}
+          </label>
+          <textarea
+            id="description-footer-en"
+            className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors min-h-[120px] resize-none"
+            {...register('descriptionFooter.en', {required: true})}
+            placeholder={t('form.author.descriptionFooterEN')}
+          />
+          {/*Animated hero words*/}
+          <label htmlFor="animated-hero-words-uk" className="block text-xs tracking-[0.08em] uppercase text-muted mt-4">
+            {t('form.author.animatedHeroWordsUK')}
+          </label>
+          <p className="text-xs text-muted">
+            {t('form.author.animatedHeroWordsHint')}
+          </p>
+          <textarea
+            id="animated-hero-words-uk"
+            className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors min-h-[120px] resize-none"
+            {...register('animatedHeroWords.uk', {required: true})}
+            placeholder={t('form.author.animatedHeroWordsUK')}
+
+          />
+
+          <button className="px-4 py-2 border border-border text-[11px] tracking-[0.06em] uppercase text-text hover:bg-bg transition-colors"
+                  onClick={(e) => handleTranslateText(e, 'animatedHeroWords')}>
+            {t('form.author.translateToEnglish')}
+          </button>
+
+          <label htmlFor="animated-hero-words-en" className="block text-xs tracking-[0.08em] uppercase text-muted">
+            {t('form.author.animatedHeroWordsEN')}
+          </label>
+          <textarea
+            id="animated-hero-words-en"
+            className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors min-h-[120px] resize-none"
+            {...register('animatedHeroWords.en', {required: true})}
+            placeholder={t('form.author.animatedHeroWordsEN')}
+          />
+          <label htmlFor="views" className="block text-xs tracking-[0.08em] uppercase text-muted">
+            {t('form.author.cakeId')}
+          </label>
+          <input id="heroCakeId"
+                 className="w-full px-3.5 py-2.5 bg-surface border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+                 type="text"
+                 {...register('heroCakeId', {required: true})}
+                 placeholder={t('form.author.heroCakeId')}/>
           <div className='flex flex-col gap-2 items-center justify-center w-full mt-4'>
             {error && (
               <p className='text-red-400'>{error}</p>

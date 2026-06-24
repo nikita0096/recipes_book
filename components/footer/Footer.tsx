@@ -3,10 +3,12 @@
 import React, {useEffect, useState} from 'react';
 import { Link } from '@/i18n/navigation';
 import { PAGES } from '@/config/page.config';
-import { useTranslations } from 'next-intl';
+import {useLocale, useTranslations} from 'next-intl';
 import {UserState} from "@/store/useUserStore";
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import Image from "next/image";
+import {LocalizedText} from "@/types";
+import {useTypedLocale} from "@/hooks/useTypedLocale";
 
 
 interface FooterProps {
@@ -24,12 +26,15 @@ interface SocialMediaLinks {
 
 const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
   const [socialMediaLinks, setSocialMediaLinks] = useState<SocialMediaLinks | null>(null);
+  const [description, setDescription] = useState<LocalizedText | null>(null);
   const t = useTranslations('footer');
   const currentYear = new Date().getFullYear();
 
+  const locale = useTypedLocale();
+
   useEffect(() => {
-    const fetchSocialMediaLinks = async () => {
-      const {data, error} = await supabase.from('author').select('inst_link, tik_tok_link, you_tube_link, facebook_link, telegram_link');
+    const fetchSocialMediaLinksAndDescription = async () => {
+      const {data, error} = await supabase.from('author').select('inst_link, tik_tok_link, you_tube_link, facebook_link, telegram_link,  description_footer');
 
       if(!error) {
         setSocialMediaLinks({
@@ -39,11 +44,13 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
           facebook: data[0].facebook_link,
           telegram: data[0].telegram_link
         });
+
+        setDescription(data[0].description_footer);
       }
 
     }
 
-    fetchSocialMediaLinks()
+    fetchSocialMediaLinksAndDescription()
   }, []);
 
   return (
@@ -57,7 +64,7 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-orange-500/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative max-w-7xl mx-auto px-6 py-16">
+      <div className="relative w-full px-6 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12">
 
           {/* Brand section */}
@@ -91,7 +98,7 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
             </div>
 
             <p className="text-xs md:text-sm text-gray-400 max-w-md mb-6 leading-relaxed">
-              {t('description')}
+              {description ? description[locale] : (t('description'))}
             </p>
 
             {/* Social links */}

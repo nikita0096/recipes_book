@@ -47,6 +47,7 @@ yarn-error.log*
 
 # cloudflare (opennext build artifacts)
 .open-next
+CLOUDFLARE_STREAM_SETUP.md
 
 # typescript
 *.tsbuildinfo

@@ -67,7 +67,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
     const month = newDate.getMonth() + 1;
     const year = newDate.getFullYear();
 
-    if (locale === 'ua') {
+    if (locale === 'uk') {
       return `${day.toString().padStart(2, '0')}.${month.toString().padStart(2, '0')}.${year}`;
     }
     return `${month.toString().padStart(2, '0')}/${day.toString().padStart(2, '0')}/${year}`;

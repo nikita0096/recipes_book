@@ -3,7 +3,7 @@
 import React, {useState} from 'react';
 import {IRecipe} from "@/types/recipe";
 import {useQueryClient} from "@tanstack/react-query";
-import {deleteRecipe} from "@/services/db/admin/deleteRecipe";
+import {deleteRecipe} from "@/services/api/admin/deleteRecipe";
 import {Link} from "@/i18n/navigation";
 import Image from 'next/image';
 import {PAGES} from "@/config/page.config";
@@ -11,6 +11,7 @@ import {useTranslations} from "next-intl";
 import {RECIPE_PLACEHOLDER_IMAGE} from "@/constants/images";
 import {useTypedLocale} from "@/hooks/useTypedLocale";
 import {MdDelete} from "react-icons/md";
+import PublishToggle from "./PublishToggle";
 
 interface AdminRecipeItemProps {
   recipe: IRecipe;
@@ -72,6 +73,13 @@ const AdminRecipeItem: React.FC<AdminRecipeItemProps> = ({recipe, index = 0}) =>
           </span>
         )}
 
+        {/* Draft badge */}
+        {!recipe.isPublished && (
+          <span className="absolute top-3 right-3 px-2.5 py-1 bg-muted/90 text-white text-xs tracking-wider uppercase">
+            {t('list.draft')}
+          </span>
+        )}
+
         {/* Delete button overlay */}
         <button
           className='absolute bottom-3 right-3 p-2.5 bg-red-500/90 hover:bg-red-600 text-white transition-colors z-10 disabled:opacity-50'
@@ -98,13 +106,14 @@ const AdminRecipeItem: React.FC<AdminRecipeItemProps> = ({recipe, index = 0}) =>
           {recipe.title[locale]}
         </h5>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between">
-          {/* Likes */}
-          <span className="text-sm text-muted">
-            ♡ {recipe.likes}
-          </span>
+        {/* Publish toggle */}
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm text-muted">♡ {recipe.likes}</span>
+          <PublishToggle recipeId={recipe.id} isPublished={recipe.isPublished} />
+        </div>
 
+        {/* Footer */}
+        <div className="flex items-center justify-end">
           {/* Edit Recipe Button */}
           <Link
             href={PAGES.ADMIN_RECIPE_PAGE(recipe.id)}

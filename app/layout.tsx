@@ -5,16 +5,18 @@ import Providers from "@/components/providers/Providers";
 import "./globals.css";
 
 const dmSans = DM_Sans({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   weight: ['400', '500', '600', '700'],
   variable: '--font-dm-sans',
+  display: 'swap',
 });
 
 const dmSerifDisplay = DM_Serif_Display({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   weight: ['400'],
   style: ['normal', 'italic'],
   variable: '--font-dm-serif',
+  display: 'swap',
 });
 
 const cormorantGaramond = Cormorant_Garamond({

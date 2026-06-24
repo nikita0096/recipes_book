@@ -5,7 +5,7 @@ import {handleEmailLogin, handleGoogleLogin, handleSignUp} from "@/lib/supabase/
 import {UserState, useUserStore} from "@/store/useUserStore";
 import {useTranslations} from "next-intl";
 import {useRouter} from "@/i18n/navigation";
-import {IoClose} from "react-icons/io5";
+import {IoClose, IoEye, IoEyeOff} from "react-icons/io5";
 import React from "react";
 import {PAGES} from "@/config/page.config";
 import {useSearchParams} from "next/navigation";
@@ -13,6 +13,7 @@ import {useSearchParams} from "next/navigation";
 export interface ISignUpValues {
   emailSignUp: string;
   passwordSignUp: string;
+  confirmPassword: string;
 }
 
 // Google Icon with brand colors
@@ -26,8 +27,10 @@ const GoogleIcon = () => (
 );
 
 export default function SignUpPage() {
-
-  const {setUserData} = useUserStore();
+  const [error, setError] = React.useState<string | null>(null);
+  const [emailSent, setEmailSent] = React.useState(false);
+  const [showPassword, setShowPassword] = React.useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
   const t = useTranslations('common');
   const router = useRouter();
 
@@ -38,43 +41,63 @@ export default function SignUpPage() {
   const signUpForm = useForm<ISignUpValues>({
     defaultValues: {
       emailSignUp: '',
-      passwordSignUp: ''
+      passwordSignUp: '',
+      confirmPassword: ''
     }
   });
 
   const {
     register: registerSignUp,
     handleSubmit: handleSubmitSignUp,
-    reset: resetSignUp
+    reset: resetSignUp,
+    formState: { errors },
+    watch
   } = signUpForm;
 
-  const handleSignUpWithEmail: SubmitHandler<ISignUpValues> = async (formData) => {
-    try {
-      await handleSignUp(formData.emailSignUp, formData.passwordSignUp);
+  const passwordValue = watch('passwordSignUp');
+  const confirmPasswordValue = watch('confirmPassword');
 
-      const data = await handleEmailLogin(formData.emailSignUp, formData.passwordSignUp);
-
-      if (data) {
-        setUserData({
-          id:  data.id,
-          name: data.user_metadata?.name,
-          avatar_url: data.user_metadata?.avatar_url || null,
-          role: 'user',
-          email: data.email || '',
-          createdAt: data.created_at,
-        });
-      }
-
-    } catch (error) {
-      console.error(error);
-    } finally {
-      resetSignUp();
-      closeModal();
-    }
-  }
+  // Password validation states
+  const hasMinLength = passwordValue?.length >= 8;
+  const hasUpperCase = /[A-Z]/.test(passwordValue || '');
+  const hasLowerCase = /[a-z]/.test(passwordValue || '');
+  const hasNumber = /[0-9]/.test(passwordValue || '');
+  const passwordsMatch = passwordValue && confirmPasswordValue && passwordValue === confirmPasswordValue;
 
   const searchParams = useSearchParams();
   const pathname = searchParams.get('from') || '/';
+
+  const handleSignUpWithEmail: SubmitHandler<ISignUpValues> = async (formData) => {
+    setError(null);
+    setEmailSent(false);
+
+    // Check password requirements
+    if (!hasMinLength || !hasUpperCase || !hasLowerCase || !hasNumber || !passwordsMatch) {
+      setError(t('auth.errors.passwordRequirementsNotMet'));
+      return;
+    }
+
+    try {
+      const data = await handleSignUp(formData.emailSignUp, formData.passwordSignUp, pathname);
+
+      if(data.user) {
+        if(data.user?.identities && data.user?.identities.length === 0) {
+          setError(t('auth.errors.userExists'));
+        } else {
+          setEmailSent(true);
+        }
+      }
+
+    } catch (error) {
+      if(error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError(t('errors.somethingWentWrong'));
+      }
+    } finally {
+      resetSignUp();
+    }
+  }
 
   const handleLoginWithGoogle = async () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -87,8 +110,10 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
-      <div className='relative w-11/12 max-w-md bg-surface border border-border p-8 sm:p-10'>
+    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
+    onClick={closeModal}>
+      <div className='relative w-11/12 max-w-md bg-surface border border-border p-8 sm:p-10'
+      onClick={e => e.stopPropagation()}>
         {/* Close button */}
         <button
           className='absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-muted hover:text-text transition-colors'
@@ -99,16 +124,13 @@ export default function SignUpPage() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className='font-serif text-3xl sm:text-4xl italic font-normal text-text mb-2'>
-            {t('auth.welcome')}
+          <h1 className='text-md sm:text-xl text-text mb-2 uppercase' style={{ fontFamily: 'var(--font-dm-serif), Georgia, serif' }}>
+            {t('auth.signupSubtitle')}
           </h1>
-          <p className="text-sm text-muted">
-            {t('auth.loginSubtitle')}
-          </p>
         </div>
 
         {/* Tabs */}
-        <div className='flex items-center w-full border border-border mb-8'>
+        <div className='flex items-center w-full border border-border mb-5'>
           <button
             onClick={() => router.replace(PAGES.SIGNIN(pathname))}
             className={`flex-1 py-3 text-sm tracking-wide transition-colors bg-transparent text-muted hover:text-text cursor-pointer`}
@@ -126,34 +148,134 @@ export default function SignUpPage() {
         <div className='w-full'>
           <form className='flex flex-col w-full'
                 onSubmit={handleSubmitSignUp(handleSignUpWithEmail)}>
-            <label className='w-full mb-5'>
+            <label className='w-full mb-3'>
           <span className='block text-[11px] tracking-[0.08em] uppercase text-muted mb-2'>
             {t('auth.email')}
           </span>
               <input
-                {...registerSignUp('emailSignUp')}
+                {...registerSignUp('emailSignUp', {
+                  required: t('auth.errors.emailRequired'),
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: t('auth.errors.invalidEmail')
+                  }
+                })}
                 className='w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors'
                 type="email"
                 placeholder={t('auth.emailPlaceholder')}
               />
+              {errors.emailSignUp && (
+                <span className='block text-xs text-red-500 mt-1'>{errors.emailSignUp.message}</span>
+              )}
             </label>
-            <label className='w-full mb-6'>
+            <label className='w-full mb-3'>
           <span className='block text-[11px] tracking-[0.08em] uppercase text-muted mb-2'>
             {t('auth.password')}
           </span>
-              <input
-                {...registerSignUp('passwordSignUp')}
-                className='w-full px-3.5 py-2.5 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors'
-                type="password"
-                placeholder={t('auth.createPassword')}
-              />
+              <div className='relative'>
+                <input
+                  {...registerSignUp('passwordSignUp', {
+                    required: t('auth.errors.passwordRequired'),
+                    minLength: {
+                      value: 8,
+                      message: t('auth.errors.passwordMinLength')
+                    },
+                    validate: {
+                      hasUpperCase: (value) => /[A-Z]/.test(value) || t('auth.errors.passwordUpperCase'),
+                      hasLowerCase: (value) => /[a-z]/.test(value) || t('auth.errors.passwordLowerCase'),
+                      hasNumber: (value) => /[0-9]/.test(value) || t('auth.errors.passwordNumber'),
+                    }
+                  })}
+                  className='w-full px-3.5 py-2.5 pr-10 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors'
+                  type={showPassword ? "text" : "password"}
+                  placeholder={t('auth.createPassword')}
+                />
+                <button
+                  type='button'
+                  onClick={() => setShowPassword(!showPassword)}
+                  className='absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors'
+                >
+                  {showPassword ? <IoEyeOff className='text-lg' /> : <IoEye className='text-lg' />}
+                </button>
+              </div>
+
+              {/* Password validation indicators */}
+              {passwordValue && (
+                <div className='mt-2'>
+                  <p className='text-xs text-muted mb-1'>{t('auth.passwordRequirements')}</p>
+                  <div className='flex flex-col gap-1'>
+                    <span className={`text-xs flex items-center gap-1 ${hasMinLength ? 'text-green-600' : 'text-red-500'}`}>
+                      {hasMinLength ? '✓' : '✗'} {t('auth.errors.passwordMinLength')}
+                    </span>
+                    <span className={`text-xs flex items-center gap-1 ${hasUpperCase ? 'text-green-600' : 'text-red-500'}`}>
+                      {hasUpperCase ? '✓' : '✗'} {t('auth.errors.passwordUpperCase')}
+                    </span>
+                    <span className={`text-xs flex items-center gap-1 ${hasLowerCase ? 'text-green-600' : 'text-red-500'}`}>
+                      {hasLowerCase ? '✓' : '✗'} {t('auth.errors.passwordLowerCase')}
+                    </span>
+                    <span className={`text-xs flex items-center gap-1 ${hasNumber ? 'text-green-600' : 'text-red-500'}`}>
+                      {hasNumber ? '✓' : '✗'} {t('auth.errors.passwordNumber')}
+                    </span>
+                    <span className={`text-xs flex items-center gap-1 ${passwordsMatch ? 'text-green-600' : 'text-red-500'}`}>
+                      {passwordsMatch ? '✓' : '✗'} {t('auth.errors.passwordsMatchIndicator')}
+                    </span>
+                  </div>
+                </div>
+              )}
             </label>
-            <button
-              type='submit'
-              className='w-full py-3.5 bg-text text-bg text-sm tracking-[0.08em] uppercase transition-opacity hover:opacity-90'
-            >
-              {t('auth.signUp')}
-            </button>
+
+            <label className='w-full mb-6'>
+          <span className='block text-[11px] tracking-[0.08em] uppercase text-muted mb-2'>
+            {t('auth.confirmPassword')}
+          </span>
+              <div className='relative'>
+                <input
+                  {...registerSignUp('confirmPassword', {
+                    required: t('auth.errors.confirmPasswordRequired'),
+                    validate: {
+                      matchesPassword: (value) => value === passwordValue || t('auth.errors.passwordMismatch')
+                    }
+                  })}
+                  className='w-full px-3.5 py-2.5 pr-10 bg-bg border border-border text-sm text-text placeholder:text-muted focus:outline-none focus:border-accent transition-colors'
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder={t('auth.confirmPasswordPlaceholder')}
+                />
+                <button
+                  type='button'
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className='absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text transition-colors'
+                >
+                  {showConfirmPassword ? <IoEyeOff className='text-lg' /> : <IoEye className='text-lg' />}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <span className='block text-xs text-red-500 mt-1'>{errors.confirmPassword.message}</span>
+              )}
+            </label>
+
+            {emailSent ? (
+              <div className='mb-4 p-4 bg-green-50 border border-green-200'>
+                <p className='text-center text-green-800 text-sm font-medium mb-1'>
+                  {t('auth.checkYourEmail')}
+                </p>
+                <p className='text-center text-green-700 text-xs'>
+                  {t('auth.emailConfirmationSent')}
+                </p>
+              </div>
+            ) : (
+              <>
+                {error && (
+                  <p className='text-center text-red-500 text-sm mb-2'>{error}</p>
+                )}
+
+                <button
+                  type='submit'
+                  className='w-full py-3.5 bg-text text-bg text-sm tracking-[0.08em] uppercase transition-opacity hover:opacity-90'
+                >
+                  {t('auth.signUp')}
+                </button>
+              </>
+            )}
           </form>
         </div>
 

@@ -1,10 +1,11 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import Image from "next/image";
 import {IRecipe, IRecipePremiumIncomplete, RecipePrice} from "@/types/recipe";
 import {useTranslations} from "next-intl";
 import RecipeIngredient from "@/components/recipes/recipe/RecipeIngredient";
+import RecipeMeta from "@/components/recipes/recipe/RecipeMeta";
 import {useTypedLocale} from "@/hooks/useTypedLocale";
 import {useUserStore} from "@/store/useUserStore";
 import {addNewLike} from "@/services/db/recipe-likes/addNewLike";
@@ -12,8 +13,11 @@ import {fetchRecipe} from "@/services/db/public/fetchRecipe";
 import {deleteLike} from "@/services/db/recipe-likes/deleteLike";
 import {SecureVideoPlayer} from "@/components/video/SecureVideoPlayer";
 import Footer from "@/components/footer/Footer";
-import {useRouter} from "next/navigation";
+import {usePathname, useRouter} from "next/navigation";
 import {RECIPE_PLACEHOLDER_IMAGE} from "@/constants/images";
+import LoadingPage from "@/components/ui/LoadingPage";
+import CheckoutModal from "@/components/recipes/recipe/CheckoutModal";
+import {PAGES} from "@/config/page.config";
 
 
 interface RecipePageProps {
@@ -78,33 +82,67 @@ const RecipePage: React.FC<RecipePageProps> = ({
   const [likes, setLikes] = useState(initialRecipe?.likes || 0);
   const [recipePrice, setRecipePrice] = useState<RecipePrice | null>(initialPrice);
   const [error, setError] = useState<Error | string | null>(initialError);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const locale = useTypedLocale();
   const t = useTranslations('recipes');
   const {user} = useUserStore();
 
   const router = useRouter();
+  const pathname = usePathname();
+
+  const loadRecipe = useCallback(async (silent = false) => {
+    // `silent` lets the caller manage the loading state itself (e.g. while
+    // polling) so the screen doesn't flicker between attempts.
+    if (!silent) setLoading(true);
+    const {data, totalPrice, error} = await fetchRecipe(recipeId);
+
+    if (error) setError(error);
+
+    if (data) {
+      setRecipe(data);
+      setLikes(data.likes);
+    }
+
+    if (totalPrice) {
+      setRecipePrice(totalPrice);
+    }
+    if (!silent) setLoading(false);
+    return data;
+  }, [recipeId]);
 
   useEffect(() => {
     if (initialRecipe) return;
+    const run = async () => {
+      await loadRecipe();
+    };
+    run();
+  }, [initialRecipe, loadRecipe]);
 
-    const fetchData = async () => {
-      const {data, totalPrice, error} = await fetchRecipe(recipeId);
-
-      if (error) setError(error);
-
-      if (data) {
-        setRecipe(data);
-        setLikes(data.likes);
-      }
-
-      if (totalPrice) {
-        setRecipePrice(totalPrice);
-      }
+  const handleBuy = () => {
+    if (!user) {
+      router.push(PAGES.SIGNIN(pathname));
+      return;
     }
+    setCheckoutOpen(true);
+  };
 
-    fetchData();
-  }, [recipeId, initialRecipe]);
+  const handleCheckoutComplete = async () => {
+    // Stripe confirms payment client-side, but the webhook records the purchase
+    // asynchronously — so poll the recipe until the unlocked content lands
+    // instead of refetching once and possibly racing the webhook.
+    setCheckoutOpen(false);
+    setLoading(true);
+    for (let attempt = 0; attempt < 6; attempt++) {
+      const data = await loadRecipe(true);
+      const unlocked = !!data?.recipeSteps?.length || (data?.videoUrl ?? null) !== null;
+      if (unlocked) break;
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    }
+    setLoading(false);
+  };
 
   if (error) {
     return (
@@ -118,6 +156,10 @@ const RecipePage: React.FC<RecipePageProps> = ({
         </div>
       </div>
     );
+  }
+
+  if(loading) {
+    return (<LoadingPage />)
   }
 
   if (!recipe) {
@@ -138,7 +180,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
       } else {
         await deleteLike(recipe.id, user.id);
       }
-    } catch (error) {
+    } catch {
       setIsLiked(prevState => !prevState);
       setLikes(prevState => isNewLiked ? prevState - 1 : prevState + 1);
     }
@@ -147,90 +189,114 @@ const RecipePage: React.FC<RecipePageProps> = ({
   return (
     <div className="min-h-screen bg-bg">
       {/* Hero Section */}
-      <section className="relative h-[400px] sm:h-[470px] lg:h-[530px] 2xl:h-[800px] w-full">
+      <section className="relative w-full h-100 md:h-120 lg:h-150">
         <Image
           src={recipe.heroImg || RECIPE_PLACEHOLDER_IMAGE}
           alt={recipe.title[locale]}
           fill
-          sizes="100vh"
-          className="object-cover"
+          sizes="100vw"
+          className='relative object-cover'
           priority
         />
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent pointer-events-none"/>
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.08) 45%, transparent 100%)'}}
+        />
 
         {/* Back link */}
         <button
           onClick={() => router.back()}
-          className="absolute top-4 left-4 sm:left-6 lg:left-10 text-smtracking-widez-10 cursor-pointer text-black/50"
+          className="absolute top-6 left-6 lg:top-10 lg:left-10 2xl:top-20 2xl:left-20 z-10 w-[46px] h-[46px] rounded-full flex flex-col items-center justify-center gap-px transition-all cursor-pointer select-none hover:scale-105 active:scale-95 bg-white/12 border border-white/40 text-white"
         >
-          ← {t('singlePage.backButton')}
+          ←
         </button>
 
         {/* Like button */}
         <button
           type="button"
           onClick={handleLike}
-          className={`absolute top-4 right-4 sm:right-6 lg:right-10 z-10 w-12 h-12 lg:w-14 lg:h-14 rounded-full flex flex-col items-center justify-center gap-0.5 border transition-all cursor-pointer select-none hover:scale-105 active:scale-95 ${
+          className={`absolute top-6 right-6 lg:top-10 lg:right-10 2xl:top-20 2xl:right-20 z-10 w-[46px] h-[46px] rounded-full flex flex-col items-center justify-center gap-px transition-all cursor-pointer select-none hover:scale-105 active:scale-95 ${
             isLiked
-              ? 'bg-red-500/80 border-red-500 text-white'
-              : 'bg-white/20 border-red-300/50  text-white'
-          }`}
-          style={{WebkitBackdropFilter: 'blur(4px)', backdropFilter: 'blur(4px)'}}
+              ? 'bg-accent border-accent'
+              : 'bg-white/12 border-white/40'
+          } border`}
+          style={{WebkitBackdropFilter: 'blur(8px)', backdropFilter: 'blur(8px)'}}
         >
-          <span className={`text-lg lg:text-xl leading-none ${isLiked ? 'text-white' : 'text-red-400/70'}`}>
+          <span className="text-lg leading-none text-white">
             {isLiked ? '♥' : '♡'}
           </span>
-          <span className={`text-xs ${isLiked ? "text-white/70" : "text-red-400/80"}`}>{likes}</span>
+          <span className="text-[9px] text-white/85 font-sans">{likes}</span>
         </button>
 
         {/* Hero content */}
-        <div className="absolute bottom-6 left-4 sm:left-6 lg:left-10 right-16 sm:right-20 lg:right-24">
+        <div className="absolute bottom-7 left-5 sm:left-8 right-20">
           {/* Category */}
-          <span className="inline-block text-xs tracking-widest uppercase text-accent border border-accent bg-white/15 px-3 py-1 mb-3 ">
+          <span className="inline-block text-[10px] tracking-[0.12em] uppercase text-accent border border-accent px-2.5 py-[3px] mb-3 bg-bg/40">
             {recipe.category && recipe.category[locale]}
           </span>
 
           {/* Title */}
-          <h1 className="font-serif text-2xl sm:text-3xl lg:text-5xl italic font-normal text-white leading-tight mb-3">
+          <h1
+            className="text-[clamp(28px,5vw,48px)] italic font-normal text-white leading-[1.1] mb-1"
+            style={{ fontFamily: 'var(--font-dm-serif), Georgia, serif' }}
+          >
             {recipe.title[locale]}
           </h1>
-
-          {/* Stats */}
-          <div className="flex gap-5">
-            <span className="text-sm text-white/60">
-              ◷ {recipe.preparingTime} {t('singlePage.minutes')}
-            </span>
-            <span className="text-sm text-white/60">
-              ☰ {t('singlePage.steps', {count: recipe.stepsCount})}
-            </span>
-          </div>
         </div>
       </section>
 
+      {/* Recipe Meta Stats */}
+      <RecipeMeta
+        preparingTime={recipe.preparingTime}
+        stepsCount={recipe.stepsCount}
+        weight={recipe.weight}
+        diameter={recipe.diameter}
+        calories={recipe.calories}
+      />
+
       {/* Description Section */}
       {recipe.description && recipe.description[locale] && (
-        <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-6 sm:py-7 lg:py-8">
-          <h2 className="text-sm tracking-widest uppercase text-accent mb-4 sm:mb-5 lg:mb-6">
+        <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-6 sm:py-8">
+          <h2 className="text-xs tracking-widest uppercase text-accent mb-4">
             {t('singlePage.description')}
           </h2>
-          <p className="text-base text-text leading-relaxed">
+          <p className="text-sm sm:text-base text-text leading-relaxed max-w-2xl text-pretty">
             {recipe.description[locale]}
           </p>
         </section>
       )}
 
       {/* Key Ingredients Section */}
-      <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-6 sm:py-7 lg:py-8">
-        <h2 className="text-sm tracking-widest uppercase text-accent mb-4 sm:mb-5 lg:mb-6">
+      <section className="border-b border-border px-4 sm:px-6 lg:px-10 py-6 sm:py-7">
+        <h2 className="text-xs tracking-widest uppercase text-accent mb-5">
           {t('singlePage.keyIngredients')}
         </h2>
-        <div
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-px "
-        >
-          {recipe.ingredients.map((item) => (
-            <RecipeIngredient key={item.id}
-                              ingredient={item}/>
+        <div>
+          {recipe.ingredients.map((group) => (
+            <div
+              key={group.id}
+              className="mt-6 pt-6 border-t border-border first:mt-0 first:pt-0 first:border-t-0"
+            >
+              {group.title[locale] && (
+                <div className="flex items-baseline gap-2.5 mb-3">
+                  <h3
+                    className="text-lg italic text-text"
+                    style={{ fontFamily: 'var(--font-dm-serif), Georgia, serif' }}
+                  >
+                    {group.title[locale]}
+                  </h3>
+                  <span className="text-xs tracking-widest uppercase text-muted whitespace-nowrap">
+                    {t('singlePage.ingredientsCount', {count: group.ingredients.length})}
+                  </span>
+                </div>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10">
+                {group.ingredients.map((item) => (
+                  <RecipeIngredient key={item.id} ingredient={item}/>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </section>
@@ -302,15 +368,15 @@ const RecipePage: React.FC<RecipePageProps> = ({
                         {recipePrice.discount && recipePrice.discount > 0 ? (
                           <div className="flex items-end gap-2">
                               <span className="font-serif italic text-2xl md:text-4xl text-text leading-none">
-                                {locale === 'en' ? '$' : '₴'}{(recipePrice.price[locale] * (1 - recipePrice.discount / 100)).toFixed(2)}
+                                ${(recipePrice.price.en * (1 - recipePrice.discount / 100)).toFixed(2)}
                               </span>
                             <span className="text-xs md:text-sm text-muted line-through">
-                                ${recipePrice.price[locale]}
+                                ${recipePrice.price.en}
                               </span>
                           </div>
                         ) : (
                           <span className="font-serif italic text-2xl md:text-4xl text-text leading-none">
-                            {locale === 'en' ? '$' : '₴'}{recipePrice?.price[locale]}
+                            ${recipePrice?.price.en}
                           </span>
                         )}
                       </span>
@@ -320,6 +386,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
                 {/* Buy button */}
                 <button
                   type="button"
+                  onClick={handleBuy}
                   className="w-full bg-accent text-bg font-medium text-sm tracking-wider uppercase py-3 px-5 md:py-3.5 md:px-6 inline-flex items-center justify-center gap-2.5 cursor-pointer hover:opacity-90 transition-opacity"
                 >
                   <UnlockIcon size={13}
@@ -348,19 +415,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
             {recipe.recipeSteps?.map((step, i) => (
               <div key={step.id}
                    className="bg-bg">
-                {/* Mobile/Tablet: Image on top */}
-                {step.imgUrl && (
-                  <div className="lg:hidden ">
-                    <div className="relative w-full aspect-video">
-                      <Image
-                        src={step.imgUrl || RECIPE_PLACEHOLDER_IMAGE}
-                        alt={`${t('singlePage.step')} ${i + 1}`}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  </div>
-                )}
+
 
                 {/* Desktop: Grid layout with image on right */}
                 <div className="lg:grid lg:grid-cols-[60px_1fr_1fr] lg:items-stretch">
@@ -378,11 +433,27 @@ const RecipePage: React.FC<RecipePageProps> = ({
                         {String(i + 1).padStart(2, '0')}
                       </span>
                     </div>
-                    <div className="p-4 sm:p-5">
-                      <p className="text-sm sm:text-base text-text leading-relaxed">
-                        {step.desc[locale]}
-                      </p>
+                    <div>
+                      {step.imgUrl && (
+                        <div className="lg:hidden p-1">
+                          <div className="relative w-full aspect-video">
+                            <Image
+                              src={step.imgUrl || RECIPE_PLACEHOLDER_IMAGE}
+                              alt={`${t('singlePage.step')} ${i + 1}`}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      <div className="p-4 sm:p-5">
+                        <p className="text-sm sm:text-base text-text leading-relaxed">
+                          {step.desc[locale]}
+                        </p>
+                      </div>
+                      {/* Mobile/Tablet: Image on top */}
                     </div>
+
                   </div>
 
                   {/* Desktop: Description */}
@@ -394,7 +465,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
 
                   {/* Desktop: Image */}
                   {step.imgUrl && (
-                    <div className="hidden lg:block border-l border-border">
+                    <div className="hidden lg:block border-l border-border p-1">
                       <div className="relative w-full h-full min-h-[220px] aspect-video">
                         <Image
                           src={step.imgUrl}
@@ -419,11 +490,12 @@ const RecipePage: React.FC<RecipePageProps> = ({
             {t('singlePage.videoSection')}
           </h2>
           <div className='flex items-center justify-center pt-4'>
-            <div className="relative w-full lg:w-3/4 aspect-video bg-[#0d0d0a] overflow-hidden">
+            <div className="relative w-full min-h-[250px] md:min-h-[350px] lg:min-h-[450px] lg:w-3/4 rounded-2xl overflow-hidden">
               <SecureVideoPlayer
                 recipeId={recipeId}
                 videoKey={recipe.videoUrl}
-                className="w-full h-full object-contain"
+                className="w-full h-full"
+                thumbnail={recipe.heroImg}
               />
             </div>
           </div>
@@ -440,6 +512,14 @@ const RecipePage: React.FC<RecipePageProps> = ({
         </button>
       </div>
       <Footer user={user}/>
+
+      {checkoutOpen && (
+        <CheckoutModal
+          recipeId={recipeId}
+          onClose={() => setCheckoutOpen(false)}
+          onComplete={handleCheckoutComplete}
+        />
+      )}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { Ingredient, LocalizedText } from './forms';
+import { IngredientGroup, LocalizedText } from './forms';
 
 // ===== БАЗОВЫЕ ТИПЫ =====
 
@@ -15,17 +15,22 @@ interface IRecipeBase {
   description: LocalizedText;
   likes: number;
   category: LocalizedText;
-  ingredients: Ingredient[];
+  ingredients: IngredientGroup[];
   heroImg: string;
   preparingTime: number;
+  weight: number | null;
+  diameter: number | null;
+  calories: number | null;
   stepsCount: number;
   slug: string;
+  // Draft/published state. New recipes default to false (draft) in the DB.
+  isPublished: boolean;
 }
 
 export interface RecipePrice {
   price: {
     en: number;
-    ua: number;
+    uk: number;
   };
   discount: number | null;
 }
@@ -60,7 +65,8 @@ export interface IRecipePremiumIncomplete extends IRecipeBase {
 // ===== CREATE/UPLOAD ТИПЫ =====
 
 // Public рецепт для загрузки (все поля обязательны)
-export interface IRecipeUploadPublic extends Omit<IRecipeBase, 'id'> {
+// isPublished is omitted: the database defaults new recipes to draft (false).
+export interface IRecipeUploadPublic extends Omit<IRecipeBase, 'id' | 'isPublished'> {
   id: string; // Generated on frontend before upload
   isPremium: false;
   recipeSteps: RecipeStep[];
@@ -68,7 +74,8 @@ export interface IRecipeUploadPublic extends Omit<IRecipeBase, 'id'> {
 }
 
 // Premium рецепт для загрузки в main table (без steps/video)
-export interface IRecipeUploadPremiumMain extends Omit<IRecipeBase, 'id'> {
+// isPublished is omitted: the database defaults new recipes to draft (false).
+export interface IRecipeUploadPremiumMain extends Omit<IRecipeBase, 'id' | 'isPublished'> {
   id: string; // Generated on frontend before upload
   isPremium: true;
   premiumId: string | null;
@@ -82,7 +89,7 @@ export interface IRecipePremiumUpload {
   videoUrl: string;
   price: {
     en: number;
-    ua: number;
+    uk: number;
   };
   discount: number | null;
 }
@@ -98,9 +105,12 @@ interface UpdateRecipeBase {
   description: LocalizedText;
   category: LocalizedText;
   likes: number;
-  ingredients: Ingredient[];
+  ingredients: IngredientGroup[];
   heroImg: string;
   preparingTime: number;
+  weight: number | null;
+  diameter: number | null;
+  calories: number | null;
   stepsCount: number;
   slug: string;
 }
@@ -124,7 +134,7 @@ export interface UpdateRecipeDataPremiumPart {
   videoUrl: string;
   price: {
     en: number;
-    ua: number;
+    uk: number;
   };
   discount: number | null;
 }

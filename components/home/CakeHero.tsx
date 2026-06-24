@@ -1,9 +1,13 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import {useLocale, useTranslations} from "next-intl";
+import {supabase} from "@/lib/supabase/ClientComponentClient";
+import {LocalizedText} from "@/types";
+import {PAGES} from "@/config/page.config";
+import {fetchAuthorInfo} from "@/services/db/author/fetchAuthorInfo";
 
 interface CakeHeroProps {
   scrollText?: string;
@@ -16,7 +20,7 @@ interface CakeHeroLayer {
   lblId: string;
   label: {
     en: string;
-    ua: string;
+    uk: string;
   };
   threshold: number;
   delay: number;
@@ -24,18 +28,26 @@ interface CakeHeroLayer {
   style?: {transform: string}
 }
 
+interface CakeHeroRecipe {
+  title: LocalizedText,
+  steps_count: number,
+  preparing_time: number,
+  slug: string,
+}
+
 const layers: CakeHeroLayer[] = [
-  { id: 'layer1', src: '/images/cake-layer/1.png', dy: 0, lblId: 'lbl1', label: {en: 'Sponge base', ua: "Бісквіт"}, threshold: 0.18, delay: 0, zIndex: 1, style: {transform: "scale(1.4)"}},
-  { id: 'layer2', src: '/images/cake-layer/layer_2.jpg', dy: -65, lblId: 'lbl2', label: {en: 'Strawberry jam', ua: "Полуничний джем"}, threshold: 0.26, delay: 150, zIndex: 2 },
-  { id: 'layer3', src: '/images/cake-layer/layer_3.jpg', dy: -115, lblId: 'lbl3', label: {en: 'Pistachio cheesecake', ua: "Фісташковий чізкейк"}, threshold: 0.34, delay: 300, zIndex: 3 },
-  { id: 'layer4', src: '/images/cake-layer/layer_4.jpg', dy: -170, lblId: 'lbl4', label: {en: 'Strawberry jam', ua: "Полуничний джем"}, threshold: 0.42, delay: 450, zIndex: 4 },
-  { id: 'layer5', src: '/images/cake-layer/layer_5.jpg', dy: -225, lblId: 'lbl5', label: {en: 'Sponge base', ua: "Бісквіт"}, threshold: 0.50, delay: 600, zIndex: 5 },
-  { id: 'layer6', src: '/images/cake-layer/layer_6.jpg', dy: -280, lblId: 'lbl6', label: {en: 'Decoration', ua: "Декорація"}, threshold: 0.58, delay: 750, zIndex: 6 },
+  { id: 'layer1', src: '/images/cake-layer/1-1.png', dy: 0, lblId: 'lbl1', label: {en: 'Sponge base', uk: "Бісквіт"}, threshold: 0.18, delay: 0, zIndex: 1, style: {transform: "scale(1.3) translateX(-2px)"}},
+  { id: 'layer2', src: '/images/cake-layer/layer_2-2.png', dy: -50, lblId: 'lbl2', label: {en: 'Strawberry jam', uk: "Полуничний джем"}, threshold: 0.26, delay: 150, zIndex: 2, style: {transform: "scale(1.01)"} },
+  { id: 'layer3', src: '/images/cake-layer/layer_3.jpg', dy: -105, lblId: 'lbl3', label: {en: 'Pistachio cheesecake', uk: "Фісташковий чізкейк"}, threshold: 0.34, delay: 300, zIndex: 3 },
+  { id: 'layer4', src: '/images/cake-layer/layer_4-4.png', dy: -160, lblId: 'lbl4', label: {en: 'Strawberry jam', uk: "Полуничний джем"}, threshold: 0.42, delay: 450, zIndex: 4 },
+  { id: 'layer5', src: '/images/cake-layer/layer_5.jpg', dy: -215, lblId: 'lbl5', label: {en: 'Sponge base', uk: "Бісквіт"}, threshold: 0.50, delay: 600, zIndex: 5 },
+  { id: 'layer6', src: '/images/cake-layer/layer_6.jpg', dy: -265, lblId: 'lbl6', label: {en: 'Decoration', uk: "Декорація"}, threshold: 0.58, delay: 750, zIndex: 6, style: {transform: "scale(.9)"} },
 ];
 
 const CakeHero = ({
   scrollText = 'scroll'
 }: CakeHeroProps) => {
+  const [heroRecipe, setHeroRecipe] = useState<CakeHeroRecipe | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const particlesRef = useRef<HTMLDivElement>(null);
   const scrollHintRef = useRef<HTMLDivElement>(null);
@@ -47,7 +59,23 @@ const CakeHero = ({
   const labelRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const tRecipes = useTranslations('recipes');
-  const locale = useLocale() as "en" | "ua";
+  const locale = useLocale() as "en" | "uk";
+
+  useEffect(() => {
+    const fetchHeroCakeRecipeId = async () => {
+
+      const recipeId = await fetchAuthorInfo().then(res => res.data.heroCakeId);
+
+      const {data} = await supabase
+        .from('recipes')
+        .select('title, preparing_time, steps_count, slug')
+        .eq('id', recipeId)
+        .maybeSingle();
+      setHeroRecipe(data);
+    }
+
+    fetchHeroCakeRecipeId();
+  }, []);
 
   // Generate particles on mount
   useEffect(() => {
@@ -171,14 +199,14 @@ const CakeHero = ({
         {/* Recipe Card - Left Side */}
         <div className="cake-recipe-card" ref={recipeCardRef}>
           <div className="cake-recipe-divider" />
-          <h3 className="cake-recipe-title">Pistachio Strawberry Cake</h3>
+          <h3 className="cake-recipe-title">{heroRecipe?.title[locale]}</h3>
           <div className="cake-recipe-meta">
             <span className="cake-recipe-time">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10"/>
                 <path d="M12 6v6l4 2"/>
               </svg>
-              120 {tRecipes('singlePage.minutes')}
+              {heroRecipe?.preparing_time} {tRecipes('singlePage.minutes')}
             </span>
             <span className="cake-recipe-steps">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -186,12 +214,11 @@ const CakeHero = ({
                 <rect x="9" y="3" width="6" height="4" rx="1"/>
                 <path d="M9 12h6M9 16h6"/>
               </svg>
-              {/*{tRecipes('singlePage.steps', {count: 3})}*/}
-              4
+              {tRecipes('singlePage.steps', {count: heroRecipe?.steps_count || 5})}
             </span>
           </div>
           <div className="cake-recipe-divider" />
-          <Link href="/recipes" className="cake-recipe-link">
+          <Link href={PAGES.RECIPE(heroRecipe?.slug + "-" + "01KTTPMCH43XJY6Q0ZDC6SAD0F")} className="cake-recipe-link">
             {tRecipes("card.toRecipe")}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M5 12h14M12 5l7 7-7 7"/>

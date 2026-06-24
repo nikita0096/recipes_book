@@ -1,10 +1,12 @@
-import {supabase} from "@/lib/supabase/ClientComponentClient";
+import {createClient} from "@/lib/supabase/ServerComponentClient";
 import {IRecipePremiumUpload} from "@/types/recipe";
 
 export const insertPremiumRecipePart = async (recipeData: IRecipePremiumUpload) => {
   if (recipeData.price === null) {
     return;
   }
+
+  const supabase = await createClient();
 
   const { error: priceError } = await supabase
     .from('recipes_price')

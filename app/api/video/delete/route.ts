@@ -1,28 +1,12 @@
 import {NextRequest, NextResponse} from "next/server";
-import {createClient} from "@/lib/supabase/ServerComponentClient";
+import {requireAdmin} from "@/lib/auth/requireAdmin";
 import {DeleteObjectCommand, S3ServiceException} from "@aws-sdk/client-s3";
 import {R2_BUCKET, r2Client} from "@/lib/r2/client";
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const {data: profile} = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    const isAdmin = profile?.role === 'admin';
-
-    if (!isAdmin) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const denied = await requireAdmin();
+    if (denied) return denied;
 
     const { videoKey } = await request.json();
 
