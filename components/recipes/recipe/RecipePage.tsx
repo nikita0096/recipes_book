@@ -207,7 +207,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
         {/* Back link */}
         <button
           onClick={() => router.back()}
-          className="absolute top-6 left-6 lg:top-10 lg:left-10 2xl:top-20 2xl:left-20 z-10 w-[46px] h-[46px] rounded-full flex flex-col items-center justify-center gap-px transition-all cursor-pointer select-none hover:scale-105 active:scale-95 bg-white/12 border border-white/40 text-white"
+          className="absolute top-6 left-6 lg:top-10 lg:left-10 2xl:top-20 2xl:left-20 z-10 w-[46px] h-[46px] rounded-full flex flex-col items-center justify-center gap-px transition-all cursor-pointer select-none hover:scale-105 active:scale-95 bg-white/12 border border-white/40 text-accent"
         >
           ←
         </button>
@@ -223,10 +223,18 @@ const RecipePage: React.FC<RecipePageProps> = ({
           } border`}
           style={{WebkitBackdropFilter: 'blur(8px)', backdropFilter: 'blur(8px)'}}
         >
-          <span className="text-lg leading-none text-white">
+          <span className={`text-lg leading-none ${
+            isLiked
+              ? 'text-white'
+              : 'text-accent'
+          }`}>
             {isLiked ? '♥' : '♡'}
           </span>
-          <span className="text-[9px] text-white/85 font-sans">{likes}</span>
+          <span className={`text-[10px] text-white/85 font-sans ${
+            isLiked
+              ? 'text-white'
+              : 'text-accent'
+          }`}>{likes}</span>
         </button>
 
         {/* Hero content */}
@@ -489,8 +497,8 @@ const RecipePage: React.FC<RecipePageProps> = ({
           <h2 className="text-sm tracking-widest uppercase text-accent mb-4 sm:mb-5 lg:mb-6">
             {t('singlePage.videoSection')}
           </h2>
-          <div className='flex items-center justify-center pt-4'>
-            <div className="relative w-full min-h-[250px] md:min-h-[350px] lg:min-h-[450px] lg:w-3/4 rounded-2xl overflow-hidden">
+          <div className='flex items-center justify-center'>
+            <div className="relative w-full lg:w-3/4 rounded-xl overflow-hidden">
               <SecureVideoPlayer
                 recipeId={recipeId}
                 videoKey={recipe.videoUrl}

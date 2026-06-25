@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       size,
       name,
       {
-        watermarkUid: 'd9b4afd0610f47504532987942029f9a',
+        watermarkUid: '2a0c72e1d2b7374e8f5d1a1d2d43c20b',
       }
     );
 
