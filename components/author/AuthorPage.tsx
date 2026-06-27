@@ -1,10 +1,8 @@
-'use client';
-
 import Link from 'next/link';
-import {useLocale, useTranslations} from "next-intl";
+import {getLocale, getTranslations} from "next-intl/server";
 import Image from "next/image";
 import authorImage from "@/public/images/about/home-author.png";
-import {useUserStore} from "@/store/useUserStore";
+import {UserState} from "@/store/useUserStore";
 import Footer from "@/components/footer/Footer";
 import {LocalizedText} from "@/types";
 
@@ -26,6 +24,7 @@ interface AuthorData {
 
 interface AuthorPageProps {
   authorData: AuthorData;
+  user: UserState | null;
 }
 
 const socialLinks = [
@@ -79,11 +78,9 @@ const socialLinks = [
   },
 ];
 
-const AuthorPage = ({authorData}: AuthorPageProps) => {
-  const t = useTranslations('about');
-  const locale = useLocale();
-
-  const {user} = useUserStore();
+const AuthorPage = async ({authorData, user}: AuthorPageProps) => {
+  const t = await getTranslations('about');
+  const locale = await getLocale();
 
   const author = authorData;
 
@@ -117,7 +114,7 @@ const AuthorPage = ({authorData}: AuthorPageProps) => {
             alt={author.name}
             fill
             className="object-cover"
-            sizes="(min-width: 400px) 100vw"
+            sizes="(min-width: 640px) 33vw, 100vw"
             priority
           />
           {/* Subtle overlay for dark theme */}
