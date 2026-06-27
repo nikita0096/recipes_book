@@ -66,30 +66,32 @@ const Header: React.FC = () => {
           <Image
             src="/images/logo/logo-light.svg"
             alt="Recipes by Yuliia"
-            width={170}
-            height={60}
+            width={498}
+            height={192}
+            sizes="170px"
             priority
-            className="dark:hidden"
+            className="dark:hidden w-[170px] h-auto"
           />
           <Image
             src="/images/logo/logo-dark.svg"
             alt="Recipes by Yuliia"
-            width={170}
-            height={60}
+            width={498}
+            height={192}
+            sizes="170px"
             priority
-            className="hidden dark:block"
+            className="hidden dark:block w-[170px] h-auto"
           />
         </Link>
 
         {/* Desktop Navigation */}
         <nav className='hidden md:flex items-center gap-6'>
-          <Link href={PAGES.HOME} className='text-sm text-muted hover:text-text transition-colors'>
+          <Link href={PAGES.HOME} className='text-sm hover:text-text transition-colors'>
             {t('nav.home')}
           </Link>
-          <Link href={PAGES.RECIPES} className='text-sm text-muted hover:text-text transition-colors'>
+          <Link href={PAGES.RECIPES} className='text-sm hover:text-text transition-colors'>
             {t('nav.recipes')}
           </Link>
-          <Link href={PAGES.ABOUT} className='text-sm text-muted hover:text-text transition-colors'>
+          <Link href={PAGES.ABOUT} className='text-sm hover:text-text transition-colors'>
             {t('nav.about')}
           </Link>
           {user?.role === 'admin' && (

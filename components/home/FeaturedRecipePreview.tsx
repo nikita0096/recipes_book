@@ -1,6 +1,5 @@
 import React from 'react';
 import Image from 'next/image';
-import {IRecipe} from "@/types";
 import {useTypedLocale} from "@/hooks/useTypedLocale";
 import {PAGES} from "@/config/page.config";
 import {Link} from "@/i18n/navigation";
@@ -29,6 +28,7 @@ const FeaturedRecipePreview: React.FC<IFeaturedRecipePreviewProps> = ({recipe}) 
           src={recipe.heroImg}
           alt={recipe.title[locale]}
           fill
+          sizes="50vw"
           className="object-cover w-full h-full "
         />
       </div>

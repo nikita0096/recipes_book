@@ -2,8 +2,6 @@
 
 import React from 'react';
 import {useTranslations} from "next-intl";
-import {Link} from '@/i18n/navigation';
-import {PAGES} from "@/config/page.config";
 import Footer from "@/components/footer/Footer";
 import {useUserStore} from "@/store/useUserStore";
 import {useRouter} from "next/navigation";

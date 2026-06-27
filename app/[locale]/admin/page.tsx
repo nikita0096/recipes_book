@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Image from 'next/image';
 import {useUserStore} from "@/store/useUserStore";
 import {useRouter} from "@/i18n/navigation";
@@ -1041,6 +1041,7 @@ const Page = () => {
                   className="w-full object-cover"
                   width={300}
                   height={200}
+                  sizes="(min-width: 1024px) 50vw, 100vw"
                   src={heroImg}
                   alt="Uploaded image"
                 />
@@ -1145,6 +1146,7 @@ const Page = () => {
                       className="w-full object-cover"
                       width={300}
                       height={200}
+                      sizes="(min-width: 1024px) 50vw, 100vw"
                       src={stepImageUrls[index]}
                       alt="Uploaded image"
                     />

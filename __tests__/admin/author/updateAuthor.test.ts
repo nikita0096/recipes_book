@@ -44,6 +44,7 @@ const createMockAuthorForm = (overrides?: Partial<AuthorInfoForm>): AuthorInfoFo
     en: 'cakes cookies pastries',
     uk: 'торти печиво випічка',
   },
+  heroCakeId: 'cake-123',
   ...overrides,
 });
 

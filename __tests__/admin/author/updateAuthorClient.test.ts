@@ -34,6 +34,7 @@ const createMockAuthorForm = (overrides?: Partial<AuthorInfoForm>): AuthorInfoFo
   description: { en: 'desc', uk: 'опис' },
   descriptionFooter: { en: 'footer', uk: 'футер' },
   animatedHeroWords: { en: 'cakes', uk: 'торти' },
+  heroCakeId: 'cake-123',
   ...overrides,
 });
 

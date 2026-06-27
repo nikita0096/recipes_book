@@ -6,7 +6,7 @@ import {IoClose, IoEye, IoEyeOff} from "react-icons/io5";
 import React, {useState} from "react";
 import {useUserStore} from "@/store/useUserStore";
 import {useTranslations} from "next-intl";
-import {usePathname, useRouter} from "@/i18n/navigation";
+import {useRouter} from "@/i18n/navigation";
 import {PAGES} from "@/config/page.config";
 import {useSearchParams} from "next/navigation";
 
@@ -106,9 +106,9 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
+    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-surface/40 backdrop-blur-sm z-50 overscroll-none"
          onClick={closeModal}>
-      <div className='relative w-11/12 max-w-md bg-surface border border-border p-8 sm:p-10'
+      <div className='relative w-11/12 max-w-md bg-surface/85 border border-border p-8 sm:p-10'
            onClick={(e) => e.stopPropagation()}>
         {/* Close button */}
         <button

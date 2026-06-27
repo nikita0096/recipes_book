@@ -3,7 +3,7 @@
 import React, {useEffect, useState} from 'react';
 import { Link } from '@/i18n/navigation';
 import { PAGES } from '@/config/page.config';
-import {useLocale, useTranslations} from 'next-intl';
+import {useTranslations} from 'next-intl';
 import {UserState} from "@/store/useUserStore";
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import Image from "next/image";
@@ -77,6 +77,7 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
                 src='/images/icon-light.png'
                 width={50}
                 height={50}
+                sizes="50px"
                 alt="icon"
                 className='block dark:hidden'
               />
@@ -84,6 +85,7 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
                 src='/images/icon-dark.png'
                 width={50}
                 height={50}
+                sizes="50px"
                 alt="icon"
                 className='hidden dark:block'
               />
