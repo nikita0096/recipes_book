@@ -115,9 +115,9 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
+    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-surface/40 backdrop-blur-sm z-50"
          onClick={closeModal}>
-      <div className='relative w-11/12 max-w-md bg-surface border border-border p-8 sm:p-10'
+      <div className='relative w-11/12 max-w-md bg-surface/85 border border-border p-8 sm:p-10'
            onClick={e => e.stopPropagation()}>
         {/* Close button */}
         <button
@@ -129,7 +129,7 @@ export default function SignUpPage() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className='text-md sm:text-xl text-text mb-2 uppercase'
+          <h1 className='text-2xl sm:text-3xl text-text mb-2'
               style={{fontFamily: 'var(--font-dm-serif), Georgia, serif'}}>
             {t('auth.signupSubtitle')}
           </h1>

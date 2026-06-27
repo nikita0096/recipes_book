@@ -106,9 +106,9 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-black/40 backdrop-blur-sm z-50"
+    <div className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-surface/40 backdrop-blur-sm z-50 overscroll-none"
          onClick={closeModal}>
-      <div className='relative w-11/12 max-w-md bg-surface border border-border p-8 sm:p-10'
+      <div className='relative w-11/12 max-w-md bg-surface/85 border border-border p-8 sm:p-10'
            onClick={(e) => e.stopPropagation()}>
         {/* Close button */}
         <button

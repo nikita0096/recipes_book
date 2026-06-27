@@ -164,11 +164,11 @@ const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 backdrop-blur-sm p-4 sm:p-8"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-surface/40 backdrop-blur-sm p-4 sm:p-8"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md bg-surface border border-border shadow-2xl"
+        className="relative w-full max-w-md bg-surface/85 border border-border shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
