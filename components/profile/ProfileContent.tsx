@@ -166,6 +166,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
                 alt={user.name}
                 width={80}
                 height={80}
+                sizes="80px"
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -271,6 +272,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
                       src={purchase.recipe.heroImg}
                       alt={purchase.recipe.title[locale]}
                       fill
+                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
@@ -358,6 +360,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
                     src={item.recipe.heroImg}
                     alt={item.recipe.title[locale]}
                     fill
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   {/* Like button */}

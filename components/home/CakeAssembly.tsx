@@ -219,6 +219,7 @@ const CakeAssembly = ({
                 style={layer.style ? layer.style : {}}
                 width={280}
                 height={120}
+                sizes="(max-width: 768px) 80vw, 320px"
                 className={styles['cake-layer-image']}
                 priority
               />

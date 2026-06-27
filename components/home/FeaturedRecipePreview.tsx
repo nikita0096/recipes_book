@@ -28,6 +28,7 @@ const FeaturedRecipePreview: React.FC<IFeaturedRecipePreviewProps> = ({recipe}) 
           src={recipe.heroImg}
           alt={recipe.title[locale]}
           fill
+          sizes="50vw"
           className="object-cover w-full h-full "
         />
       </div>

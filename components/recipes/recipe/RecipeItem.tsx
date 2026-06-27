@@ -40,6 +40,7 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe, index = 0, userLikes, us
         <div className='relative w-full aspect-4/3'>
           <Image
             fill
+            sizes="(min-width: 1536px) 25vw, (min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
             className="object-cover"
             src={recipe.heroImg || RECIPE_PLACEHOLDER_IMAGE}
             alt={recipe.title[locale]}

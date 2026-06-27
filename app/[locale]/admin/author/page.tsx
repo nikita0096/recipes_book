@@ -227,6 +227,7 @@ const Page = () => {
                 src={imageUrl}
                 alt={author.name}
                 fill
+                sizes="(min-width: 768px) 50vw, 100vw"
                 style={{objectFit: 'cover'}}
                 className='w-full h-full'
                 priority

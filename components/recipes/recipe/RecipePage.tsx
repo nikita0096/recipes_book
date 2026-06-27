@@ -451,6 +451,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
                               src={step.imgUrl || RECIPE_PLACEHOLDER_IMAGE}
                               alt={`${t('singlePage.step')} ${i + 1}`}
                               fill
+                              sizes="100vw"
                               className="object-cover"
                             />
                           </div>
@@ -481,6 +482,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
                           src={step.imgUrl}
                           alt={`${t('singlePage.step')} ${i + 1}`}
                           fill
+                          sizes="(min-width: 1024px) 50vw, 100vw"
                           className="object-cover"
                         />
                       </div>

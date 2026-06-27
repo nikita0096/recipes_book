@@ -77,6 +77,7 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
                 src='/images/icon-light.png'
                 width={50}
                 height={50}
+                sizes="50px"
                 alt="icon"
                 className='block dark:hidden'
               />
@@ -84,6 +85,7 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
                 src='/images/icon-dark.png'
                 width={50}
                 height={50}
+                sizes="50px"
                 alt="icon"
                 className='hidden dark:block'
               />

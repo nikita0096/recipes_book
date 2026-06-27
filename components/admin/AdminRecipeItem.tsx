@@ -55,6 +55,7 @@ const AdminRecipeItem: React.FC<AdminRecipeItemProps> = ({recipe, index = 0}) =>
         <div className='relative w-full aspect-4/3'>
           <Image
             fill
+            sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
             className="object-cover"
             src={image}
             alt={recipe.title[locale]}
