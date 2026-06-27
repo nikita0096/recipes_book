@@ -35,6 +35,7 @@ const AuthBar: React.FC<AuthBarProps> = ({user, handleLogout}) => {
               alt={user.name || 'User'}
               width={30}
               height={30}
+              sizes="30px"
               className='rounded-full'
             />
           ) : (

@@ -45,6 +45,7 @@ const SortableStep = ({step, stepId, index, isEditing, onEdit, onRemove}: Sortab
               src={step.imgUrl}
               alt={`${tRecipes('singlePage.step')} ${index + 1}`}
               fill
+              sizes="100vw"
               className="object-cover"
               unoptimized={step.imgUrl.startsWith('blob:')}
             />
@@ -116,6 +117,7 @@ const SortableStep = ({step, stepId, index, isEditing, onEdit, onRemove}: Sortab
                   src={step.imgUrl}
                   alt={`${tRecipes('singlePage.step')} ${index + 1}`}
                   fill
+                  sizes="(min-width: 1024px) 50vw, 100vw"
                   className="object-cover"
                   unoptimized={step.imgUrl.startsWith('blob:')}
                 />

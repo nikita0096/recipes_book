@@ -802,6 +802,7 @@ const Page = () => {
           src={mainImage === '' ? recipe.heroImg : mainImage}
           alt={recipe.title[locale]}
           fill
+          sizes="100vw"
           className="object-cover"
           priority
         />
@@ -1538,6 +1539,7 @@ const Page = () => {
                                   src={step.imgUrl}
                                   alt={`Step ${i + 1}`}
                                   fill
+                                  sizes="(min-width: 1024px) 50vw, 100vw"
                                   className="object-cover"
                                 />
                               </div>

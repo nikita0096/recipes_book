@@ -66,18 +66,20 @@ const Header: React.FC = () => {
           <Image
             src="/images/logo/logo-light.svg"
             alt="Recipes by Yuliia"
-            width={170}
-            height={60}
+            width={498}
+            height={192}
+            sizes="170px"
             priority
-            className="dark:hidden"
+            className="dark:hidden w-[170px] h-auto"
           />
           <Image
             src="/images/logo/logo-dark.svg"
             alt="Recipes by Yuliia"
-            width={170}
-            height={60}
+            width={498}
+            height={192}
+            sizes="170px"
             priority
-            className="hidden dark:block"
+            className="hidden dark:block w-[170px] h-auto"
           />
         </Link>
 
