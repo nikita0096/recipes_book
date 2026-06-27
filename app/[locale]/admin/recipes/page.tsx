@@ -1,10 +1,8 @@
 'use client';
 
 import {AdminRecipesItems} from "@/components/admin";
-import LoadingPage from "@/components/ui/LoadingPage";
 import {useRecipes} from "@/hooks/useRecipes";
 import React, {useEffect, useMemo, useRef, useState} from "react";
-import {IRecipe} from "@/types/recipe";
 import {useLocale, useTranslations} from "next-intl";
 import {Link} from "@/i18n/navigation";
 import {useSearchParams} from "next/navigation";

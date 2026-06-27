@@ -50,6 +50,7 @@ export const logout = async () => {
 export const handleResetPassword = async (email: string, pathname: string) => {
   const locale = window.location.pathname.split('/')[1] || 'en';
   const url = new URL(`${window.location.origin}/${locale}/auth/update-password`);
+  const tempUrl = new URL(window.location.origin);
   url.searchParams.set('next', pathname);
 
   const {error} = await supabase.auth.resetPasswordForEmail(email, {
@@ -59,7 +60,11 @@ export const handleResetPassword = async (email: string, pathname: string) => {
   if(error) throw error;
 }
 
-export const handleUpdatePassword = async (newPassword: string) => {
+export const handleUpdatePassword = async (newPassword: string, code: string) => {
+  if(code) {
+    await supabase.auth.exchangeCodeForSession(code);
+  }
+
   const {data, error} = await supabase.auth.updateUser({
     password: newPassword
   });

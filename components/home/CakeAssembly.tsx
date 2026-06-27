@@ -4,11 +4,9 @@ import React, {useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import {useLocale, useTranslations} from "next-intl";
-import {supabase} from "@/lib/supabase/ClientComponentClient";
-import {LocalizedText} from "@/types";
 import {PAGES} from "@/config/page.config";
-import {fetchAuthorInfo} from "@/services/db/author/fetchAuthorInfo";
 import {CakeAssemblyRecipe} from "@/components/home/HomePage";
+import styles from "./CakeAssembly.module.css";
 
 interface CakeAssemblyProps {
   scrollText?: string;
@@ -43,7 +41,7 @@ const CakeAssembly = ({
   scrollText = 'scroll',
   cakeAssemblyData
 }: CakeAssemblyProps) => {
-  const [recipe, setRecipe] = useState<CakeAssemblyRecipe | null>(cakeAssemblyData);
+  const [recipe] = useState<CakeAssemblyRecipe | null>(cakeAssemblyData);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const particlesRef = useRef<HTMLDivElement>(null);
   const scrollHintRef = useRef<HTMLDivElement>(null);
@@ -57,22 +55,6 @@ const CakeAssembly = ({
   const tRecipes = useTranslations('recipes');
   const locale = useLocale() as "en" | "uk";
 
-  useEffect(() => {
-    // const fetchCakeRecipe = async () => {
-    //
-    //   const recipeId = await fetchAuthorInfo().then(res => res.data.heroCakeId);
-    //
-    //   const {data} = await supabase
-    //     .from('recipes')
-    //     .select('title, preparing_time, steps_count, slug')
-    //     .eq('id', recipeId)
-    //     .maybeSingle();
-    //   setRecipe({...data, id: recipeId});
-    // }
-    //
-    // fetchCakeRecipe();
-  }, []);
-
   // Generate particles on mount
   useEffect(() => {
     if (!particlesRef.current) return;
@@ -82,7 +64,7 @@ const CakeAssembly = ({
 
     for (let i = 0; i < 30; i++) {
       const p = document.createElement('div');
-      p.className = 'cake-particle';
+      p.className = styles['cake-particle'];
       const size = Math.random() * 6 + 2;
       const x = 5 + Math.random() * 90;
       const dx = (Math.random() - 0.5) * 80 + 'px';
@@ -185,26 +167,26 @@ const CakeAssembly = ({
   }, []);
 
   return (
-    <div className="cake-assembly-wrapper" ref={wrapperRef}>
-      <div className="cake-sticky-scene">
-        <div className="cake-bg-image" />
-        <div className="cake-bg-glow" />
+    <div className={styles['cake-assembly-wrapper']} ref={wrapperRef}>
+      <div className={styles['cake-sticky-scene']}>
+        <div className={styles['cake-bg-image']} />
+        <div className={styles['cake-bg-glow']} />
 
         <div ref={particlesRef} />
 
         {/* Recipe Card - Left Side */}
-        <div className="cake-recipe-card" ref={recipeCardRef}>
-          <div className="cake-recipe-divider" />
-          <h3 className="cake-recipe-title">{recipe?.title ? recipe?.title[locale] : 'Strawberry and Pistachio Cake'}</h3>
-          <div className="cake-recipe-meta">
-            <span className="cake-recipe-time">
+        <div className={styles['cake-recipe-card']} ref={recipeCardRef}>
+          <div className={styles['cake-recipe-divider']} />
+          <h3 className={styles['cake-recipe-title']}>{recipe?.title ? recipe?.title[locale] : 'Strawberry and Pistachio Cake'}</h3>
+          <div className={styles['cake-recipe-meta']}>
+            <span className={styles['cake-recipe-time']}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="10"/>
                 <path d="M12 6v6l4 2"/>
               </svg>
               {recipe?.preparing_time ? recipe?.preparing_time : 120} {tRecipes('singlePage.minutes')}
             </span>
-            <span className="cake-recipe-steps">
+            <span className={styles['cake-recipe-steps']}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
                 <rect x="9" y="3" width="6" height="4" rx="1"/>
@@ -213,8 +195,8 @@ const CakeAssembly = ({
               {tRecipes('singlePage.steps', {count: recipe?.steps_count || 5})}
             </span>
           </div>
-          <div className="cake-recipe-divider" />
-          <Link href={PAGES.RECIPE(recipe?.slug + "-" + recipe?.id)} className="cake-recipe-link">
+          <div className={styles['cake-recipe-divider']} />
+          <Link href={PAGES.RECIPE(recipe?.slug + "-" + recipe?.id)} className={styles['cake-recipe-link']}>
             {tRecipes("card.toRecipe")}
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -222,12 +204,12 @@ const CakeAssembly = ({
           </Link>
         </div>
 
-        <div className="cake-stage">
-          <div className="cake-plate" ref={plateRef} />
+        <div className={styles['cake-stage']}>
+          <div className={styles['cake-plate']} ref={plateRef} />
           {layers.map((layer) => (
             <div
               key={layer.id}
-              className="cake-layer cake-layer-img"
+              className={`${styles['cake-layer']} ${styles['cake-layer-img']}`}
               style={{ zIndex: layer.zIndex }}
               ref={(el) => { layerRefs.current[layer.id] = el; }}
             >
@@ -237,11 +219,11 @@ const CakeAssembly = ({
                 style={layer.style ? layer.style : {}}
                 width={280}
                 height={120}
-                className="cake-layer-image"
+                className={styles['cake-layer-image']}
                 priority
               />
               <div
-                className="cake-lbl"
+                className={styles['cake-lbl']}
                 ref={(el) => { labelRefs.current[layer.lblId] = el; }}
               >
                 {layer.label[locale]}
@@ -250,13 +232,13 @@ const CakeAssembly = ({
           ))}
         </div>
 
-        <div className={`cake-scroll-hint`} ref={scrollHintRef}>
-          <div className="cake-scroll-arrow" />
+        <div className={styles['cake-scroll-hint']} ref={scrollHintRef}>
+          <div className={styles['cake-scroll-arrow']} />
           <span>{scrollText}</span>
         </div>
 
-        <div className="cake-progress-track">
-          <div className="cake-progress-fill" ref={progressFillRef} />
+        <div className={styles['cake-progress-track']}>
+          <div className={styles['cake-progress-fill']} ref={progressFillRef} />
         </div>
       </div>
     </div>

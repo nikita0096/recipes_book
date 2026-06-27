@@ -6,7 +6,7 @@ import {IoClose, IoEye, IoEyeOff} from "react-icons/io5";
 import React, {useState} from "react";
 import {useUserStore} from "@/store/useUserStore";
 import {useTranslations} from "next-intl";
-import {usePathname, useRouter} from "@/i18n/navigation";
+import {useRouter} from "@/i18n/navigation";
 import {PAGES} from "@/config/page.config";
 import {useSearchParams} from "next/navigation";
 

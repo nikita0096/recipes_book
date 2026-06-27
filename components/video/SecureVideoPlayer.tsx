@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Stream } from '@cloudflare/stream-react';
-import { Spinner } from '@/components/ui/spinner';
 import { useTranslations } from 'next-intl';
+import EggLoader from "@/components/eggLoader/EggLoader";
 
 interface SecureVideoPlayerProps {
   videoKey: string; // Cloudflare Stream video UID (or R2 key for backward compatibility)
   recipeId: string;
   className?: string;
   thumbnail: string;
+  setIsVideoSrcLoaded?: (isVideoSrcLoaded: boolean) => void;
 }
 
 /**
@@ -26,14 +27,12 @@ export const SecureVideoPlayer = ({
   recipeId,
   className = '',
   thumbnail,
+  setIsVideoSrcLoaded
 }: SecureVideoPlayerProps) => {
   const t = useTranslations('common.video');
   const [signedToken, setSignedToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Check if this is a legacy R2 video (contains '/' in the key)
-  const isLegacyR2Video = videoKey?.includes('/') ?? false;
 
   useEffect(() => {
     // Skip if no videoKey
@@ -46,37 +45,19 @@ export const SecureVideoPlayer = ({
         setIsLoading(true);
         setError(null);
 
-        // For legacy R2 videos, use old API
-        if (isLegacyR2Video) {
-          const response = await fetch('/api/video/view-url', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ videoKey: videoKey, recipeId }),
-          });
+        const response = await fetch('/api/stream/view-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ videoKey, recipeId }),
+        });
 
-          if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Failed to load video');
-          }
-
-          const { viewUrl } = await response.json();
-          setSignedToken(viewUrl); // For R2, this is the presigned URL
-        } else {
-          // For Stream videos, get signed token
-          const response = await fetch('/api/stream/view-url', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ videoKey, recipeId }),
-          });
-
-          if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Failed to load video');
-          }
-
-          const { token } = await response.json();
-          setSignedToken(token);
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to load video');
         }
+
+        const { token } = await response.json();
+        setSignedToken(token);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load video');
       } finally {
@@ -85,11 +66,11 @@ export const SecureVideoPlayer = ({
     };
 
     fetchSignedToken();
-  }, [videoKey, recipeId, isLegacyR2Video]);
+  }, [videoKey, recipeId]);
 
   // Auto-refresh token before it expires (every 90 minutes for 2-hour tokens)
   useEffect(() => {
-    if (!videoKey || isLegacyR2Video) return;
+    if (!videoKey) return;
 
     const refreshInterval = setInterval(async () => {
       try {
@@ -111,7 +92,7 @@ export const SecureVideoPlayer = ({
     }, 90 * 60 * 1000); // 90 minutes
 
     return () => clearInterval(refreshInterval);
-  }, [videoKey, recipeId, isLegacyR2Video]);
+  }, [videoKey, recipeId]);
 
   if (isLoading) {
     return (
@@ -127,7 +108,7 @@ export const SecureVideoPlayer = ({
           />
         )}
         <div className="relative flex items-center justify-center">
-          <Spinner />
+          <EggLoader/>
         </div>
       </div>
     );
@@ -158,18 +139,6 @@ export const SecureVideoPlayer = ({
     );
   }
 
-  // Legacy R2 video: use regular video element
-  if (isLegacyR2Video) {
-    return (
-      <video
-        className={`rounded-xl ${className}`}
-        src={signedToken}
-        controls
-        playsInline
-      />
-    );
-  }
-
   // Stream video: use Cloudflare Stream React component
   return (
     <div className={`overflow-hidden ${className}`}>
@@ -180,6 +149,11 @@ export const SecureVideoPlayer = ({
         // Additional Stream player options
         preload="metadata"
         poster={thumbnail}
+        onLoadedData={() => {
+          if(setIsVideoSrcLoaded) {
+            setIsVideoSrcLoaded(true);
+          }
+        }}
         // Disable ads (if you have Stream Pro)
         // ad-url=""
       />

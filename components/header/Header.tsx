@@ -83,13 +83,13 @@ const Header: React.FC = () => {
 
         {/* Desktop Navigation */}
         <nav className='hidden md:flex items-center gap-6'>
-          <Link href={PAGES.HOME} className='text-sm text-muted hover:text-text transition-colors'>
+          <Link href={PAGES.HOME} className='text-sm hover:text-text transition-colors'>
             {t('nav.home')}
           </Link>
-          <Link href={PAGES.RECIPES} className='text-sm text-muted hover:text-text transition-colors'>
+          <Link href={PAGES.RECIPES} className='text-sm hover:text-text transition-colors'>
             {t('nav.recipes')}
           </Link>
-          <Link href={PAGES.ABOUT} className='text-sm text-muted hover:text-text transition-colors'>
+          <Link href={PAGES.ABOUT} className='text-sm hover:text-text transition-colors'>
             {t('nav.about')}
           </Link>
           {user?.role === 'admin' && (

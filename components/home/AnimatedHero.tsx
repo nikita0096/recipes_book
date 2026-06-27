@@ -3,9 +3,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from '@/i18n/navigation';
 import { PAGES } from '@/config/page.config';
-import {supabase} from "@/lib/supabase/ClientComponentClient";
 import {useTranslations} from "next-intl";
 import {useTypedLocale} from "@/hooks/useTypedLocale";
+import styles from "./AnimatedHero.module.css";
 
 interface AnimatedHeroProps {
   discoverText?: string;
@@ -103,13 +103,13 @@ const AnimatedHero = ({
   }, []);
 
   return (
-    <section className="animated-hero"
+    <section className={styles['animated-hero']}
              ref={wrapperRef}>
-      <div className="hero-top">
-        <h1 className="hero-title">
-          <span className="line-static">{discoverText}</span>
+      <div className={styles['hero-top']}>
+        <h1 className={styles['hero-title']}>
+          <span className={styles['line-static']}>{discoverText}</span>
           <span
-            className='word-wrapper'
+            className={styles['word-wrapper']}
             style={{ height: height || '1em' }}>
           <div
             ref={innerRef}
@@ -117,20 +117,20 @@ const AnimatedHero = ({
             style={{ transition: `transform ${duration}ms cubic-bezier(0.76,0,0.24,1)` }}
           >
             {words.map((w, i) => (
-              <span key={i} className="word-flipper">{w}</span>
+              <span key={i} className={styles['word-flipper']}>{w}</span>
             ))}
-            <span className="word-flipper">{words[0]}</span>
+            <span className={styles['word-flipper']}>{words[0]}</span>
           </div>
         </span>
 
-          <span className="line-static">{recipesText}</span>
+          <span className={styles['line-static']}>{recipesText}</span>
         </h1>
 
-        <p className="hero-byline">{byAuthor}</p>
+        <p className={styles['hero-byline']}>{byAuthor}</p>
 
-        <div className="hero-cta">
+        <div className={styles['hero-cta']}>
           <Link href={PAGES.RECIPES}
-                className="btn-primary">
+                className={styles['btn-primary']}>
             {browseText}
             <svg width="12"
                  height="12"
@@ -142,16 +142,16 @@ const AnimatedHero = ({
             </svg>
           </Link>
           <Link href={PAGES.ABOUT}
-                className="btn-ghost">
+                className={styles['btn-ghost']}>
             {aboutText}
           </Link>
         </div>
       </div>
 
-      <div className="scroll-cta"
+      <div className={styles['scroll-cta']}
            ref={scrollHintRef}>
-        <div className="scroll-cta-line"></div>
-        <div className="scroll-cta-dot"></div>
+        <div className={styles['scroll-cta-line']}></div>
+        <div className={styles['scroll-cta-dot']}></div>
       </div>
     </section>
   );

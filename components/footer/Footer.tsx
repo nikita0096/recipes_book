@@ -3,7 +3,7 @@
 import React, {useEffect, useState} from 'react';
 import { Link } from '@/i18n/navigation';
 import { PAGES } from '@/config/page.config';
-import {useLocale, useTranslations} from 'next-intl';
+import {useTranslations} from 'next-intl';
 import {UserState} from "@/store/useUserStore";
 import {supabase} from "@/lib/supabase/ClientComponentClient";
 import Image from "next/image";

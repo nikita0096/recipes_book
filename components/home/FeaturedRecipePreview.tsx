@@ -1,6 +1,5 @@
 import React from 'react';
 import Image from 'next/image';
-import {IRecipe} from "@/types";
 import {useTypedLocale} from "@/hooks/useTypedLocale";
 import {PAGES} from "@/config/page.config";
 import {Link} from "@/i18n/navigation";

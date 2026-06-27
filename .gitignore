@@ -25,6 +25,10 @@ CLAUDE.md
 # next.js
 /.next/
 /out/
+.swc/
+
+# playwright mcp (local artifacts)
+.playwright-mcp/
 
 # production
 /build

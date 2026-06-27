@@ -18,6 +18,7 @@ import {RECIPE_PLACEHOLDER_IMAGE} from "@/constants/images";
 import LoadingPage from "@/components/ui/LoadingPage";
 import CheckoutModal from "@/components/recipes/recipe/CheckoutModal";
 import {PAGES} from "@/config/page.config";
+import EggLoader from "@/components/eggLoader/EggLoader";
 
 
 interface RecipePageProps {
@@ -83,6 +84,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
   const [recipePrice, setRecipePrice] = useState<RecipePrice | null>(initialPrice);
   const [error, setError] = useState<Error | string | null>(initialError);
   const [loading, setLoading] = useState<boolean>(false);
+  const [isVideoLoaded, setIsVideoLoaded] = useState<boolean>(false);
 
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
@@ -504,7 +506,13 @@ const RecipePage: React.FC<RecipePageProps> = ({
                 videoKey={recipe.videoUrl}
                 className="w-full h-full"
                 thumbnail={recipe.heroImg}
+                setIsVideoSrcLoaded={setIsVideoLoaded}
               />
+              {!isVideoLoaded && (
+                  <div className='aspect-video flex items-center justify-center'>
+                    <EggLoader/>
+                  </div>
+                )}
             </div>
           </div>
         </section>

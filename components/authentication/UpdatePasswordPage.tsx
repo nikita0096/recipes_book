@@ -22,6 +22,7 @@ const UpdatePasswordPage = () => {
 
   const searchParams = useSearchParams();
   const pathname = searchParams.get('next') || '';
+  const code = searchParams.get('code') || '';
 
   const {
     register,
@@ -55,9 +56,10 @@ const UpdatePasswordPage = () => {
       if(!passwordsMatch) return;
 
       try {
-        await handleUpdatePassword(formData.newPassword);
+        await handleUpdatePassword(formData.newPassword, code);
 
         closeModal();
+        reset();
       } catch (error) {
         setError(error instanceof Error ? error.message : t("auth.errors.invalidCredentials"));
       }
@@ -117,30 +119,6 @@ const UpdatePasswordPage = () => {
                   {showPassword ? <IoEyeOff className='text-lg' /> : <IoEye className='text-lg' />}
                 </button>
               </div>
-
-              {/*New Password validation indicators */}
-              {newPasswordValue && (
-                <div className='mt-2'>
-                  <p className='text-xs text-muted mb-1'>{t('auth.passwordRequirements')}</p>
-                  <div className='flex flex-col gap-1'>
-                    <span className={`text-xs flex items-center gap-1 ${hasMinLength ? 'text-green-600' : 'text-red-500'}`}>
-                      {hasMinLength ? '✓' : '✗'} {t('auth.errors.passwordMinLength')}
-                    </span>
-                    <span className={`text-xs flex items-center gap-1 ${hasUpperCase ? 'text-green-600' : 'text-red-500'}`}>
-                      {hasUpperCase ? '✓' : '✗'} {t('auth.errors.passwordUpperCase')}
-                    </span>
-                    <span className={`text-xs flex items-center gap-1 ${hasLowerCase ? 'text-green-600' : 'text-red-500'}`}>
-                      {hasLowerCase ? '✓' : '✗'} {t('auth.errors.passwordLowerCase')}
-                    </span>
-                    <span className={`text-xs flex items-center gap-1 ${hasNumber ? 'text-green-600' : 'text-red-500'}`}>
-                      {hasNumber ? '✓' : '✗'} {t('auth.errors.passwordNumber')}
-                    </span>
-                    <span className={`text-xs flex items-center gap-1 ${passwordsMatch ? 'text-green-600' : 'text-red-500'}`}>
-                      {passwordsMatch ? '✓' : '✗'} {t('auth.errors.passwordsMatchIndicator')}
-                    </span>
-                  </div>
-                </div>
-              )}
             </label>
 
             <label className='w-full mb-8'>
@@ -169,6 +147,30 @@ const UpdatePasswordPage = () => {
               </div>
               {errors.confirmNewPassword && (
                 <span className='block text-xs text-red-500 mt-1'>{errors.confirmNewPassword.message}</span>
+              )}
+
+              {/*New Password validation indicators */}
+              {newPasswordValue && (
+                <div className='mt-2'>
+                  <p className='text-xs text-muted mb-1'>{t('auth.passwordRequirements')}</p>
+                  <div className='flex flex-col gap-1'>
+                    <span className={`text-xs flex items-center gap-1 ${hasMinLength ? 'text-green-600' : 'text-red-500'}`}>
+                      {hasMinLength ? '✓' : '✗'} {t('auth.errors.passwordMinLength')}
+                    </span>
+                    <span className={`text-xs flex items-center gap-1 ${hasUpperCase ? 'text-green-600' : 'text-red-500'}`}>
+                      {hasUpperCase ? '✓' : '✗'} {t('auth.errors.passwordUpperCase')}
+                    </span>
+                    <span className={`text-xs flex items-center gap-1 ${hasLowerCase ? 'text-green-600' : 'text-red-500'}`}>
+                      {hasLowerCase ? '✓' : '✗'} {t('auth.errors.passwordLowerCase')}
+                    </span>
+                    <span className={`text-xs flex items-center gap-1 ${hasNumber ? 'text-green-600' : 'text-red-500'}`}>
+                      {hasNumber ? '✓' : '✗'} {t('auth.errors.passwordNumber')}
+                    </span>
+                    <span className={`text-xs flex items-center gap-1 ${passwordsMatch ? 'text-green-600' : 'text-red-500'}`}>
+                      {passwordsMatch ? '✓' : '✗'} {t('auth.errors.passwordsMatchIndicator')}
+                    </span>
+                  </div>
+                </div>
               )}
             </label>
 

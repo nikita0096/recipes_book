@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useRef} from 'react';
 import {IRecipe} from "@/types/recipe";
 import Image from 'next/image';
 import {PAGES} from "@/config/page.config";
