@@ -8,23 +8,27 @@ type UploadProps = {
 }
 
 export async function uploadImage({file, bucket, filePath}: UploadProps) {
-  const fileExtension = file.name.slice(file.name.lastIndexOf('.') + 1);
-  const path = `${filePath}.${fileExtension}`;
-
   let errorMessage;
+  let compressedImage = null;
 
   try {
-    file = await imageCompression(file, {
-      maxSizeMB: 5
+    compressedImage = await imageCompression(file, {
+      maxSizeMB: 0.5,
+      maxWidthOrHeight: 1600,
+      fileType: 'image/webp',
+      useWebWorker: true,
     });
   } catch (error) {
     errorMessage = error instanceof Error ? error.message : 'Image compression failed';
     return {imagePath: "", error: errorMessage};
   }
 
+  const fileExtension = compressedImage.type.split('/');
+  const path = `${filePath}.${fileExtension[fileExtension.length - 1]}`;
+
   const { data, error } = await supabase.storage
     .from(bucket)
-    .upload(path, file);
+    .upload(path, compressedImage);
 
   if (error) {
     errorMessage = 'Image uploading failed';

@@ -1,6 +1,7 @@
 'use client';
 
 import React, {useCallback, useEffect, useState} from 'react';
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import {IRecipe, IRecipePremiumIncomplete, RecipePrice} from "@/types/recipe";
 import {useTranslations} from "next-intl";
@@ -11,14 +12,23 @@ import {useUserStore} from "@/store/useUserStore";
 import {addNewLike} from "@/services/db/recipe-likes/addNewLike";
 import {fetchRecipe} from "@/services/db/public/fetchRecipe";
 import {deleteLike} from "@/services/db/recipe-likes/deleteLike";
-import {SecureVideoPlayer} from "@/components/video/SecureVideoPlayer";
 import Footer from "@/components/footer/Footer";
 import {usePathname, useRouter} from "next/navigation";
 import {RECIPE_PLACEHOLDER_IMAGE} from "@/constants/images";
 import LoadingPage from "@/components/ui/LoadingPage";
-import CheckoutModal from "@/components/recipes/recipe/CheckoutModal";
 import {PAGES} from "@/config/page.config";
 import EggLoader from "@/components/eggLoader/EggLoader";
+
+// Defer the heavy Stripe and Cloudflare Stream chunks so they aren't part of
+// the recipe page's initial JS. They only render conditionally (checkout open /
+// recipe has a video), so loading them on demand keeps unused JS off the wire.
+// CheckoutModal in particular calls loadStripe() at module scope, so a static
+// import would also start downloading the Stripe SDK before the user buys.
+const CheckoutModal = dynamic(() => import("@/components/recipes/recipe/CheckoutModal"), {ssr: false});
+const SecureVideoPlayer = dynamic(
+  () => import("@/components/video/SecureVideoPlayer").then((m) => m.SecureVideoPlayer),
+  {ssr: false}
+);
 
 
 interface RecipePageProps {
