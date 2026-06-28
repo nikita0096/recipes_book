@@ -3,6 +3,7 @@ import AdminNavBar from "@/components/admin/AdminNavBar";
 import {createClient} from "@/lib/supabase/ServerComponentClient";
 import {redirect} from "next/navigation";
 import type {Metadata} from "next";
+import {PAGES} from "@/config/page.config";
 
 export const metadata: Metadata = {
   title: "Recipes admin",
@@ -16,7 +17,7 @@ export default async function AdminLayout({children}: PropsWithChildren<unknown>
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect('/login');
+  if (!user) redirect(PAGES.SIGNIN('/'));
 
   const { data: profile } = await supabase
     .from('profiles')
