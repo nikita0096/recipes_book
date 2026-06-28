@@ -13,7 +13,7 @@ export async function uploadImage({file, bucket, filePath}: UploadProps) {
 
   try {
     compressedImage = await imageCompression(file, {
-      maxSizeMB: 0.5,
+      maxSizeMB: 4,
       maxWidthOrHeight: 1600,
       fileType: 'image/webp',
       useWebWorker: true,
