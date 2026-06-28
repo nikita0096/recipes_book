@@ -16,28 +16,25 @@ export default async function Page({params}: PageProps){
 
   const {data: {user}} = await supabase.auth.getUser();
 
-  let isLiked = false;
+  //parallel recipe and likes fetching, to save a round-trip
+  // makes the hero/imgs available on the first render
 
-  if(user){
-    const {data} = await supabase
-      .from("recipe_likes")
-      .select("id")
-      .eq('recipe_id', recipeId)
-      .eq('user_id', user.id)
-      .single();
-
-    isLiked = !!data;
-  }
-
-  // Fetch the recipe on the server so the hero/step images are available on the
-  // first render and can be optimized by next/image instead of waiting on a
-  // client-side fetch waterfall.
-  const {data: recipe, totalPrice, error} = await fetchRecipeServer(supabase, recipeId);
+  const [likeResult, {data: recipe, totalPrice, error}] = await Promise.all([
+    user
+      ? supabase
+        .from("recipe_likes")
+        .select("id")
+        .eq('recipe_id', recipeId)
+        .eq('user_id', user.id)
+        .single()
+      : Promise.resolve({data: null}),
+    fetchRecipeServer(supabase, recipeId)
+  ]);
 
   return (
     <RecipePage
       recipeId={recipeId}
-      isLikedRecipe={isLiked}
+      isLikedRecipe={!!likeResult.data}
       initialRecipe={recipe}
       initialPrice={totalPrice}
       initialError={error ? error.message : null}
