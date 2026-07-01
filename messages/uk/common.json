@@ -52,6 +52,7 @@
       "userExists" : "Ця електронна пошта вже зареєстрована. Спробуйте увійти",
       "invalidCredentials": "Невірний email або пароль",
       "invalidEmailCredential": "Невірний email",
+      "missingCredentials": "Будь ласка, введіть email та пароль",
       "emailNotConfirmed": "Будь ласка, підтвердіть вашу пошту",
       "userNotFound": "Користувача не знайдено",
       "emailAlreadyUsed": "Email вже зареєстрований",

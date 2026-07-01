@@ -36,6 +36,7 @@ export default function SignUpPage() {
   const [emailSent, setEmailSent] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const [isProcessing, setIsProcessing] = React.useState(false);
   const t = useTranslations('common');
   const router = useRouter();
 
@@ -73,6 +74,7 @@ export default function SignUpPage() {
   const pathname = searchParams.get('from') || '/';
 
   const handleSignUpWithEmail: SubmitHandler<ISignUpValues> = async (formData) => {
+    if (isProcessing) return;
     setError(null);
     setEmailSent(false);
 
@@ -82,6 +84,7 @@ export default function SignUpPage() {
       return;
     }
 
+    setIsProcessing(true);
     try {
       const data = await handleSignUp(formData.emailSignUp, formData.passwordSignUp, pathname);
 
@@ -100,6 +103,7 @@ export default function SignUpPage() {
         setError(t('errors.somethingWentWrong'));
       }
     } finally {
+      setIsProcessing(false);
       resetSignUp();
     }
   }
@@ -277,7 +281,8 @@ export default function SignUpPage() {
 
                 <button
                   type='submit'
-                  className='w-full py-3.5 bg-text text-bg text-sm tracking-[0.08em] uppercase transition-opacity hover:opacity-90'
+                  disabled={isProcessing}
+                  className='w-full py-3.5 bg-text text-bg text-sm tracking-[0.08em] uppercase transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed'
                 >
                   {t('auth.signUp')}
                 </button>

@@ -363,12 +363,14 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
                     sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  {/* Like button */}
+                  {/* Save button */}
                   <button
-                    className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-red-500/85 flex items-center justify-center text-white text-sm hover:bg-red-600 transition-colors"
+                    className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-accent/85 flex items-center justify-center text-white text-sm hover:bg-accent transition-colors"
                     onClick={(e) => handleUnlikeRecipe(e, item.recipe.id)}
                   >
-                    ♥
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" aria-hidden="true">
+                      <path d="M6 3a2 2 0 0 0-2 2v15.28a.7.7 0 0 0 1.05.6L12 17l6.95 3.88A.7.7 0 0 0 20 20.28V5a2 2 0 0 0-2-2H6z" />
+                    </svg>
                   </button>
                 </div>
                 {/* Card content */}
@@ -387,7 +389,7 @@ const ProfileContent: React.FC<ProfileContentProps> = ({likedRecipesData, purcha
           <div className="bg-surface p-6 flex items-center gap-4 text-muted">
             <div className="w-12 h-12 border border-border flex items-center justify-center">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 3a2 2 0 0 0-2 2v15.28a.7.7 0 0 0 1.05.6L12 17l6.95 3.88A.7.7 0 0 0 20 20.28V5a2 2 0 0 0-2-2H6z"/>
               </svg>
             </div>
             <div>

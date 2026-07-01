@@ -2,12 +2,12 @@
   "title": "My Profile",
   "stats": {
     "purchased": "Recipes Purchased",
-    "liked": "Liked",
+    "liked": "Saved",
     "memberSince": "Member Since"
   },
   "sections": {
     "purchasedRecipes": "My Purchased Recipes",
-    "likedRecipes": "Liked Recipes",
+    "likedRecipes": "Saved Recipes",
     "quickActions": "Quick Actions"
   },
   "recipes": {
@@ -22,8 +22,8 @@
   "empty": {
     "purchasedTitle": "No purchased recipes yet",
     "purchasedText": "Browse our premium recipes and get full access to detailed instructions",
-    "likedTitle": "No liked recipes yet",
-    "likedText": "Click the heart icon on any recipe to save it here",
+    "likedTitle": "No saved recipes yet",
+    "likedText": "Click the save icon on any recipe to keep it here",
     "browseRecipes": "Browse Recipes"
   },
   "actions": {
@@ -35,7 +35,7 @@
     "signOutDesc": "Log out of your account"
   },
   "liked": {
-    "addHint": "Add recipes to your favorites",
-    "addHintDesc": "Click the heart icon on any recipe to save it here"
+    "addHint": "Save recipes for later",
+    "addHintDesc": "Click the save icon on any recipe to keep it here"
   }
 }

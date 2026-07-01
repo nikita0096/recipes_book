@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import {IRecipe, IRecipePremiumIncomplete, RecipePrice} from "@/types/recipe";
@@ -95,8 +95,17 @@ const RecipePage: React.FC<RecipePageProps> = ({
   const [error, setError] = useState<Error | string | null>(initialError);
   const [loading, setLoading] = useState<boolean>(false);
   const [isVideoLoaded, setIsVideoLoaded] = useState<boolean>(false);
+  const [isShowLoginNotification, setIsShowLoginNotification] = useState<boolean>(false);
 
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const loginNotificationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear any pending notification timer when the component unmounts.
+  useEffect(() => {
+    return () => {
+      if (loginNotificationTimer.current) clearTimeout(loginNotificationTimer.current);
+    };
+  }, []);
 
   const locale = useTypedLocale();
   const t = useTranslations('recipes');
@@ -180,7 +189,13 @@ const RecipePage: React.FC<RecipePageProps> = ({
 
 
   const handleLike = async () => {
-    if (!user) return;
+    if (!user) {
+      setIsShowLoginNotification(true);
+      // Reset any in-flight timer so rapid clicks don't stack timeouts.
+      if (loginNotificationTimer.current) clearTimeout(loginNotificationTimer.current);
+      loginNotificationTimer.current = setTimeout(() => setIsShowLoginNotification(false), 10000);
+      return;
+    }
 
     const isNewLiked = !isLiked;
     setIsLiked(isNewLiked);
@@ -219,35 +234,56 @@ const RecipePage: React.FC<RecipePageProps> = ({
         {/* Back link */}
         <button
           onClick={() => router.back()}
-          className="absolute top-6 left-6 lg:top-10 lg:left-10 2xl:top-20 2xl:left-20 z-10 w-[46px] h-[46px] rounded-full flex flex-col items-center justify-center gap-px transition-all cursor-pointer select-none hover:scale-105 active:scale-95 bg-white/12 border border-white/40 text-accent"
+          className="absolute top-6 left-6 lg:top-10 lg:left-10 2xl:top-20 2xl:left-20 z-10 w-[46px] h-[46px] flex flex-col items-center justify-center gap-px transition-all cursor-pointer select-none hover:scale-105 active:scale-95 bg-white/12 border border-white/40 text-accent"
         >
           ←
         </button>
 
-        {/* Like button */}
-        <button
-          type="button"
-          onClick={handleLike}
-          className={`absolute top-6 right-6 lg:top-10 lg:right-10 2xl:top-20 2xl:right-20 z-10 w-[46px] h-[46px] rounded-full flex flex-col items-center justify-center gap-px transition-all cursor-pointer select-none hover:scale-105 active:scale-95 ${
-            isLiked
-              ? 'bg-accent border-accent'
-              : 'bg-white/12 border-white/40'
-          } border`}
-          style={{WebkitBackdropFilter: 'blur(8px)', backdropFilter: 'blur(8px)'}}
-        >
-          <span className={`text-lg leading-none ${
-            isLiked
-              ? 'text-white'
-              : 'text-accent'
-          }`}>
-            {isLiked ? '♥' : '♡'}
-          </span>
-          <span className={`text-[10px] text-white/85 font-sans ${
-            isLiked
-              ? 'text-white'
-              : 'text-accent'
-          }`}>{likes}</span>
-        </button>
+        {/* Save button */}
+        <div className='absolute top-6 right-6 lg:top-10 lg:right-10 2xl:top-20 2xl:right-20 z-10'>
+          <div className='relative flex flex-row items-center gap-2'>
+            <p
+              className={`${isShowLoginNotification ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'} whitespace-nowrap text-[11px] md:text-sm lg:text-md bg-white/12 border border-white/40 text-accent px-3 py-2 transition-opacity duration-200 ease-in-out delay-75`}
+              style={{WebkitBackdropFilter: 'blur(8px)', backdropFilter: 'blur(8px)'}}
+            >
+              {t.rich('singlePage.saveHint', {
+                link: (chunks) => (
+                  <a
+                    className="font-medium text-black underline underline-offset-2 hover:text-accent transition-colors cursor-pointer"
+                    href={PAGES.SIGNIN(pathname)}
+                  >
+                    {chunks}
+                  </a>
+                ),
+              })}
+            </p>
+            <button
+              type="button"
+              onClick={handleLike}
+              className={`w-[46px] h-[46px] flex flex-col items-center justify-center gap-px transition-all cursor-pointer select-none hover:scale-105 active:scale-95 ${
+                isLiked
+                  ? 'bg-accent border-accent'
+                  : 'bg-white/12 border-white/40'
+              } border`}
+              style={{WebkitBackdropFilter: 'blur(8px)', backdropFilter: 'blur(8px)'}}
+            >
+            <span className={`leading-none ${
+              isLiked
+                ? 'text-white'
+                : 'text-accent'
+            }`}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth={2} strokeLinejoin="round" aria-hidden="true">
+                <path d="M6 3a2 2 0 0 0-2 2v15.28a.7.7 0 0 0 1.05.6L12 17l6.95 3.88A.7.7 0 0 0 20 20.28V5a2 2 0 0 0-2-2H6z" />
+              </svg>
+            </span>
+              <span className={`text-[10px] text-white/85 font-sans ${
+                isLiked
+                  ? 'text-white'
+                  : 'text-accent'
+              }`}>{likes}</span>
+            </button>
+          </div>
+        </div>
 
         {/* Hero content */}
         <div className="absolute bottom-7 left-5 sm:left-8 right-20">
@@ -436,6 +472,36 @@ const RecipePage: React.FC<RecipePageProps> = ({
               <div key={step.id}
                    className="bg-bg">
 
+                {/* Mobile/Tablet: Number + Description */}
+                <div className="lg:hidden grid grid-cols-[44px_1fr] sm:grid-cols-[52px_1fr] items-center">
+                  <div className="pl-4 sm:pl-5 self-stretch flex items-center border-r border-border">
+                      <span className="text-sm sm:text-base text-accent font-semibold">
+                        {String(i + 1).padStart(2, '0')}
+                      </span>
+                  </div>
+                  <div>
+                    {step.imgUrl && (
+                      <div className="lg:hidden p-1">
+                        <div className="relative w-full aspect-video">
+                          <Image
+                            src={step.imgUrl || RECIPE_PLACEHOLDER_IMAGE}
+                            alt={`${t('singlePage.step')} ${i + 1}`}
+                            fill
+                            sizes="100vw"
+                            className="object-cover"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <div className="p-4 sm:p-5">
+                      <p className="text-sm sm:text-base text-text leading-relaxed">
+                        {step.desc[locale]}
+                      </p>
+                    </div>
+                    {/* Mobile/Tablet: Image on top */}
+                  </div>
+                </div>
+
 
                 {/* Desktop: Grid layout with image on right */}
                 <div className="lg:grid lg:grid-cols-[60px_1fr_1fr] lg:items-stretch">
@@ -444,37 +510,6 @@ const RecipePage: React.FC<RecipePageProps> = ({
                     <span className="text-base text-accent font-semibold">
                       {String(i + 1).padStart(2, '0')}
                     </span>
-                  </div>
-
-                  {/* Mobile/Tablet: Number + Description */}
-                  <div className="lg:hidden grid grid-cols-[44px_1fr] sm:grid-cols-[52px_1fr] items-center">
-                    <div className="pl-4 sm:pl-5 self-stretch flex items-center border-r border-border">
-                      <span className="text-sm sm:text-base text-accent font-semibold">
-                        {String(i + 1).padStart(2, '0')}
-                      </span>
-                    </div>
-                    <div>
-                      {step.imgUrl && (
-                        <div className="lg:hidden p-1">
-                          <div className="relative w-full aspect-video">
-                            <Image
-                              src={step.imgUrl || RECIPE_PLACEHOLDER_IMAGE}
-                              alt={`${t('singlePage.step')} ${i + 1}`}
-                              fill
-                              sizes="100vw"
-                              className="object-cover"
-                            />
-                          </div>
-                        </div>
-                      )}
-                      <div className="p-4 sm:p-5">
-                        <p className="text-sm sm:text-base text-text leading-relaxed">
-                          {step.desc[locale]}
-                        </p>
-                      </div>
-                      {/* Mobile/Tablet: Image on top */}
-                    </div>
-
                   </div>
 
                   {/* Desktop: Description */}
@@ -487,7 +522,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
                   {/* Desktop: Image */}
                   {step.imgUrl && (
                     <div className="hidden lg:block border-l border-border p-1">
-                      <div className="relative w-full h-full min-h-[220px] aspect-video">
+                      <div className="relative w-full aspect-video">
                         <Image
                           src={step.imgUrl}
                           alt={`${t('singlePage.step')} ${i + 1}`}

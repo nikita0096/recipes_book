@@ -62,7 +62,9 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe, index = 0, userLikes, us
             className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-red-500/85 flex items-center justify-center text-white text-sm hover:bg-red-600 transition-colors"
             onClick={(e) => handleUnlikeRecipe(e, recipe.id)}
           >
-            ♥
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" aria-hidden="true">
+              <path d="M6 3a2 2 0 0 0-2 2v15.28a.7.7 0 0 0 1.05.6L12 17l6.95 3.88A.7.7 0 0 0 20 20.28V5a2 2 0 0 0-2-2H6z" />
+            </svg>
           </button>
         )}
 
@@ -91,9 +93,12 @@ const RecipeItem: React.FC<RecipeItemProps> = ({recipe, index = 0, userLikes, us
 
         {/* Footer */}
         <div className="flex items-center justify-between">
-          {/* Likes */}
-          <span className="text-sm text-muted">
-            ♡ {recipe.likes}
+          {/* Saves */}
+          <span className="flex items-center gap-1 text-sm text-muted">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" aria-hidden="true">
+              <path d="M6 3a2 2 0 0 0-2 2v15.28a.7.7 0 0 0 1.05.6L12 17l6.95 3.88A.7.7 0 0 0 20 20.28V5a2 2 0 0 0-2-2H6z" />
+            </svg>
+            {recipe.likes}
           </span>
 
           {/* View Recipe Button */}
