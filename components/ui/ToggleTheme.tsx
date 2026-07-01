@@ -20,13 +20,13 @@ const ToggleTheme = () => {
 
   return (
     <button
-      className="w-14 h-7 rounded-full border border-border bg-surface relative flex items-center px-1.5 justify-between shrink-0 cursor-pointer transition-colors"
+      className="w-14 h-7 border border-border bg-surface relative flex items-center px-1.5 justify-between shrink-0 cursor-pointer transition-colors"
       onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
       aria-label="Toggle theme"
     >
       <span className="text-accent"><SunIcon /></span>
       <span className="text-muted"><MoonIcon /></span>
-      <div className="absolute w-5 h-5 rounded-full bg-accent transition-all duration-200 left-1.5 dark:left-[30px]" />
+      <div className="absolute w-5 h-5  bg-accent transition-all duration-200 left-1 dark:left-[30px]" />
     </button>
   );
 };

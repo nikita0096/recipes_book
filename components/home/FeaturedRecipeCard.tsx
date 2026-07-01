@@ -65,9 +65,12 @@ const FeaturedRecipeCard: React.FC<FeaturedRecipeCardProps> = ({ recipe, index, 
 
         {/* Footer */}
         <div className="flex items-center justify-between">
-          {/* Likes */}
-          <span className="text-xs text-muted">
-            ♡ {recipe.likes}
+          {/* Saves */}
+          <span className="flex items-center gap-1 text-xs text-muted">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinejoin="round" aria-hidden="true">
+              <path d="M6 3a2 2 0 0 0-2 2v15.28a.7.7 0 0 0 1.05.6L12 17l6.95 3.88A.7.7 0 0 0 20 20.28V5a2 2 0 0 0-2-2H6z" />
+            </svg>
+            {recipe.likes}
           </span>
           <Link
             href={PAGES.RECIPE(recipe.slug + '-' + recipe.id)}
