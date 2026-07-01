@@ -34,6 +34,7 @@ const GoogleIcon = () => (
 export default function SignInPage() {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const {setUserData} = useUserStore();
   const t = useTranslations('common');
@@ -57,6 +58,8 @@ export default function SignInPage() {
   } = signinFrom;
 
   const handleLoginWithEmail: SubmitHandler<ISigninValues> = async (formData) => {
+    if (isProcessing) return;
+    setIsProcessing(true);
     try {
       const data = await handleEmailLogin(formData.emailLogin, formData.passwordLogin);
       console.log(data)
@@ -77,13 +80,21 @@ export default function SignInPage() {
       closeModal();
     } catch (error) {
       if (error instanceof Error) {
-        const errorMessage = error.message === 'Invalid login credentials'
-          ? t('auth.errors.invalidCredentials')
-          : error.message;
+        let errorMessage: string;
+        if (error.message === 'Invalid login credentials') {
+          errorMessage = t('auth.errors.invalidCredentials');
+        } else if (error.message === 'missing email or phone') {
+          // Supabase returns this when the email or password field is empty.
+          errorMessage = t('auth.errors.missingCredentials');
+        } else {
+          errorMessage = error.message;
+        }
         setError(errorMessage);
       } else {
         setError(t('auth.errors.default'));
       }
+    } finally {
+      setIsProcessing(false);
     }
   }
 
@@ -187,7 +198,8 @@ export default function SignInPage() {
 
             <button
               type='submit'
-              className='w-full py-3.5 bg-text text-bg text-sm tracking-[0.08em] uppercase transition-opacity hover:opacity-90'
+              disabled={isProcessing}
+              className='w-full py-3.5 bg-text text-bg text-sm tracking-[0.08em] uppercase transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed'
             >
               {t('auth.signIn')}
             </button>

@@ -44,14 +44,14 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onComplete }) => {
   const stripe = useStripe();
   const elements = useElements();
   const t = useTranslations('recipes.singlePage.checkout');
-  const [submitting, setSubmitting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
+    if (!stripe || !elements || isProcessing) return;
 
-    setSubmitting(true);
+    setIsProcessing(true);
     setErrorMsg(null);
 
     // redirect: 'if_required' keeps us inline for cards without 3DS; methods
@@ -64,7 +64,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onComplete }) => {
 
     if (error) {
       setErrorMsg(error.message ?? t('payError'));
-      setSubmitting(false);
+      setIsProcessing(false);
       return;
     }
 
@@ -73,7 +73,7 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onComplete }) => {
       return;
     }
 
-    setSubmitting(false);
+    setIsProcessing(false);
   };
 
   return (
@@ -88,10 +88,10 @@ const CheckoutForm: React.FC<CheckoutFormProps> = ({ onComplete }) => {
 
       <button
         type="submit"
-        disabled={!stripe || submitting}
+        disabled={!stripe || isProcessing}
         className="w-full bg-accent text-bg font-medium text-sm tracking-wider uppercase py-3.5 px-6 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {submitting ? t('processing') : t('pay')}
+        {isProcessing ? t('processing') : t('pay')}
       </button>
     </form>
   );

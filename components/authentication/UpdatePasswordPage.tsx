@@ -17,6 +17,7 @@ const UpdatePasswordPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const t = useTranslations('common');
   const router = useRouter();
 
@@ -53,8 +54,9 @@ const UpdatePasswordPage = () => {
 
 
   const handleUpdate: SubmitHandler<UpdatePasswordValues> = async (formData) => {
-      if(!passwordsMatch) return;
+      if(!passwordsMatch || isProcessing) return;
 
+      setIsProcessing(true);
       try {
         await handleUpdatePassword(formData.newPassword, code);
 
@@ -62,6 +64,8 @@ const UpdatePasswordPage = () => {
         reset();
       } catch (error) {
         setError(error instanceof Error ? error.message : t("auth.errors.invalidCredentials"));
+      } finally {
+        setIsProcessing(false);
       }
   }
 
@@ -180,7 +184,8 @@ const UpdatePasswordPage = () => {
 
             <button
               type='submit'
-              className='w-full py-3.5 bg-text text-bg text-sm tracking-[0.08em] uppercase transition-opacity hover:opacity-90'
+              disabled={isProcessing}
+              className='w-full py-3.5 bg-text text-bg text-sm tracking-[0.08em] uppercase transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed'
             >
               {t('auth.updatePassword')}
             </button>

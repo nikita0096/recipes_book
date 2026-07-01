@@ -52,6 +52,7 @@
       "userExists" : "This email is already registered. Try signing in instead.",
       "invalidCredentials": "Invalid email or password",
       "invalidEmailCredential": "Invalid email",
+      "missingCredentials": "Please enter your email and password",
       "emailNotConfirmed": "Please confirm your email first",
       "userNotFound": "User not found",
       "emailAlreadyUsed": "Email is already registered",

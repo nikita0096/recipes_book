@@ -15,6 +15,7 @@ const ResetPasswordPage = () => {
   const [sentEmail, setSentEmail] = useState(false);
   const [error, setError] = useState("");
   const [resendCountdown, setResendCountdown] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const searchParams = useSearchParams();
   const pathname = searchParams.get('from') || '';
@@ -47,7 +48,9 @@ const ResetPasswordPage = () => {
   const isValid = isValidEmail(email);
 
   const sendResetEmail = async () => {
+    if (isProcessing) return;
     setError("");
+    setIsProcessing(true);
 
     try {
       await handleResetPassword(email, pathname);
@@ -56,6 +59,8 @@ const ResetPasswordPage = () => {
       setResendCountdown(RESEND_DELAY_SECONDS);
     } catch (error) {
       setError(error instanceof Error ? error.message : t("auth.errors.invalidEmailCredential"));
+    } finally {
+      setIsProcessing(false);
     }
   }
 
@@ -128,7 +133,7 @@ const ResetPasswordPage = () => {
               <p className='text-xs text-muted mb-1'>{t('auth.resendQuestion')}</p>
               <button
                 type='button'
-                disabled={resendCountdown > 0}
+                disabled={resendCountdown > 0 || isProcessing}
                 onClick={handleResend}
                 className='text-sm text-text underline hover:opacity-80 disabled:no-underline disabled:text-muted disabled:cursor-not-allowed transition-opacity'
               >
@@ -146,7 +151,8 @@ const ResetPasswordPage = () => {
 
             <button
               type='button'
-              className='w-full py-3.5 bg-text text-bg text-sm tracking-[0.08em] uppercase transition-opacity hover:opacity-90'
+              disabled={isProcessing}
+              className='w-full py-3.5 bg-text text-bg text-sm tracking-[0.08em] uppercase transition-opacity hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed'
               onClick={handleReset}
             >
               {t('auth.resetPassword')}
