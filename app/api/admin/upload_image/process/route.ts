@@ -46,10 +46,15 @@ export async function POST(request: NextRequest) {
   try {
     const inputBuffer = Buffer.from(await original.arrayBuffer());
 
+    // Byte-integrity diagnostics, visible in Vercel function logs.
+    console.log('process input:', inputBuffer.length, 'bytes, head:', inputBuffer.subarray(0, 8).toString('hex'));
+
     composedFile = await sharp(inputBuffer)
       .resize({ width: 1600, withoutEnlargement: true })
       .webp({quality: 85})
       .toBuffer({resolveWithObject: true});
+
+    console.log('sharp output:', composedFile.data.length, 'bytes, head:', composedFile.data.subarray(0, 8).toString('hex'));
   } catch (error) {
     console.error('Image compression failed:', error);
     await supabase.storage.from(bucket).remove([sourcePath]);
@@ -59,9 +64,14 @@ export async function POST(request: NextRequest) {
   const fileExtension = composedFile.info.format;
   const path = `${filePath}.${fileExtension}`;
 
+  // Send the bytes as a Blob so storage-js uses its multipart/FormData path.
+  // Raw Buffer bodies get UTF-8-mangled by the patched fetch in the Vercel
+  // runtime, which corrupted every stored image.
+  const blob = new Blob([new Uint8Array(composedFile.data)], {type: `image/${fileExtension}`});
+
   const {data, error} = await supabase.storage
     .from(bucket)
-    .upload(path, composedFile.data, {contentType: `image/${fileExtension}`});
+    .upload(path, blob, {contentType: `image/${fileExtension}`});
 
   // The original is transient regardless of the upload outcome.
   const {error: removeError} = await supabase.storage.from(bucket).remove([sourcePath]);
