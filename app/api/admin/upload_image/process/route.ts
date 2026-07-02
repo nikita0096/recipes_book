@@ -11,40 +11,50 @@ interface FileOutput {
   info: OutputInfo
 }
 
+/**
+ * Compresses an original image previously uploaded to `${filePath}.orig` via a
+ * signed upload URL (see the companion sign route). Only the small JSON body
+ * travels through Vercel; the image bytes stay inside Supabase Storage.
+ */
 export async function POST(request: NextRequest) {
   const denied = await requireAdmin();
   if (denied) return denied;
 
-  const formData = await request.formData();
+  const body = await request.json().catch(() => null);
+  const bucket = body?.bucket;
+  const filePath = body?.filePath;
 
-  const file = formData.get("file");
-  const bucket = formData.get("bucket");
-  const filePath = formData.get("filePath");
-
-
-  if (!file || !(file instanceof File)) {
-    return NextResponse.json({ error: 'Invalid file' }, { status: 400 });
+  if (typeof bucket !== "string" || !bucket || typeof filePath !== "string" || !filePath) {
+    return NextResponse.json({imagePath: '', error: 'Invalid bucket or path' }, { status: 400 });
   }
 
-  if (typeof bucket !== "string" || typeof filePath !== "string") {
-    return NextResponse.json({ error: 'Invalid bucket or path' }, { status: 400 });
+  const sourcePath = `${filePath}.orig`;
+
+  const supabase = await createClient();
+
+  const {data: original, error: downloadError} = await supabase.storage
+    .from(bucket)
+    .download(sourcePath);
+
+  if (downloadError || !original) {
+    console.error('Downloading original image failed:', downloadError);
+    return NextResponse.json({imagePath: '', error: 'Failed to read uploaded image' }, { status: 500 });
   }
 
   let composedFile: FileOutput | undefined;
 
-  const inputBuffer = Buffer.from(await file.arrayBuffer());
-
   try {
+    const inputBuffer = Buffer.from(await original.arrayBuffer());
+
     composedFile = await sharp(inputBuffer)
       .resize({ width: 1600, withoutEnlargement: true })
       .webp({quality: 85})
       .toBuffer({resolveWithObject: true});
   } catch (error) {
     console.error('Image compression failed:', error);
+    await supabase.storage.from(bucket).remove([sourcePath]);
     return NextResponse.json({imagePath: '', error: 'Failed to compose image' }, { status: 500 });
   }
-
-  const supabase = await createClient();
 
   const fileExtension = composedFile.info.format;
   const path = `${filePath}.${fileExtension}`;
@@ -52,6 +62,12 @@ export async function POST(request: NextRequest) {
   const {data, error} = await supabase.storage
     .from(bucket)
     .upload(path, composedFile.data, {contentType: `image/${fileExtension}`});
+
+  // The original is transient regardless of the upload outcome.
+  const {error: removeError} = await supabase.storage.from(bucket).remove([sourcePath]);
+  if (removeError) {
+    console.error('Removing original image failed:', removeError);
+  }
 
   if (error) {
     console.error('Image upload failed:', error);

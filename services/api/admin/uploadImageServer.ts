@@ -1,22 +1,45 @@
-/**
- * Client-side helper that uploads an image through the admin API route, where it
- * is compressed with sharp and stored in the given Supabase bucket. Runs in the
- * browser (the "Server" suffix means the heavy lifting is delegated to the
- * server, not that this function runs there). Returns the stored path or an error.
- */
-export async function uploadImageServer(file: File, bucket: string, filePath: string) {
-  const form = new FormData();
+import {supabase} from "@/lib/supabase/ClientComponentClient";
 
-  form.append("filePath", filePath);
-  form.set("file", file);
-  form.append('bucket', bucket);
-
-  const res = await fetch('/api/admin/upload_image', {
+async function postJson(url: string, body: Record<string, string>) {
+  const res = await fetch(url, {
     method: 'POST',
-    body: form,
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body),
   });
 
-  const {imagePath, error} = await res.json();
+  // Vercel-level failures (413, 502, ...) return non-JSON bodies.
+  const data = await res.json().catch(() => null);
 
-  return {imagePath, error};
+  if (!res.ok || !data) {
+    throw new Error(data?.error || `Request to ${url} failed (${res.status})`);
+  }
+
+  return data;
+}
+
+/**
+ * Client-side helper that uploads an image to Supabase Storage and has the
+ * admin API compress it with sharp. The image bytes go from the browser
+ * straight to Supabase via a signed upload URL, so uploads are not subject to
+ * Vercel's ~4.5 MB request body limit. Returns the stored path or an error.
+ */
+export async function uploadImageServer(file: File, bucket: string, filePath: string) {
+  try {
+    const {token, path} = await postJson('/api/admin/upload_image/sign', {bucket, filePath});
+
+    const {error: uploadError} = await supabase.storage
+      .from(bucket)
+      .uploadToSignedUrl(path, token, file, {contentType: file.type});
+
+    if (uploadError) {
+      console.error('Direct image upload failed:', uploadError);
+      return {imagePath: '', error: 'Failed to upload image'};
+    }
+
+    const {imagePath, error} = await postJson('/api/admin/upload_image/process', {bucket, filePath});
+
+    return {imagePath, error};
+  } catch (error) {
+    return {imagePath: '', error: error instanceof Error ? error.message : 'Failed to upload image'};
+  }
 }
