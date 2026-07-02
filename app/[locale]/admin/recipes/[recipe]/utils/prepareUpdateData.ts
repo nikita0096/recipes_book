@@ -1,5 +1,4 @@
 import {v4 as uuidv4} from "uuid";
-import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {uploadVideoToStream} from "@/services/storage/uploadVideoToStream";
 import {deleteFileByPath} from "@/services/storage/deleteImageFromStorage";
 import {EditingValues} from "../page";
@@ -11,6 +10,7 @@ import {
   UpdateRecipeDataPremiumPart,
 } from "@/types/recipe";
 import {deleteVideoFromStream} from "@/services/storage/deleteVideoFromStream";
+import {uploadImageServer} from "@/services/api/admin/uploadImageServer";
 
 // Extract path from Supabase public URL
 const extractPathFromUrl = (urlOrPath: string, bucket: string): string => {
@@ -87,11 +87,8 @@ export const prepareUpdateData = async ({
         }
 
         const filePath = `${folder}/step-img-${uuidv4()}`;
-        const {imagePath, error: uploadError} = await uploadImage({
-          file: step.imgFile,
-          bucket: 'steps',
-          filePath: filePath
-        });
+
+        const {imagePath, error: uploadError} = await uploadImageServer(step.imgFile, 'steps', filePath);
 
         if (uploadError) {
           return {success: false, error: 'Failed to upload step image'};
@@ -127,13 +124,11 @@ export const prepareUpdateData = async ({
       }
 
       const filePath = `${folder}/hero-img-${uuidv4()}`;
-      const {imagePath, error: heroError} = await uploadImage({
-        file: formData.heroImgFile,
-        bucket: 'hero-images',
-        filePath: filePath
-      });
+
+      const {imagePath, error: heroError} = await uploadImageServer(formData.heroImgFile, 'hero-images', filePath);
 
       if (heroError) {
+        console.log(heroError);
         return {success: false, error: 'Failed to upload hero image'};
       }
 

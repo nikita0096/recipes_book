@@ -26,7 +26,6 @@ import SortableItem from "@/components/admin/SortableItem";
 import {v4 as uuidv4} from 'uuid';
 import {ulid} from "ulid";
 import {createRecipe} from "@/services/api/admin/createRecipe";
-import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {MdDeleteForever} from "react-icons/md";
 import {Spinner} from "@/components/ui/spinner";
 import {units} from "@/constants/units";
@@ -39,6 +38,7 @@ import {
   IRecipePremiumUpload,
   RecipeStep,
 } from "@/types/recipe";
+import {uploadImageServer} from "@/services/api/admin/uploadImageServer";
 
 const createEmptyGroup = (): IngredientGroupFormValues => ({
   id: uuidv4(),
@@ -465,11 +465,7 @@ const Page = () => {
       const filePath = `${folder}/step-img-${uuidv4()}`;
 
       if (image !== null) {
-        const {imagePath, error} = await uploadImage({
-          file: image,
-          bucket: 'steps',
-          filePath: filePath
-        });
+        const {imagePath, error} = await uploadImageServer(image, 'steps', filePath);
 
         if (error) {
           return null;
@@ -488,18 +484,14 @@ const Page = () => {
 
     let heroImgPath: string;
     try {
-      const heroImgResult = await uploadImage({
-        file: data.heroImg,
-        bucket: 'hero-images',
-        filePath: fileHeroPath
-      });
+      const {imagePath, error} = await uploadImageServer(data.heroImg, 'hero-images', fileHeroPath);
 
-      if (heroImgResult.error) {
+      if (error) {
         setError(t('form.validation.reloadHeroImage'));
         return null;
       }
 
-      heroImgPath = heroImgResult.imagePath;
+      heroImgPath = imagePath;
     } catch {
       setError(t('form.validation.reloadHeroImage'));
       return null;

@@ -1,10 +1,10 @@
 import { updateAuthorInfo } from '@/services/api/admin/updateAuthor';
 import { AuthorInfoForm } from '@/app/[locale]/admin/author/page';
-import { uploadImage } from '@/services/storage/uploadImagetoStorage';
+import { uploadImageServer } from '@/services/api/admin/uploadImageServer';
 import { deleteFileByPath } from '@/services/storage/deleteImageFromStorage';
 
-jest.mock('@/services/storage/uploadImagetoStorage', () => ({
-  uploadImage: jest.fn(),
+jest.mock('@/services/api/admin/uploadImageServer', () => ({
+  uploadImageServer: jest.fn(),
 }));
 
 jest.mock('@/services/storage/deleteImageFromStorage', () => ({
@@ -15,7 +15,7 @@ jest.mock('uuid', () => ({
   v4: jest.fn(() => 'test-uuid-author'),
 }));
 
-const mockUploadImage = uploadImage as jest.MockedFunction<typeof uploadImage>;
+const mockUploadImage = uploadImageServer as jest.MockedFunction<typeof uploadImageServer>;
 const mockDeleteFile = deleteFileByPath as jest.MockedFunction<typeof deleteFileByPath>;
 
 const createMockAuthorForm = (overrides?: Partial<AuthorInfoForm>): AuthorInfoForm => ({
@@ -60,11 +60,7 @@ describe('updateAuthorInfo (client wrapper)', () => {
     await updateAuthorInfo('author-1', formData, 'old-author-123.jpg');
 
     expect(mockDeleteFile).toHaveBeenCalledWith('old-author-123.jpg', 'author');
-    expect(mockUploadImage).toHaveBeenCalledWith({
-      file: mockFile,
-      bucket: 'author',
-      filePath: 'author-test-uuid-author',
-    });
+    expect(mockUploadImage).toHaveBeenCalledWith(mockFile, 'author', 'author-test-uuid-author');
 
     const [, init] = (global.fetch as jest.Mock).mock.calls[0];
     const body = JSON.parse(init.body as string);

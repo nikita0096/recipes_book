@@ -1,17 +1,18 @@
 import type {AuthorInfoForm} from "@/app/[locale]/admin/author/page";
 import {AuthorInfo} from "@/services/db/author/fetchAuthorInfo";
 import {UpdateAuthorPayload} from "@/services/db/author/updateAuthorInfo";
-import {uploadImage} from "@/services/storage/uploadImagetoStorage";
 import {deleteFileByPath} from "@/services/storage/deleteImageFromStorage";
 import {v4 as uuidv4} from "uuid";
+import {uploadImageServer} from "@/services/api/admin/uploadImageServer";
 
 const AUTHOR_BUCKET = 'author';
 
 /**
- * Client wrapper that updates the author. The image upload (browser image
- * compression) and old-image cleanup happen client-side; the resolved path and
- * remaining fields are then persisted through the admin API route. Same return
- * shape as the previous direct call, so call sites only change their import.
+ * Client wrapper that updates the author. The new image is sent to the upload
+ * API route (which compresses via sharp and stores it), the old image is cleaned
+ * up, and the resolved path plus remaining fields are persisted through the admin
+ * API route. Same return shape as the previous direct call, so call sites only
+ * change their import.
  */
 export const updateAuthorInfo = async (
   id: string,
@@ -26,11 +27,7 @@ export const updateAuthorInfo = async (
     }
 
     const filePath = `author-${uuidv4()}`;
-    const {imagePath: newImagePath, error: uploadError} = await uploadImage({
-      file: data.imageFile,
-      bucket: AUTHOR_BUCKET,
-      filePath: filePath
-    });
+    const {imagePath: newImagePath, error: uploadError} = await uploadImageServer(data.imageFile, AUTHOR_BUCKET, filePath);
 
     if (uploadError) {
       throw new Error('Failed to upload image');

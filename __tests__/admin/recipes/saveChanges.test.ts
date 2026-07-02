@@ -1,12 +1,12 @@
 import {prepareUpdateData, hasDataChanged, PrepareUpdateDataResult} from '@/app/[locale]/admin/recipes/[recipe]/utils/prepareUpdateData';
 import {EditingValues} from '@/app/[locale]/admin/recipes/[recipe]/page';
 import {IRecipe, IRecipePublic, IRecipePremiumFull} from '@/types/recipe';
-import {uploadImage} from '@/services/storage/uploadImagetoStorage';
+import {uploadImageServer} from '@/services/api/admin/uploadImageServer';
 import {uploadVideoToStream} from '@/services/storage/uploadVideoToStream';
 
 // Mock the upload functions
-jest.mock('@/services/storage/uploadImagetoStorage', () => ({
-  uploadImage: jest.fn(),
+jest.mock('@/services/api/admin/uploadImageServer', () => ({
+  uploadImageServer: jest.fn(),
 }));
 
 jest.mock('@/services/storage/uploadVideoToStream', () => ({
@@ -26,7 +26,7 @@ jest.mock('uuid', () => ({
   v4: jest.fn(() => 'test-uuid'),
 }));
 
-const mockUploadImage = uploadImage as jest.MockedFunction<typeof uploadImage>;
+const mockUploadImage = uploadImageServer as jest.MockedFunction<typeof uploadImageServer>;
 const mockUploadVideo = uploadVideoToStream as jest.MockedFunction<typeof uploadVideoToStream>;
 
 // Base mock data
