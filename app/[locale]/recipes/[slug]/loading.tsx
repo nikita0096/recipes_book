@@ -16,9 +16,9 @@ const RecipeLoading = () => {
           style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.08) 45%, transparent 100%)' }}
         />
         {/* Back placeholder */}
-        <div className="absolute top-6 left-6 lg:top-10 lg:left-10 2xl:top-20 2xl:left-20 w-[46px] h-[46px] rounded-full bg-white/12 border border-white/40" />
+        <div className="absolute top-6 left-6 lg:top-10 lg:left-10 2xl:top-20 2xl:left-20 w-[46px] h-[46px] bg-white/12 border border-white/40" />
         {/* Like placeholder */}
-        <div className="absolute top-6 right-6 lg:top-10 lg:right-10 2xl:top-20 2xl:right-20 w-[46px] h-[46px] rounded-full bg-white/12 border border-white/40" />
+        <div className="absolute top-6 right-6 lg:top-10 lg:right-10 2xl:top-20 2xl:right-20 w-[46px] h-[46px] bg-white/12 border border-white/40" />
         {/* Title block */}
         <div className="absolute bottom-7 left-5 sm:left-8 right-20 flex flex-col gap-3">
           <div className="h-5 w-28 bg-white/15 border border-accent/40" />

@@ -30,11 +30,11 @@ interface CakeAssemblyLayer {
 
 const layers: CakeAssemblyLayer[] = [
   { id: 'layer1', src: '/images/cake-layer/layer_1.png', dy: 0, lblId: 'lbl1', label: {en: 'Sponge base', uk: "Бісквіт"}, threshold: 0.18, delay: 0, zIndex: 1, style: {transform: "scale(1.3) translateX(-2px)"}},
-  { id: 'layer2', src: '/images/cake-layer/layer_2.png', dy: -50, lblId: 'lbl2', label: {en: 'Strawberry jam', uk: "Полуничний джем"}, threshold: 0.26, delay: 150, zIndex: 2, style: {transform: "scale(1.01)"} },
+  { id: 'layer2', src: '/images/cake-layer/layer_2.png', dy: -55, lblId: 'lbl2', label: {en: 'Strawberry jam', uk: "Полуничний джем"}, threshold: 0.26, delay: 150, zIndex: 2, style: {transform: "scale(1.01)"} },
   { id: 'layer3', src: '/images/cake-layer/layer_3.jpg', dy: -105, lblId: 'lbl3', label: {en: 'Pistachio cheesecake', uk: "Фісташковий чізкейк"}, threshold: 0.34, delay: 300, zIndex: 3 },
   { id: 'layer4', src: '/images/cake-layer/layer_4.png', dy: -160, lblId: 'lbl4', label: {en: 'Strawberry jam', uk: "Полуничний джем"}, threshold: 0.42, delay: 450, zIndex: 4 },
-  { id: 'layer5', src: '/images/cake-layer/layer_5.jpg', dy: -215, lblId: 'lbl5', label: {en: 'Sponge base', uk: "Бісквіт"}, threshold: 0.50, delay: 600, zIndex: 5 },
-  { id: 'layer6', src: '/images/cake-layer/layer_6.jpg', dy: -265, lblId: 'lbl6', label: {en: 'Decoration', uk: "Декорація"}, threshold: 0.58, delay: 750, zIndex: 6, style: {transform: "scale(.9)"} },
+  { id: 'layer5', src: '/images/cake-layer/layer_5.jpg', dy: -210, lblId: 'lbl5', label: {en: 'Sponge base', uk: "Бісквіт"}, threshold: 0.50, delay: 600, zIndex: 5 },
+  { id: 'layer6', src: '/images/cake-layer/layer_6.jpg', dy: -260, lblId: 'lbl6', label: {en: 'Decoration', uk: "Декорація"}, threshold: 0.58, delay: 750, zIndex: 6, style: {transform: "scale(.9)"} },
 ];
 
 const CakeAssembly = ({
