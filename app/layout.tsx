@@ -27,7 +27,7 @@ const cormorantGaramond = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "CookBook by YS",
+  title: "The CookBook by YS",
   description: "Personal Recipes Book by YS",
 };
 

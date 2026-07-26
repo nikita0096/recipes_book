@@ -26,7 +26,7 @@
     "forgotPassword": "Forgot password?",
     "createAccount": "Create account",
     "welcomeGuest": "Welcome, Guest",
-    "guestDescription": "Sign in to save your favorite recipes and access exclusive content",
+    "guestDescription": "Sign in to save your favorite recipes and access purchased recipes",
     "email": "Email",
     "emailPlaceholder": "your@email.com",
     "password": "Password",
