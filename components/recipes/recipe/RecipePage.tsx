@@ -326,13 +326,14 @@ const RecipePage: React.FC<RecipePageProps> = ({
                   <div>
                     {step.imgUrl && (
                       <div className="lg:hidden p-1">
-                        <div className="relative w-full min-h-[500px]">
+                        <div className="relative w-full">
                           <Image
                             src={step.imgUrl || RECIPE_PLACEHOLDER_IMAGE}
                             alt={`${t('singlePage.step')} ${i + 1}`}
-                            fill
+                            width={800}
+                            height={600}
                             sizes="100vw"
-                            className="object-cover"
+                            className="w-full h-auto"
                           />
                         </div>
                       </div>
@@ -366,12 +367,11 @@ const RecipePage: React.FC<RecipePageProps> = ({
                   {/* Desktop: Image */}
                   {step.imgUrl && (
                     <div className="hidden lg:flex border-l border-border p-1 items-center justify-center">
-                      <div className="relative w-full min-h-[500px] 2xl:min-h-[700px]">
+                      <div className="relative p-15 w-full min-h-[500px] 2xl:min-h-[700px]">
                         <Image
                           src={step.imgUrl}
                           alt={`${t('singlePage.step')} ${i + 1}`}
                           fill
-                          sizes="50vw, 100vw"
                           className="object-cover"
                         />
                       </div>
