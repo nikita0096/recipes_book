@@ -1,6 +1,6 @@
 'use client';
 
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
 import {useUserStore} from "@/store/useUserStore";
 import {useRouter} from "@/i18n/navigation";
@@ -69,6 +69,9 @@ const Page = () => {
   const [videoError, setVideoError] = useState<string | null>(null);
   const [videoUploadProgress, setVideoUploadProgress] = useState<number>(0);
   const [isVideoUploading, setIsVideoUploading] = useState<boolean>(false);
+
+  const heroImgInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
 
   const [isSuccess, setIsSuccess] = useState(false);
   const [isPending, setIsPending] = useState<boolean>(false);
@@ -528,8 +531,7 @@ const Page = () => {
       const recipeData = await handleFormData(formData, recipeId);
 
       if (recipeData === null) {
-        setIsPending(false);
-        throw new Error();
+        return;
       }
 
       if (formData.isPremium) {
@@ -1047,6 +1049,7 @@ const Page = () => {
               </div>
             ) : (
               <div
+                onClick={() => heroImgInputRef.current?.click()}
                 className="flex flex-col items-center justify-center gap-3.5 w-full py-12 border border-dashed border-border cursor-pointer">
                 <svg width="24"
                      height="24"
@@ -1065,22 +1068,23 @@ const Page = () => {
                           r="1.5"/>
                   <path d="M21 15l-5-5L5 21"/>
                 </svg>
-                <label className="cursor-pointer text-xs tracking-[0.06em] uppercase text-muted hover:text-text transition-colors">
-                  <Controller
-                    name='heroImg'
-                    control={control}
-                    rules={{required: 'Main image is required'}}
-                    render={() => (
-                      <input
-                        type="file"
-                        hidden
-                        multiple={false}
-                        onChange={(e) => handleHeroImg(e)}
-                      />
-                    )}
-                  />
+                <Controller
+                  name='heroImg'
+                  control={control}
+                  rules={{required: 'Main image is required'}}
+                  render={() => (
+                    <input
+                      type="file"
+                      ref={heroImgInputRef}
+                      hidden
+                      multiple={false}
+                      onChange={(e) => handleHeroImg(e)}
+                    />
+                  )}
+                />
+                <span className="cursor-pointer text-xs tracking-[0.06em] uppercase text-muted hover:text-text transition-colors">
                   {t('form.buttons.addPicture')}
-                </label>
+                </span>
                 <span className="text-[11px] text-muted opacity-60">PNG, JPG up to 10MB</span>
                 {errors.heroImg && <p className="text-red-500 text-sm">{errors.heroImg.message}</p>}
               </div>
@@ -1260,7 +1264,9 @@ const Page = () => {
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center gap-3.5 py-12">
+              <div className="flex flex-col items-center justify-center gap-3.5 py-12 w-full h-full cursor-pointer"
+                    onClick={() => videoInputRef.current?.click()}
+              >
                 <svg width="24"
                      height="24"
                      viewBox="0 0 24 24"
@@ -1275,23 +1281,24 @@ const Page = () => {
                         height="14"
                         rx="2"/>
                 </svg>
-                <label className="cursor-pointer text-xs tracking-[0.06em] uppercase text-muted hover:text-text transition-colors">
-                  <Controller
-                    name='videoFile'
-                    control={control}
-                    rules={{required: 'Video is required'}}
-                    render={() => (
-                      <input
-                        type="file"
-                        hidden
-                        multiple={false}
-                        accept="video/*"
-                        onChange={(e) => handleFiles(e, 0)}
-                      />
-                    )}
-                  />
+                <span className="cursor-pointer text-xs tracking-[0.06em] uppercase text-muted hover:text-text transition-colors">
                   {t('form.buttons.addVideo')}
-                </label>
+                </span>
+                <Controller
+                  name='videoFile'
+                  control={control}
+                  rules={{required: 'Video is required'}}
+                  render={() => (
+                    <input
+                      type="file"
+                      ref={videoInputRef}
+                      hidden
+                      multiple={false}
+                      accept="video/*"
+                      onChange={(e) => handleFiles(e, 0)}
+                    />
+                  )}
+                />
                 <span className="text-[11px] text-muted opacity-60">MP4, MOV up to 2000MB</span>
                 {errors.videoFile && <p className="text-red-500 text-sm">{errors.videoFile.message}</p>}
               </div>

@@ -311,7 +311,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
             {t('singlePage.preparationSteps')}
           </h2>
 
-          <div className="flex flex-col gap-px bg-border">
+          <div className="flex flex-col gap-px bg-border ">
             {recipe.recipeSteps?.map((step, i) => (
               <div key={step.id}
                    className="bg-bg">
@@ -326,7 +326,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
                   <div>
                     {step.imgUrl && (
                       <div className="lg:hidden p-1">
-                        <div className="relative w-full aspect-video">
+                        <div className="relative w-full min-h-[500px]">
                           <Image
                             src={step.imgUrl || RECIPE_PLACEHOLDER_IMAGE}
                             alt={`${t('singlePage.step')} ${i + 1}`}
@@ -348,7 +348,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
 
 
                 {/* Desktop: Grid layout with image on right */}
-                <div className="lg:grid lg:grid-cols-[60px_1fr_1fr] lg:items-stretch">
+                <div className="lg:grid lg:grid-cols-[60px_1fr_1fr] lg:items-stretch ">
                   {/* Step number */}
                   <div className="hidden lg:flex items-center pl-5 border-r border-border">
                     <span className="text-base text-accent font-semibold">
@@ -365,13 +365,13 @@ const RecipePage: React.FC<RecipePageProps> = ({
 
                   {/* Desktop: Image */}
                   {step.imgUrl && (
-                    <div className="hidden lg:block border-l border-border p-1">
-                      <div className="relative w-full aspect-video">
+                    <div className="hidden lg:flex border-l border-border p-1 items-center justify-center">
+                      <div className="relative w-full min-h-[500px] 2xl:min-h-[700px]">
                         <Image
                           src={step.imgUrl}
                           alt={`${t('singlePage.step')} ${i + 1}`}
                           fill
-                          sizes="(min-width: 1024px) 50vw, 100vw"
+                          sizes="50vw, 100vw"
                           className="object-cover"
                         />
                       </div>
