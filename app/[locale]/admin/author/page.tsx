@@ -224,6 +224,7 @@ const Page = () => {
           {imageUrl ? (
             <div>
               <Image
+                unoptimized
                 src={imageUrl}
                 alt={author.name}
                 fill

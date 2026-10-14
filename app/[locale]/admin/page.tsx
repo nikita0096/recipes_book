@@ -1032,6 +1032,7 @@ const Page = () => {
             {heroImg ? (
               <div className="relative">
                 <Image
+                  unoptimized
                   className="w-full object-cover"
                   width={300}
                   height={200}
@@ -1139,6 +1140,7 @@ const Page = () => {
                         {stepImageUrls[index] ? (
                   <div className="relative mb-3">
                     <Image
+                      unoptimized
                       className="w-full object-cover"
                       width={300}
                       height={200}

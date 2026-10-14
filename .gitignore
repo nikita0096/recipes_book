@@ -19,6 +19,9 @@ scripts
 # claude code
 CLAUDE.md
 
+# agent instructions
+AGENTS.md
+
 # testing
 /coverage
 

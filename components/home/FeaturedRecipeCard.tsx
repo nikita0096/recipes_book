@@ -34,7 +34,7 @@ const FeaturedRecipeCard: React.FC<FeaturedRecipeCardProps> = ({ recipe, index, 
         <div className='hidden md:block relative w-full aspect-4/3' onClick={() => setPreviewFeaturedCard(recipe)}>
           <Image
             fill
-            sizes="100vh"
+            sizes="(min-width: 1312px) 405px, (min-width: 768px) calc((100vw - 96px) / 3), calc(100vw - 32px)"
             className="object-cover"
             src={recipe.heroImg || RECIPE_PLACEHOLDER_IMAGE}
             alt={recipe.title[locale]}
@@ -43,7 +43,7 @@ const FeaturedRecipeCard: React.FC<FeaturedRecipeCardProps> = ({ recipe, index, 
         <Link className='block md:hidden relative w-full aspect-4/3' href={PAGES.RECIPE(recipe.slug + '-' + recipe.id)}>
           <Image
             fill
-            sizes="100vh"
+            sizes="(min-width: 1312px) 405px, (min-width: 768px) calc((100vw - 96px) / 3), calc(100vw - 32px)"
             className="object-cover"
             src={recipe.heroImg || RECIPE_PLACEHOLDER_IMAGE}
             alt={recipe.title[locale]}
