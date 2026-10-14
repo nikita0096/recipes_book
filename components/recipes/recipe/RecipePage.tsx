@@ -372,6 +372,7 @@ const RecipePage: React.FC<RecipePageProps> = ({
                           src={step.imgUrl}
                           alt={`${t('singlePage.step')} ${i + 1}`}
                           fill
+                          sizes="50vw"
                           className="object-cover"
                         />
                       </div>

@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    // Uploaded replacements use new filenames, so cached photos can live longer.
+    minimumCacheTTL: 2678400,
+    deviceSizes: [640, 960, 1280, 1600, 1920],
+    imageSizes: [32, 64, 96, 160, 320, 480],
     remotePatterns: [
       {
         protocol: 'https',

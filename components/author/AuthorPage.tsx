@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import {getLocale, getTranslations} from "next-intl/server";
 import Image from "next/image";
-import authorImage from "@/public/images/about/home-author.png";
+import authorImage from "@/public/images/about/home-author.webp";
 import {UserState} from "@/store/useUserStore";
 import Footer from "@/components/footer/Footer";
 import {LocalizedText} from "@/types";
@@ -111,6 +111,7 @@ const AuthorPage = async ({authorData, user}: AuthorPageProps) => {
         <div className="relative bg-surface border-b lg:border-b-0 lg:border-r border-border min-h-[400px] sm:min-h-[450px] lg:min-h-[480px]">
           <Image
             src={author.image ? author.image : authorImage}
+            unoptimized={!author.image}
             alt={author.name}
             fill
             className="object-cover"

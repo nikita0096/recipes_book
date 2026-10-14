@@ -799,6 +799,7 @@ const Page = () => {
       {/* Hero Section */}
       <section className="relative h-[280px] sm:h-[360px] lg:h-[480px] w-full">
         <Image
+          unoptimized
           src={mainImage === '' ? recipe.heroImg : mainImage}
           alt={recipe.title[locale]}
           fill
@@ -1536,6 +1537,7 @@ const Page = () => {
                             <div className="relative w-full mb-4">
                               <div className="relative w-full aspect-video">
                                 <Image
+                                  unoptimized
                                   src={step.imgUrl}
                                   alt={`Step ${i + 1}`}
                                   fill

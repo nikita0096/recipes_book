@@ -54,6 +54,7 @@ const AdminRecipeItem: React.FC<AdminRecipeItemProps> = ({recipe, index = 0}) =>
       <Link href={PAGES.ADMIN_RECIPE_PAGE(recipe.id)} className="block relative overflow-hidden">
         <div className='relative w-full aspect-4/3'>
           <Image
+            unoptimized
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
             className="object-cover"

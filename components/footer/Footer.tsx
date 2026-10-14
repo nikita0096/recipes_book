@@ -74,7 +74,8 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
           <div className="lg:col-span-2">
             <div className="relative flex items-center gap-3 mb-6">
               <Image
-                src='/images/icon-light.png'
+                src='/images/icon-light.webp'
+                unoptimized
                 width={50}
                 height={50}
                 sizes="50px"
@@ -82,7 +83,8 @@ const Footer: React.FC<FooterProps> = ({ user, isSocialShown = true}) => {
                 className='block dark:hidden'
               />
               <Image
-                src='/images/icon-dark.png'
+                src='/images/icon-dark.webp'
+                unoptimized
                 width={50}
                 height={50}
                 sizes="50px"
